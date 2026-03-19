@@ -1,8 +1,5 @@
 import { useState, useEffect } from "react";
 
-// Telegram WebApp SDK helper
-const tg = window.Telegram?.WebApp;
-
 const IDEOLOGIES = {
   socialismo: { icon: "🔴", label: "Socialismo", color: "#e53935", bonus: "+Salud +Educación" },
   liberalismo: { icon: "🔵", label: "Liberalismo", color: "#1e88e5", bonus: "+PIB +Comercio" },
@@ -15,12 +12,12 @@ const IDEOLOGIES = {
 const COUNTRIES = ["Cuba","México","Venezuela","Argentina","Brasil","Colombia","Chile","Perú","Ecuador","Bolivia","España","Francia","Alemania","Rusia","China","USA","India","Japón","Corea del Sur","Nigeria","Egipto","Turquía","Irán","Arabia Saudita","Sudáfrica"];
 
 const DECREES = [
-  { id: 1, name: "Reforma Fiscal", icon: "💰", desc: "Aumentar impuestos corporativos", effect: "+PIB 3%, -Aprobación 5%", statChanges: { pib: 3, aprobacion: -5 } },
-  { id: 2, name: "Reclutamiento", icon: "⚔️", desc: "Ampliar el ejército nacional", effect: "+Militar 8%, -PIB 4%", statChanges: { militar: 8, pib: -4 } },
-  { id: 3, name: "Plan Social", icon: "🏥", desc: "Subsidiar salud y educación", effect: "+Aprobación 10%, -PIB 6%", statChanges: { aprobacion: 10, pib: -6 } },
-  { id: 4, name: "Industrialización", icon: "🏭", desc: "Inversión en industria pesada", effect: "+Industria 7%, -PIB 4%", statChanges: { industria: 7, pib: -4 } },
-  { id: 5, name: "Apertura Comercial", icon: "🚢", desc: "Reducir aranceles de importación", effect: "+PIB 9%, -Industria 4%", statChanges: { pib: 9, industria: -4 } },
-  { id: 6, name: "Operación Espía", icon: "🕵️", desc: "Infiltrar inteligencia enemiga", effect: "+Intel 15%, -Diplomacia", statChanges: { intel: 15 } },
+  { id: 1, name: "Reforma Fiscal", icon: "💰", desc: "Aumentar impuestos corporativos", effect: "+PIB 3%, -Aprobación 5%" },
+  { id: 2, name: "Reclutamiento", icon: "⚔️", desc: "Ampliar el ejército nacional", effect: "+Militar 8%, -PIB 4%" },
+  { id: 3, name: "Plan Social", icon: "🏥", desc: "Subsidiar salud y educación", effect: "+Aprobación 10%, -PIB 6%" },
+  { id: 4, name: "Industrialización", icon: "🏭", desc: "Inversión en industria pesada", effect: "+Industria 7%, -Ambiente 5%" },
+  { id: 5, name: "Apertura Comercial", icon: "🚢", desc: "Reducir aranceles de importación", effect: "+Comercio 9%, -Industria 4%" },
+  { id: 6, name: "Operación Espía", icon: "🕵️", desc: "Infiltrar inteligencia enemiga", effect: "+Intel 15%, riesgo diplomático" },
 ];
 
 const ALLIES = [
@@ -32,7 +29,7 @@ const ALLIES = [
 
 const EVENTS = [
   { id: 1, type: "crisis", icon: "🌋", title: "Terremoto en Región Norte", desc: "Un sismo 7.2 sacude tu región industrial. Pérdidas estimadas en $2.3B.", time: "hace 2h", urgent: true },
-  { id: 2, type: "diplo", icon: "🤝", title: "Propuesta de Alianza — Brasil", desc: "Brasil solicita un pacto de no agresión por 30 días de juego.", time: "hace 4h", urgent: false },
+  { id: 2, type: "diplo", icon: "🤝", title: "Propuesta de Alianza", desc: "Brasil solicita un pacto de no agresión por 30 días de juego.", time: "hace 4h", urgent: false },
   { id: 3, type: "economic", icon: "📈", title: "Boom Petrolero", desc: "Los precios del crudo suben 18%. Tus reservas valen más.", time: "hace 6h", urgent: false },
   { id: 4, type: "military", icon: "⚠️", title: "Movimiento de Tropas", desc: "Colombia reporta concentración militar en tu frontera sur.", time: "hace 8h", urgent: true },
 ];
@@ -43,12 +40,170 @@ const PARTIES = [
   { name: "Bloque del Este", ideology: "autoritarismo", members: 8, countries: ["Rusia","China","Irán"], power: 91 },
 ];
 
-const clamp = (v, min = 0, max = 100) => Math.min(max, Math.max(min, v));
+// Este archivo reemplaza la función issueDecree y agrega el motor de consecuencias
+// Pega este bloque ANTES del export default en App.jsx
+
+const CONSECUENCIAS = {
+  reforma_fiscal: {
+    socialismo: {
+      alta_rebeldia: ["La reforma llega demasiado tarde. Los manifestantes queman neumáticos frente al palacio. Tu jefe de seguridad pide estado de emergencia.", "Grupos opositores financiados desde el exterior sabotean la implementación. Tres funcionarios son arrestados.", "La tensión social explota. Un general te llama: 'Presidente, la situación es insostenible'. Tienes 24 horas."],
+      alto_pib: ["La reforma redistributiva genera protestas en los barrios ricos pero las clases populares celebran. El FMI advierte.", "Los empresarios amenazan con fuga de capitales. Tu ministro de economía dimite. Tu aprobación sube 12 puntos.", "La medida es aplaudida por sindicatos de 15 países. Venezuela ofrece apoyo. Los mercados reaccionan con cautela."],
+      bajo_pib: ["Con la economía en crisis, subir impuestos provoca una huelga general. Tres regiones amenazan con autonomía.", "El pueblo entiende el sacrificio. La recaudación sube lentamente. China ofrece un préstamo de emergencia.", "Tus asesores advierten: esto puede hundirte. No hay otra salida. El congreso aprueba por un solo voto."],
+    },
+    liberalismo: {
+      alta_rebeldia: ["La población no cree en reformas. Las redes sociales explotan. Un video tuyo es viral por las razones equivocadas.", "Tres gobernadores se niegan a implementar la medida. El país se fragmenta políticamente. Crisis constitucional.", "Un escándalo de corrupción sale a la luz hoy mismo. La reforma queda opacada. La prensa pide tu renuncia."],
+      alto_pib: ["El mercado reacciona: la bolsa sube 3%. Tu base conservadora murmura descontento silencioso.", "Inversores extranjeros aplauden. Dos multinacionales anuncian nuevas plantas. Tu popularidad empresarial en máximos.", "El Wall Street Journal publica editorial elogioso. Tu canciller recibe llamadas de aliados estratégicos."],
+      bajo_pib: ["Con el PIB en caída, la reforma es un salvavidas polémico. La oposición exige elecciones anticipadas.", "Los mercados castigan la medida: la moneda cae 4%. El banco central interviene comprando divisas de emergencia.", "Tu vicepresidente filtra su desacuerdo. La coalición tambalea. Necesitas consolidar alianzas esta semana."],
+    },
+    autoritarismo: {
+      alta_rebeldia: ["Declaras estado de excepción. Las calles están militarizadas. El mundo observa con alarma creciente.", "Un intento de golpe es abortado. Cinco generales arrestados. Tu posición se consolida pero el precio es alto.", "La crisis se internacionaliza. La ONU convoca reunión de emergencia. Tu embajador pide instrucciones urgentes."],
+      alto_pib: ["El decreto se implementa sin debate. La oposición protesta pero no puede frenarlo. Tu control del Estado crece.", "Los medios oficiales celebran. Dos periodistas independientes son 'invitados a conversar' con el gobierno.", "El ejército apoya públicamente. Los países vecinos observan con preocupación el creciente poder ejecutivo."],
+      bajo_pib: ["Cualquier impuesto genera resentimiento. Aumentas el presupuesto de seguridad como medida preventiva.", "Implementas con mano dura. La resistencia es silenciada. El descontento crece en silencio, peligrosamente.", "Tres líderes opositores detenidos 'preventivamente'. La comunidad internacional condena. Sanciones posibles."],
+    },
+    ecologismo: {
+      alto_pib: ["La reforma incluye incentivos verdes. Inversores ESG internacionales miran tu país con interés renovado.", "Tu reforma es pionera en la región. La prensa internacional te llama 'el presidente verde'. Orgullo nacional.", "Silicon Valley verde aplaude. Tres fondos sostenibles anuncian entrada al mercado. Nuevo modelo económico."],
+      bajo_pib: ["La crisis hace imposible pensar en verde. Tus aliados ecologistas te presionan. Atrapado entre dos mundos.", "Priorizas empresas sostenibles para contratos. El sector tradicional ruge. Tensión severa en el gabinete.", "La medida llega en mal momento pero es necesaria. El futuro lo agradecerá aunque el presente duela."],
+      alta_rebeldia: ["El caos social hace imposible cualquier reforma. Los ecologistas marchan junto a los descontentos.", "Usas la crisis para justificar medidas verdes de emergencia. La oposición lo llama dictadura ambiental.", "Tres regiones rechazan la reforma. Tensión entre capital y provincias en niveles históricos."],
+    },
+    nacionalismo: {
+      alto_pib: ["La reforma es vendida como 'primero los nacionales'. Las empresas extranjeras pagarán más. Tú no cedes.", "El orgullo nacional sube. Tu eslogan 'nuestra riqueza, nuestro futuro' se vuelve viral.", "Tres multinacionales amenazan con irse. Les deseas buen viaje. Tu base te aplaude eufóricamente."],
+      bajo_pib: ["La economía sufre pero el discurso nacionalista mantiene a tu base unida. La identidad vale más.", "Culpas a factores externos. El pueblo te cree por ahora. ¿Cuánto aguantará esa narrativa?", "La reforma es dolorosa pero 'soberana'. Los medios internacionales la llaman proteccionismo puro."],
+      alta_rebeldia: ["Tu base nacionalista se fractura. Unos te apoyan, otros te traicionan. La lealtad tiene límites.", "Grupos ultranacionalistas aprovechan el caos para radicalizarse. Te están superando por la derecha.", "La crisis amenaza con dividir el país en líneas regionales. Necesitas un discurso unificador urgente."],
+    },
+    tecnocracia: {
+      alto_pib: ["Los algoritmos predicen éxito con 87% de confianza. La prensa lo llama 'gobierno de datos'. Nuevo estándar.", "Silicon Valley aplaude. Tres startups anuncian sede en tu país. La fuga de cerebros se revierte.", "Tu ministra aparece en portada de Wired. Soft power tecnológico al máximo histórico."],
+      bajo_pib: ["Los modelos económicos fallaron. Tu equipo de datos pide más tiempo. La realidad supera los algoritmos.", "La tecnocracia tiene límites. El factor humano no cabe en ninguna hoja de cálculo. Crisis de credibilidad.", "Tus asesores proponen reforma 2.0 basada en errores aprendidos. La ciudadanía ya no confía en los expertos."],
+      alta_rebeldia: ["La gente rechaza ser gobernada por algoritmos. 'No somos datos', gritan. Crisis de legitimidad profunda.", "Hackean el sistema de implementación. Caos administrativo total. Tus técnicos trabajan sin dormir.", "La desconfianza en tecnología gubernamental en máximos históricos. Necesitas humanizar tu gobierno urgente."],
+    },
+  },
+  reclutamiento: {
+    socialismo: {
+      alto_militar: ["Con ejército poderoso, el reclutamiento es visto como provocación. Colombia rompe relaciones temporalmente.", "Soldados con adoctrinamiento ideológico. Moral alta. Pero el gasto militar preocupa a tus aliados de izquierda.", "Venezuela y Bolivia felicitan. USA emite 'preocupación'. Tu posición geopolítica se endurece notablemente."],
+      bajo_militar: ["El ejército estaba en estado crítico. El reclutamiento masivo restaura la confianza. Aprobación sube entre veteranos.", "Tropas jóvenes e inexpertas. Un incidente fronterizo pone a prueba su entrenamiento antes de tiempo.", "La inversión militar genera debate: ¿por qué no salud? Tus asesores de izquierda amenazan con renunciar."],
+    },
+    liberalismo: {
+      alto_militar: ["El complejo industrial-militar celebra. Tres empresas de defensa suben en bolsa. Tu donante principal sonríe.", "La OTAN valora el refuerzo positivamente. Nuevos ejercicios conjuntos se planifican para el próximo trimestre.", "Think tank conservador: 'el ejército más profesional de la región'. El orgullo nacional sube notablemente."],
+      bajo_militar: ["Brecha de liderazgo en las fuerzas armadas. Tres generales compiten por el ascenso. Tensión interna.", "Los mercados lo ven como señal de inestabilidad. Riesgo país sube dos puntos. Los bonos caen levemente.", "Empresa de seguridad privada ofrece complementar el reclutamiento. Tentador pero muy polémico."],
+    },
+    autoritarismo: {
+      alto_militar: ["El ejército ya es temido. Más tropas envían mensaje inequívoco: no habrá debilidad en este gobierno.", "Desfile militar en cadena nacional. El mensaje es claro. Cuatro países vecinos refuerzan sus fronteras en respuesta.", "Tensión regional sube a niveles de Guerra Fría. Tu embajador en la ONU trabaja sin dormir."],
+      bajo_militar: ["Reclutas con urgencia. Soldados leales pero crudos. Un incidente podría descontrolarse fácilmente.", "El partido te presiona a militarizar más rápido. Los derechos humanos quedan temporalmente en segundo plano.", "Prisa en el reclutamiento genera problemas de disciplina. Tres incidentes graves en una sola semana."],
+    },
+    ecologismo: {
+      alto_militar: ["Propones 'ejército verde': soldados que plantan árboles y protegen ecosistemas. El mundo te aplaude.", "Milicia ambiental patrulla zonas de deforestación. Los madereros ilegales huyen. Victoria táctica importante.", "ONG ambientales colaboran con el ejército. Alianza inédita estudiada en universidades europeas."],
+      bajo_militar: ["Ejército pequeño pero entrenado en defensa ecológica. Una empresa minera ilegal aprende la lección dura.", "Priorizas rangers ambientales. La defensa nacional convencional queda en segundo plano. ¿Error estratégico?", "Formación ambiental obligatoria en el ejército. Los militares tradicionales lo odian. Los jóvenes lo aman."],
+    },
+    nacionalismo: {
+      alto_militar: ["'Nuestro ejército, nuestra soberanía.' El servicio militar se vuelve acto de orgullo nacional máximo.", "Desfiles, himnos, banderas. Fervor patriótico en niveles no vistos en décadas. País unido detrás del uniforme.", "País vecino protesta por el refuerzo. Tú lo llamas 'defensa legítima soberana'. Tensión diplomática alta."],
+      bajo_militar: ["La debilidad militar era humillación nacional. El reclutamiento masivo restaura el orgullo patrio.", "Jóvenes de todo el país se alistan voluntariamente. Espíritu nacional en punto más alto de la historia reciente.", "Servicio militar obligatorio. Algunos protestan. La mayoría lo ve como deber sagrado irrenunciable."],
+    },
+    tecnocracia: {
+      alto_militar: ["Integras IA en el comando. El ejército más tecnológico de la región. Y potencialmente el más impredecible.", "Drones autónomos patrullan fronteras. Eficiente. Un fallo técnico crea incidente internacional delicado.", "Ejército digital envidiado globalmente. Tres países piden comprar la tecnología. Nueva fuente de ingresos."],
+      bajo_militar: ["Simulaciones de IA para entrenar tropas. Innovador. Pero ¿funciona en combate real? Nadie lo sabe aún.", "Presupuesto dividido entre soldados tradicionales y sistemas autónomos. Tensión entre generaciones militares.", "Reclutas hackers junto a soldados. El ciberejército nace. Rusia y China toman nota con preocupación visible."],
+    },
+  },
+  plan_social: {
+    socialismo: {
+      alta_aprobacion: ["Éxito rotundo. Cuba y Bolivia piden asesoría para replicarlo. Tu imagen internacional mejora notablemente.", "Las madres de familia salen a aplaudirte. Un documental te llama 'el presidente de los pobres'. Viral.", "Indicadores de salud mejoran en tiempo récord. La OMS felicita al gobierno. Premio internacional posible."],
+      baja_aprobacion: ["El plan llega cuando nadie confía. La prensa lo llama 'populismo desesperado'. Tu credibilidad sangra.", "Fondos insuficientes para todos. Filas interminables. Un video viral muestra el caos en la distribución.", "La oposición acusa corrupción en la licitación. Tu ministro de bienestar enfrenta investigación parlamentaria."],
+    },
+    liberalismo: {
+      alta_aprobacion: ["Los mercados lo ven como inversión en capital humano. Rating crediticio sube. Victoria inesperada para tu gobierno.", "La productividad laboral sube 8% en zonas beneficiadas. Los números hablan más fuerte que la ideología.", "El Banco Mundial publica informe positivo. Delegaciones de 5 países vienen a estudiar tu modelo. Soft power máximo."],
+      baja_aprobacion: ["Con poca credibilidad, el plan es visto como limosna. Los beneficiarios lo toman pero no te votan. Paradoja.", "Tu partido te presiona: 'esto no es lo que prometimos'. Facción interna amenaza con romper la coalición hoy.", "El plan cuesta más de lo presupuestado. Tu ministro de hacienda presenta la renuncia. Crisis de gabinete inminente."],
+    },
+    autoritarismo: {
+      alta_aprobacion: ["El plan social silencia a la oposición temporalmente. La gente agradece pero sabe que hay condiciones implícitas.", "Los beneficiarios son registrados como 'ciudadanos leales'. Base de datos política disfrazada de programa social.", "La medida es aplaudida en encuesta oficial. Los métodos de la encuesta son ampliamente cuestionados."],
+      baja_aprobacion: ["Muchos rechazan el plan por miedo. La desconfianza institucional está profundamente arraigada en el pueblo.", "Usas los beneficios como control político. Quien protesta pierde el subsidio. El miedo reemplaza la gratitud.", "Un funcionario filtra que los fondos están mal gestionados. Desaparece misteriosamente tres días después."],
+    },
+    ecologismo: {
+      alta_aprobacion: ["El plan incluye huertos comunitarios y energía solar subsidiada. Nuevo modelo de bienestar verde sostenible.", "Las comunidades rurales son las más beneficiadas. El campo florece. Turismo sostenible aumenta 30% en un mes.", "Tu modelo de 'bienestar verde' presentado en la COP como caso de éxito global. Orgullo nacional internacional."],
+      baja_aprobacion: ["El plan es demasiado verde para gente que necesita dinero ahora. 'No puedo comer un árbol', dice un beneficiario.", "Las comunidades quieren empleo industrial, no huertos. Tensión entre tus valores y las necesidades reales.", "El plan llega tarde y recortado. Las promesas ambientales quedan en segundo plano ante la emergencia social real."],
+    },
+    nacionalismo: {
+      alta_aprobacion: ["'Para los nuestros primero.' ONG internacionales te critican por exclusión de inmigrantes. Tu base te aplaude.", "El programa lleva nombre de héroe nacional. Cargado de simbolismo. La gente lo recibe con orgullo profundo.", "Los beneficiarios lucen la escarapela al cobrar. Bienestar y patriotismo fusionados. Imagen política poderosa."],
+      baja_aprobacion: ["Tu base esperaba más. Frustración mezclada con orgullo herido. Combinación política peligrosa e impredecible.", "El plan llegó recortado por presiones externas. Lo vendes como imposición extranjera. Narrativa útil pero desgastante.", "Algunos beneficiarios rechazan el plan por considerarlo insuficiente. El orgullo nacional tiene un límite real."],
+    },
+    tecnocracia: {
+      alta_aprobacion: ["App gubernamental distribuye beneficios sin burocracia. Cero corrupción en la cadena. Eficiencia sin precedentes.", "Blockchain garantiza transparencia total. Cada centavo rastreable públicamente. Nuevo estándar global establecido.", "Tu sistema es copiado por Estonia y Singapur. Pequeño país, gran innovación. Orgullo tecnológico nacional."],
+      baja_aprobacion: ["El sistema excluye a los más vulnerables que no tienen smartphone. Ironía dolorosa del progreso tecnológico.", "Fallo en el servidor deja sin cobrar a 200,000 familias una semana. Crisis de confianza digital profunda.", "Datos de beneficiarios hackeados. Escándalo de privacidad masivo. Tu ministro tech renuncia de inmediato."],
+    },
+  },
+  industrializacion: {
+    default: {
+      socialismo: ["Fábricas nacionalizadas. Los trabajadores aplauden. Los inversores extranjeros huyen. Balance complicado inevitable.", "Creas empleos pero a costa del medio ambiente. Tus aliados verdes te presionan. Dilema ideológico real.", "La industrialización soviética como modelo. Funciona en el papel. Los resultados en 10 años."],
+      liberalismo: ["Las zonas económicas especiales atraen inversión masiva. Pero los salarios siguen bajos. Tensión laboral crece.", "Automatización industrial reduce costos y empleos. El sindicato declara huelga general esta tarde.", "Boom industrial en el papel. En la calle, la gente pregunta dónde están los beneficios reales."],
+      autoritarismo: ["Megaproyectos construidos a marcha forzada. Productividad récord. Derechos laborales, inexistentes.", "El Estado controla las industrias estratégicas. Eficiente a corto plazo. Corrupto inevitablemente a largo plazo.", "Obreros sin descanso. Los números son buenos. Las condiciones laborales, no."],
+      ecologismo: ["Industria verde desde cero. Energías renovables como motor económico. Costoso al inicio, transformador después.", "Prohibes industrias contaminantes. El desempleo sube a corto plazo. El planeta respira. ¿Vale el costo?", "Tu modelo atrae a los mejores ingenieros del mundo. La fuga de cerebros se revierte dramáticamente."],
+      nacionalismo: ["'Hecho en casa.' Productos nacionales en todos los mercados. El consumidor local responde con orgullo.", "Proteges la industria con aranceles altos. La OMC amenaza con sanciones. Tú no cedes ante ninguna presión.", "Industrialización como acto patriótico. Las fábricas son templos de la soberanía nacional."],
+      tecnocracia: ["Fábricas 4.0 con IA y robótica. Productividad máxima. Empleos mínimos. Debate sobre ingreso universal.", "Tu plan industrial optimizado por algoritmos funciona. Pero nadie entiende cómo. Caja negra gubernamental.", "Patentes tecnológicas nacionales generan ingresos sin precedentes. El conocimiento como nueva materia prima."],
+    }
+  },
+  apertura_comercial: {
+    default: {
+      socialismo: ["Abres el comercio con condiciones sociales. Las multinacionales aceptan a regañadientes. Nuevo modelo.", "El libre comercio contradice tu ideología. Tu base te lo recuerda constantemente. Necesitas un relato.", "Acuerdos con países del Sur Global. Menos rentables pero más alineados con tus valores fundamentales."],
+      liberalismo: ["Los aranceles caen. Los supermercados se llenan de importados. La industria local sufre. El consumidor gana.", "Nuevo TLC con potencia económica. Acceso a mercados millonarios. Pero hay letra pequeña muy preocupante.", "Exportaciones récord este trimestre. La clase media crece por primera vez en años. Victoria histórica."],
+      autoritarismo: ["Apertura controlada. Solo entra lo que el Estado autoriza. Capitalismo de Estado en su versión más pura.", "Acuerdos usados como herramienta de influencia política. Comercio con condiciones ideológicas explícitas.", "Abres a aliados y cierras a adversarios. El comercio como extensión de la política exterior nacional."],
+      ecologismo: ["Solo aceptas comercio con países que cumplen estándares ambientales. Revolucionario, costoso y necesario.", "Aranceles verdes como nueva herramienta. Contaminadores pagan más. Sostenibles, menos. Tu modelo atrae seguidores.", "El comercio justo y ecológico como bandera. Menos volumen pero más coherencia con tus valores."],
+      nacionalismo: ["Apertura selectiva: sí a aliados, no a adversarios. El comercio como extensión de la identidad nacional.", "Reduces dependencia de productos estratégicos extranjeros. 'Nunca más rehenes del exterior.'", "Los consumidores prefieren lo importado por precio. Campaña de 'compra nacional'. Resultados mixtos."],
+      tecnocracia: ["Algoritmos negocian TLC en tiempo real. Condiciones óptimas garantizadas. Los diplomáticos, obsoletos.", "Plataforma digital lanzada. Pequeños exportadores acceden a mercados globales por primera vez en la historia.", "Big data predice tendencias con 94% de precisión. Tu ministro de comercio es un modelo de IA. Literalmente."],
+    }
+  },
+  operacion_espia: {
+    socialismo: ["Tus agentes infiltran célula financiada por la CIA. Documentos comprometedores. ¿Los publicas?", "Operación exitosa pero un agente es capturado en territorio enemigo. Negociación diplomática discreta.", "Interceptas comunicaciones que revelan un plan de golpe financiado desde el exterior. Tienes los nombres.", "Tus servicios descubren que un ministro de tu gabinete filtra información. Traición desde adentro."],
+    liberalismo: ["La operación revela que tu principal competidor recibe fondos ilegales. Oro político puro. ¿Lo usas?", "Infiltras la red de narcotráfico que financia a la oposición. El fiscal pide las pruebas. Decisión delicada.", "Descubres que una potencia extranjera manipula tus elecciones. Las pruebas son contundentes pero peligrosas.", "La operación falla y se filtra a la prensa. Escándalo diplomático mayor. El país espiado convoca a tu embajador."],
+    autoritarismo: ["Espionaje masivo exitoso. Tienes archivos de todos tus opositores. El poder absoluto tiene un precio.", "Tus agentes van demasiado lejos. Un periodista muere en circunstancias sospechosas. El mundo exige explicaciones.", "Tu red de inteligencia se vuelve autónoma. Tu jefe de espías sabe demasiado. ¿Realmente puedes confiar en él?", "Interceptas la comunicación privada de un líder aliado. Él lo descubre. Tu alianza más importante tambalea."],
+    ecologismo: ["Infiltras empresas mineras ilegales. Evidencia de destrucción ambiental masiva. Victoria verde histórica.", "Tus agentes descubren lobby corporativo que bloquea tus leyes ambientales. Los nombres son muy poderosos.", "La operación revela corrupción dentro de tu propio ministerio de medio ambiente. Escándalo interno profundo.", "Espías una potencia que quiere tus recursos naturales. Intervención corporativa disfrazada de inversión."],
+    nacionalismo: ["Infiltras grupos separatistas financiados desde el exterior. Los nombres sorprenden: algunos son tus funcionarios.", "Descubres plan para fragmentar el país. El enemigo interno existe. Tu discurso de unidad cobra nueva urgencia.", "La operación revela que medios extranjeros manipulan la opinión pública nacional. Guerra de información real.", "Identificas traidores que venden secretos de Estado. El juicio será público y ejemplar. Mensaje para todos."],
+    tecnocracia: ["Ciberespionaje exitoso. Tus hackers obtienen planos de tecnología militar enemiga sin disparar un tiro.", "IA analiza patrones y predice un ataque antes de que ocurra. El futuro de la inteligencia llegó hoy.", "Tu sistema de vigilancia digital es hackeado por un Estado rival. Ironía de la tecnocracia: vulnerabilidad total.", "Drones espía fotografían instalaciones secretas. Las imágenes enviadas a la ONU. Jugada diplomática arriesgada."],
+  },
+};
+
+function getConsequence(decretoId, ideologia, stats, historial) {
+  const decretoMap = { 1:'reforma_fiscal', 2:'reclutamiento', 3:'plan_social', 4:'industrializacion', 5:'apertura_comercial', 6:'operacion_espia' };
+  const key = decretoMap[decretoId];
+  if (!key) return "Las decisiones presidenciales tienen eco en todo el mundo. El tiempo dirá si fue la correcta.";
+  const base = CONSECUENCIAS[key];
+  if (!base) return "El mundo observa. Tu canciller recibe llamadas de tres capitales.";
+  
+  // operacion_espia y otros con estructura directa por ideología
+  const byIdeology = base[ideologia] || base.liberalismo;
+  if (Array.isArray(byIdeology)) {
+    const used = historial.filter(h => h === decretoId).length;
+    return byIdeology[used % byIdeology.length];
+  }
+  
+  // industrializacion y apertura_comercial tienen estructura .default
+  if (base.default) {
+    const arr = base.default[ideologia] || base.default.liberalismo;
+    if (Array.isArray(arr)) {
+      const used = historial.filter(h => h === decretoId).length;
+      return arr[used % arr.length];
+    }
+  }
+  
+  // reforma_fiscal, reclutamiento, plan_social tienen sub-estados
+  let estado = 'default';
+  if (key === 'reforma_fiscal') {
+    if (stats.rebeldia > 55) estado = 'alta_rebeldia';
+    else if (stats.pib > 60) estado = 'alto_pib';
+    else estado = 'bajo_pib';
+  } else if (key === 'reclutamiento') {
+    estado = stats.militar > 55 ? 'alto_militar' : 'bajo_militar';
+  } else if (key === 'plan_social') {
+    estado = stats.aprobacion > 55 ? 'alta_aprobacion' : 'baja_aprobacion';
+  }
+  
+  const options = byIdeology[estado] || byIdeology[Object.keys(byIdeology)[0]];
+  if (!Array.isArray(options)) return "La presión internacional aumenta. Tu equipo trabaja toda la noche para contener el impacto.";
+  const used = historial.filter(h => h === decretoId).length;
+  return options[used % options.length];
+}
+
 
 export default function NacionesEnGuerra() {
-  const [screen, setScreen] = useState("onboarding");
+  const [screen, setScreen] = useState("onboarding"); // onboarding | game
   const [tab, setTab] = useState("panel");
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(0); // onboarding steps
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedIdeology, setSelectedIdeology] = useState("");
   const [nationName, setNationName] = useState("");
@@ -58,79 +213,35 @@ export default function NacionesEnGuerra() {
   const [aiResponse, setAiResponse] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [notification, setNotification] = useState(null);
-  const [allianceAccepted, setAllianceAccepted] = useState(false);
-  const [tgUser, setTgUser] = useState(null);
+  const [allianceRequest, setAllianceRequest] = useState(null);
+  const [tick, setTick] = useState(0);
 
-  // Stats with real state
-  const [stats, setStats] = useState({
+  const stats = {
     pib: 67, militar: 45, aprobacion: 58, poblacion: 11.2,
     petroleo: 34, comida: 71, energia: 52, educacion: 63,
     salud: 55, rebeldia: 28, intel: 40, industria: 49,
-  });
-
-  // Tick countdown
-  const [countdown, setCountdown] = useState(6 * 3600); // 6h in seconds
+  };
 
   useEffect(() => {
-    // Init Telegram WebApp
-    if (tg) {
-      tg.ready();
-      tg.expand();
-      tg.setHeaderColor("#080b14");
-      tg.setBackgroundColor("#080b14");
-      const user = tg.initDataUnsafe?.user;
-      if (user) {
-        setTgUser(user);
-        setLeaderName(user.first_name || "Presidente");
-      }
-    }
-
-    // Countdown timer
-    const timer = setInterval(() => {
-      setCountdown(c => {
-        if (c <= 1) {
-          // Tick! Apply passive changes
-          setStats(s => ({
-            ...s,
-            pib: clamp(s.pib + Math.floor(Math.random() * 5) - 2),
-            aprobacion: clamp(s.aprobacion + Math.floor(Math.random() * 4) - 2),
-            rebeldia: clamp(s.rebeldia + Math.floor(Math.random() * 3) - 1),
-          }));
-          setDecreeUsed([]); // Reset decrees each tick
-          showNotif("⏰ Nuevo tick — decretos renovados", "info");
-          return 6 * 3600;
-        }
-        return c - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
+    const t = setInterval(() => setTick(p => p + 1), 60000);
+    return () => clearInterval(t);
   }, []);
-
-  const formatCountdown = (secs) => {
-    const h = Math.floor(secs / 3600).toString().padStart(2, "0");
-    const m = Math.floor((secs % 3600) / 60).toString().padStart(2, "0");
-    const s = (secs % 60).toString().padStart(2, "0");
-    return `${h}:${m}:${s}`;
-  };
 
   const showNotif = (msg, type = "info") => {
     setNotification({ msg, type });
-    setTimeout(() => setNotification(null), 3500);
+    setTimeout(() => setNotification(null), 3000);
   };
 
   const issueDecree = async (decree) => {
     if (decreeUsed.includes(decree.id)) return;
     if (decreeUsed.length >= 3) { showNotif("⛔ Ya usaste tus 3 decretos de hoy", "error"); return; }
-
-    // Haptic feedback in Telegram
     tg?.HapticFeedback?.impactOccurred("medium");
-
     setSelectedDecree(decree);
     setAiLoading(true);
     setAiResponse("");
     setTab("decretos");
 
-    // Apply stat changes immediately
+    // Apply stat changes
     setStats(prev => {
       const next = { ...prev };
       if (decree.statChanges) {
@@ -141,52 +252,12 @@ export default function NacionesEnGuerra() {
       return next;
     });
 
-    try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          messages: [{
-            role: "user",
-            content: `Eres el narrador de "Naciones en Guerra", simulador geopolítico en Telegram.
-El jugador es ${leaderName}, Presidente de ${selectedCountry} con ideología ${IDEOLOGIES[selectedIdeology]?.label || "neutral"}.
-Emitió el decreto: "${decree.name}" — ${decree.desc}.
-Stats actuales: PIB ${stats.pib}%, Aprobación ${stats.aprobacion}%, Militar ${stats.militar}%, Rebeldía ${stats.rebeldia}%.
-
-Responde con 3 párrafos cortos:
-1. Consecuencia inmediata dramática (como noticiario urgente)
-2. Reacción de un país aliado o enemigo específico con nombre real
-3. Evento secundario inesperado (bueno o malo 50/50)
-
-Tono: serio, geopolítico, dramático. Máximo 100 palabras. Sin listas, solo párrafos.`
-          }]
-        })
-      });
-      const data = await res.json();
-      const text = data.content?.[0]?.text || "Las consecuencias se despliegan por el territorio...";
-      setAiResponse(text);
-    } catch {
-      setAiResponse("Las decisiones presidenciales tienen consecuencias que el mundo entero observa con atención...");
-    }
-
+    // Get consequence from local engine
+    await new Promise(r => setTimeout(r, 800)); // small delay for effect
+    const consequence = getConsequence(decree.id, selectedIdeology, stats, decreeUsed);
+    setAiResponse(consequence);
     setDecreeUsed(p => [...p, decree.id]);
     setAiLoading(false);
-  };
-
-  const handleAllianceAccept = () => {
-    tg?.HapticFeedback?.notificationOccurred("success");
-    setAllianceAccepted(true);
-    setStats(s => ({ ...s, pib: clamp(s.pib + 5), aprobacion: clamp(s.aprobacion + 3) }));
-    showNotif("✅ Alianza con Brasil confirmada +PIB +Aprobación", "info");
-  };
-
-  const handleAllianceReject = () => {
-    tg?.HapticFeedback?.notificationOccurred("error");
-    setAllianceAccepted(false);
-    setStats(s => ({ ...s, aprobacion: clamp(s.aprobacion - 2) }));
-    showNotif("❌ Propuesta rechazada — relaciones tensas con Brasil", "error");
   };
 
   const StatBar = ({ label, value, color = "#c9a84c", icon }) => (
@@ -196,25 +267,29 @@ Tono: serio, geopolítico, dramático. Máximo 100 palabras. Sin listas, solo p�
         <span style={{ color: value > 60 ? "#4caf50" : value > 35 ? "#c9a84c" : "#e53935", fontWeight: "bold" }}>{value}%</span>
       </div>
       <div style={{ height: 6, background: "#1a1a2e", borderRadius: 3, overflow: "hidden" }}>
-        <div style={{ height: "100%", width: `${value}%`, background: `linear-gradient(90deg, ${color}, ${color}aa)`, borderRadius: 3, transition: "width 0.8s ease" }} />
+        <div style={{ height: "100%", width: `${value}%`, background: `linear-gradient(90deg, ${color}, ${color}aa)`, borderRadius: 3, transition: "width 1s ease" }} />
       </div>
     </div>
   );
 
-  // ── ONBOARDING ──
+  // ONBOARDING
   if (screen === "onboarding") {
     return (
       <div style={{ minHeight: "100vh", background: "#080b14", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Georgia', serif", padding: 20, position: "relative", overflow: "hidden" }}>
+        {/* bg grid */}
         <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
-        <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 420, textAlign: "center" }}>
+        <div style={{ position: "absolute", top: "20%", left: "10%", width: 300, height: 300, background: "radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%)", borderRadius: "50%" }} />
 
+        <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 420, textAlign: "center" }}>
           {step === 0 && (
             <div>
-              <div style={{ fontSize: 64, marginBottom: 16 }}>🌍</div>
-              <h1 style={{ fontSize: 30, color: "#c9a84c", letterSpacing: 3, margin: "0 0 4px", textTransform: "uppercase" }}>Naciones</h1>
-              <h1 style={{ fontSize: 30, color: "#e8e8e8", letterSpacing: 3, margin: "0 0 20px", textTransform: "uppercase" }}>en Guerra</h1>
-              {tgUser && <p style={{ color: "#c9a84c", fontSize: 13, marginBottom: 8 }}>Bienvenido, {tgUser.first_name} 👋</p>}
-              <p style={{ color: "#6a6a8a", fontSize: 13, lineHeight: 1.8, marginBottom: 32 }}>El mundo está en caos. 195 naciones compiten por el poder global. Solo una alcanzará la hegemonía.</p>
+              <div style={{ fontSize: 56, marginBottom: 16 }}>🌍</div>
+              <h1 style={{ fontSize: 32, color: "#c9a84c", letterSpacing: 3, margin: "0 0 8px", textTransform: "uppercase" }}>Naciones</h1>
+              <h1 style={{ fontSize: 32, color: "#e8e8e8", letterSpacing: 3, margin: "0 0 24px", textTransform: "uppercase" }}>en Guerra</h1>
+              <p style={{ color: "#6a6a8a", fontSize: 14, lineHeight: 1.8, marginBottom: 32 }}>
+                El mundo está en caos. 195 naciones compiten por el poder.<br/>
+                Solo una alcanzará la hegemonía global.
+              </p>
               <button onClick={() => setStep(1)} style={{ background: "linear-gradient(135deg, #c9a84c, #a07830)", border: "none", color: "#080b14", padding: "14px 40px", borderRadius: 4, fontSize: 14, letterSpacing: 2, textTransform: "uppercase", cursor: "pointer", fontWeight: "bold", width: "100%" }}>
                 TOMAR EL PODER
               </button>
@@ -223,15 +298,17 @@ Tono: serio, geopolítico, dramático. Máximo 100 palabras. Sin listas, solo p�
 
           {step === 1 && (
             <div>
-              <div style={{ fontSize: 36, marginBottom: 12 }}>🗺️</div>
-              <h2 style={{ color: "#c9a84c", letterSpacing: 2, marginBottom: 6, textTransform: "uppercase", fontSize: 16 }}>Elige tu Nación</h2>
-              <p style={{ color: "#6a6a8a", fontSize: 12, marginBottom: 16 }}>Serás su Presidente. Para bien o para mal.</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 20, maxHeight: 260, overflowY: "auto" }}>
+              <div style={{ fontSize: 36, marginBottom: 16 }}>🗺️</div>
+              <h2 style={{ color: "#c9a84c", letterSpacing: 2, marginBottom: 8, textTransform: "uppercase", fontSize: 18 }}>Elige tu Nación</h2>
+              <p style={{ color: "#6a6a8a", fontSize: 12, marginBottom: 20 }}>Serás su Presidente. Para bien o para mal.</p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24, maxHeight: 280, overflowY: "auto" }}>
                 {COUNTRIES.map(c => (
-                  <button key={c} onClick={() => setSelectedCountry(c)} style={{ background: selectedCountry === c ? "rgba(201,168,76,0.2)" : "rgba(255,255,255,0.04)", border: `1px solid ${selectedCountry === c ? "#c9a84c" : "rgba(255,255,255,0.08)"}`, color: selectedCountry === c ? "#c9a84c" : "#777", padding: "10px 4px", borderRadius: 4, fontSize: 11, cursor: "pointer", transition: "all 0.2s" }}>{c}</button>
+                  <button key={c} onClick={() => setSelectedCountry(c)} style={{ background: selectedCountry === c ? "rgba(201,168,76,0.2)" : "rgba(255,255,255,0.04)", border: `1px solid ${selectedCountry === c ? "#c9a84c" : "rgba(255,255,255,0.08)"}`, color: selectedCountry === c ? "#c9a84c" : "#888", padding: "10px 6px", borderRadius: 4, fontSize: 11, cursor: "pointer", transition: "all 0.2s" }}>
+                    {c}
+                  </button>
                 ))}
               </div>
-              <button disabled={!selectedCountry} onClick={() => setStep(2)} style={{ background: selectedCountry ? "linear-gradient(135deg, #c9a84c, #a07830)" : "#2a2a3a", border: "none", color: selectedCountry ? "#080b14" : "#444", padding: "14px", borderRadius: 4, fontSize: 13, letterSpacing: 2, textTransform: "uppercase", cursor: selectedCountry ? "pointer" : "not-allowed", fontWeight: "bold", width: "100%" }}>
+              <button disabled={!selectedCountry} onClick={() => setStep(2)} style={{ background: selectedCountry ? "linear-gradient(135deg, #c9a84c, #a07830)" : "#2a2a3a", border: "none", color: selectedCountry ? "#080b14" : "#444", padding: "14px 40px", borderRadius: 4, fontSize: 13, letterSpacing: 2, textTransform: "uppercase", cursor: selectedCountry ? "pointer" : "not-allowed", fontWeight: "bold", width: "100%" }}>
                 CONTINUAR →
               </button>
             </div>
@@ -239,10 +316,10 @@ Tono: serio, geopolítico, dramático. Máximo 100 palabras. Sin listas, solo p�
 
           {step === 2 && (
             <div>
-              <div style={{ fontSize: 36, marginBottom: 12 }}>🏛️</div>
-              <h2 style={{ color: "#c9a84c", letterSpacing: 2, marginBottom: 6, textTransform: "uppercase", fontSize: 16 }}>Tu Ideología</h2>
-              <p style={{ color: "#6a6a8a", fontSize: 12, marginBottom: 16 }}>Define cómo gobernarás. Afecta todos tus decretos.</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
+              <div style={{ fontSize: 36, marginBottom: 16 }}>🏛️</div>
+              <h2 style={{ color: "#c9a84c", letterSpacing: 2, marginBottom: 8, textTransform: "uppercase", fontSize: 18 }}>Tu Ideología</h2>
+              <p style={{ color: "#6a6a8a", fontSize: 12, marginBottom: 20 }}>Define cómo gobernarás. Afecta todos tus decretos.</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
                 {Object.entries(IDEOLOGIES).map(([key, val]) => (
                   <button key={key} onClick={() => setSelectedIdeology(key)} style={{ background: selectedIdeology === key ? `${val.color}22` : "rgba(255,255,255,0.03)", border: `1px solid ${selectedIdeology === key ? val.color : "rgba(255,255,255,0.07)"}`, color: selectedIdeology === key ? val.color : "#777", padding: "12px 16px", borderRadius: 4, fontSize: 13, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "all 0.2s" }}>
                     <span>{val.icon} {val.label}</span>
@@ -250,7 +327,7 @@ Tono: serio, geopolítico, dramático. Máximo 100 palabras. Sin listas, solo p�
                   </button>
                 ))}
               </div>
-              <button disabled={!selectedIdeology} onClick={() => setStep(3)} style={{ background: selectedIdeology ? "linear-gradient(135deg, #c9a84c, #a07830)" : "#2a2a3a", border: "none", color: selectedIdeology ? "#080b14" : "#444", padding: "14px", borderRadius: 4, fontSize: 13, letterSpacing: 2, textTransform: "uppercase", cursor: selectedIdeology ? "pointer" : "not-allowed", fontWeight: "bold", width: "100%" }}>
+              <button disabled={!selectedIdeology} onClick={() => setStep(3)} style={{ background: selectedIdeology ? "linear-gradient(135deg, #c9a84c, #a07830)" : "#2a2a3a", border: "none", color: selectedIdeology ? "#080b14" : "#444", padding: "14px 40px", borderRadius: 4, fontSize: 13, letterSpacing: 2, textTransform: "uppercase", cursor: selectedIdeology ? "pointer" : "not-allowed", fontWeight: "bold", width: "100%" }}>
                 CONTINUAR →
               </button>
             </div>
@@ -258,31 +335,19 @@ Tono: serio, geopolítico, dramático. Máximo 100 palabras. Sin listas, solo p�
 
           {step === 3 && (
             <div>
-              <div style={{ fontSize: 36, marginBottom: 12 }}>✍️</div>
-              <h2 style={{ color: "#c9a84c", letterSpacing: 2, marginBottom: 6, textTransform: "uppercase", fontSize: 16 }}>Tu Identidad</h2>
-              <p style={{ color: "#6a6a8a", fontSize: 12, marginBottom: 20 }}>El mundo entero sabrá tu nombre.</p>
-              <input
-                placeholder="Tu nombre como líder..."
-                value={leaderName}
-                onChange={e => setLeaderName(e.target.value)}
-                style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(201,168,76,0.3)", color: "#e8e8e8", padding: "12px 16px", borderRadius: 4, fontSize: 14, marginBottom: 12, boxSizing: "border-box", outline: "none", fontFamily: "Georgia, serif" }}
-              />
-              <input
-                placeholder="Nombre de tu partido político..."
-                value={nationName}
-                onChange={e => setNationName(e.target.value)}
-                style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(201,168,76,0.3)", color: "#e8e8e8", padding: "12px 16px", borderRadius: 4, fontSize: 14, marginBottom: 24, boxSizing: "border-box", outline: "none", fontFamily: "Georgia, serif" }}
-              />
-              <button
-                disabled={!leaderName || !nationName}
-                onClick={() => { tg?.HapticFeedback?.notificationOccurred("success"); setScreen("game"); }}
-                style={{ background: leaderName && nationName ? "linear-gradient(135deg, #c9a84c, #a07830)" : "#2a2a3a", border: "none", color: leaderName && nationName ? "#080b14" : "#444", padding: "14px", borderRadius: 4, fontSize: 13, letterSpacing: 2, textTransform: "uppercase", cursor: leaderName && nationName ? "pointer" : "not-allowed", fontWeight: "bold", width: "100%" }}>
+              <div style={{ fontSize: 36, marginBottom: 16 }}>✍️</div>
+              <h2 style={{ color: "#c9a84c", letterSpacing: 2, marginBottom: 8, textTransform: "uppercase", fontSize: 18 }}>Tu Identidad</h2>
+              <p style={{ color: "#6a6a8a", fontSize: 12, marginBottom: 24 }}>El mundo entero sabrá tu nombre.</p>
+              <input placeholder="Tu nombre como líder..." value={leaderName} onChange={e => setLeaderName(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(201,168,76,0.3)", color: "#e8e8e8", padding: "12px 16px", borderRadius: 4, fontSize: 14, marginBottom: 12, boxSizing: "border-box", outline: "none", fontFamily: "Georgia, serif" }} />
+              <input placeholder="Nombre de tu partido político..." value={nationName} onChange={e => setNationName(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(201,168,76,0.3)", color: "#e8e8e8", padding: "12px 16px", borderRadius: 4, fontSize: 14, marginBottom: 24, boxSizing: "border-box", outline: "none", fontFamily: "Georgia, serif" }} />
+              <button disabled={!leaderName || !nationName} onClick={() => setScreen("game")} style={{ background: leaderName && nationName ? "linear-gradient(135deg, #c9a84c, #a07830)" : "#2a2a3a", border: "none", color: leaderName && nationName ? "#080b14" : "#444", padding: "14px 40px", borderRadius: 4, fontSize: 13, letterSpacing: 2, textTransform: "uppercase", cursor: leaderName && nationName ? "pointer" : "not-allowed", fontWeight: "bold", width: "100%" }}>
                 🌍 ASUMIR EL PODER
               </button>
             </div>
           )}
 
-          <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 20 }}>
+          {/* step dots */}
+          <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 24 }}>
             {[0,1,2,3].map(i => (
               <div key={i} style={{ width: i === step ? 20 : 6, height: 6, borderRadius: 3, background: i === step ? "#c9a84c" : "#2a2a3a", transition: "all 0.3s" }} />
             ))}
@@ -292,32 +357,36 @@ Tono: serio, geopolítico, dramático. Máximo 100 palabras. Sin listas, solo p�
     );
   }
 
-  // ── GAME ──
+  // GAME
   const ideo = IDEOLOGIES[selectedIdeology] || IDEOLOGIES.liberalismo;
+  const nextTick = "04:32:18";
 
   return (
     <div style={{ minHeight: "100vh", background: "#080b14", fontFamily: "'Georgia', serif", color: "#e8e8e8", position: "relative" }}>
+      {/* bg */}
       <div style={{ position: "fixed", inset: 0, backgroundImage: "linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px)", backgroundSize: "40px 40px", pointerEvents: "none" }} />
 
+      {/* notification */}
       {notification && (
-        <div style={{ position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", background: notification.type === "error" ? "#e5393522" : "#c9a84c22", border: `1px solid ${notification.type === "error" ? "#e53935" : "#c9a84c"}`, color: notification.type === "error" ? "#e53935" : "#c9a84c", padding: "10px 20px", borderRadius: 4, fontSize: 13, zIndex: 1000, letterSpacing: 1, whiteSpace: "nowrap" }}>
+        <div style={{ position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", background: notification.type === "error" ? "#e5393522" : "#c9a84c22", border: `1px solid ${notification.type === "error" ? "#e53935" : "#c9a84c"}`, color: notification.type === "error" ? "#e53935" : "#c9a84c", padding: "10px 20px", borderRadius: 4, fontSize: 13, zIndex: 1000, letterSpacing: 1 }}>
           {notification.msg}
         </div>
       )}
 
       {/* HEADER */}
-      <div style={{ background: "rgba(8,11,20,0.97)", borderBottom: "1px solid rgba(201,168,76,0.2)", padding: "12px 16px", position: "sticky", top: 0, zIndex: 100, backdropFilter: "blur(10px)" }}>
+      <div style={{ background: "rgba(8,11,20,0.95)", borderBottom: "1px solid rgba(201,168,76,0.2)", padding: "12px 16px", position: "sticky", top: 0, zIndex: 100, backdropFilter: "blur(10px)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 2, textTransform: "uppercase" }}>🌍 Naciones en Guerra</div>
             <div style={{ fontSize: 13, color: "#e8e8e8", marginTop: 2 }}>{leaderName} · <span style={{ color: ideo.color }}>{ideo.icon} {selectedCountry}</span></div>
           </div>
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 9, color: "#6a6a8a", letterSpacing: 1 }}>PRÓXIMO TICK</div>
-            <div style={{ fontSize: 15, color: "#c9a84c", fontFamily: "monospace", fontWeight: "bold" }}>{formatCountdown(countdown)}</div>
+            <div style={{ fontSize: 10, color: "#6a6a8a", letterSpacing: 1 }}>PRÓXIMO TICK</div>
+            <div style={{ fontSize: 16, color: "#c9a84c", fontFamily: "monospace", fontWeight: "bold" }}>{nextTick}</div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 10, marginTop: 10, overflowX: "auto", paddingBottom: 2 }}>
+        {/* quick stats */}
+        <div style={{ display: "flex", gap: 12, marginTop: 10, overflowX: "auto", paddingBottom: 2 }}>
           {[["💰", stats.pib], ["⚔️", stats.militar], ["👥", stats.aprobacion], ["🛢️", stats.petroleo], ["🌾", stats.comida]].map(([icon, val], i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.04)", padding: "4px 10px", borderRadius: 20, border: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
               <span style={{ fontSize: 12 }}>{icon}</span>
@@ -327,14 +396,17 @@ Tono: serio, geopolítico, dramático. Máximo 100 palabras. Sin listas, solo p�
         </div>
       </div>
 
+      {/* CONTENT */}
       <div style={{ padding: "16px", paddingBottom: 80 }}>
 
-        {/* PANEL */}
+        {/* PANEL PRINCIPAL */}
         {tab === "panel" && (
           <div>
             <div style={{ fontSize: 11, color: "#c9a84c", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>📊 Panel Nacional</div>
+
+            {/* events urgent */}
             {EVENTS.filter(e => e.urgent).map(ev => (
-              <div key={ev.id} style={{ background: "rgba(229,57,53,0.08)", border: "1px solid rgba(229,57,53,0.3)", borderRadius: 6, padding: "12px 14px", marginBottom: 10, display: "flex", gap: 12 }}>
+              <div key={ev.id} style={{ background: "rgba(229,57,53,0.08)", border: "1px solid rgba(229,57,53,0.3)", borderRadius: 6, padding: "12px 14px", marginBottom: 10, display: "flex", gap: 12, alignItems: "flex-start" }}>
                 <span style={{ fontSize: 24 }}>{ev.icon}</span>
                 <div>
                   <div style={{ fontSize: 13, color: "#e53935", fontWeight: "bold", marginBottom: 4 }}>⚠ {ev.title}</div>
@@ -343,24 +415,28 @@ Tono: serio, geopolítico, dramático. Máximo 100 palabras. Sin listas, solo p�
                 </div>
               </div>
             ))}
+
+            {/* stats grid */}
             <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, padding: 16, marginBottom: 12 }}>
-              <div style={{ fontSize: 11, color: "#6a6a8a", letterSpacing: 1, marginBottom: 12, textTransform: "uppercase" }}>Economía</div>
+              <div style={{ fontSize: 11, color: "#6a6a8a", letterSpacing: 1, marginBottom: 12, textTransform: "uppercase" }}>Indicadores Económicos</div>
               <StatBar label="PIB Nacional" value={stats.pib} icon="💰" color="#c9a84c" />
-              <StatBar label="Petróleo" value={stats.petroleo} icon="🛢️" color="#ff8f00" />
-              <StatBar label="Comida" value={stats.comida} icon="🌾" color="#4caf50" />
+              <StatBar label="Reservas Petróleo" value={stats.petroleo} icon="🛢️" color="#ff8f00" />
+              <StatBar label="Seguridad Alimentaria" value={stats.comida} icon="🌾" color="#4caf50" />
               <StatBar label="Energía" value={stats.energia} icon="⚡" color="#03a9f4" />
               <StatBar label="Industria" value={stats.industria} icon="🏭" color="#9c27b0" />
             </div>
+
             <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, padding: 16, marginBottom: 12 }}>
-              <div style={{ fontSize: 11, color: "#6a6a8a", letterSpacing: 1, marginBottom: 12, textTransform: "uppercase" }}>Social</div>
-              <StatBar label="Aprobación" value={stats.aprobacion} icon="👥" color="#e91e63" />
+              <div style={{ fontSize: 11, color: "#6a6a8a", letterSpacing: 1, marginBottom: 12, textTransform: "uppercase" }}>Indicadores Sociales</div>
+              <StatBar label="Aprobación Popular" value={stats.aprobacion} icon="👥" color="#e91e63" />
               <StatBar label="Educación" value={stats.educacion} icon="🎓" color="#3f51b5" />
-              <StatBar label="Salud" value={stats.salud} icon="🏥" color="#00bcd4" />
-              <StatBar label="Rebeldía" value={stats.rebeldia} icon="😤" color="#e53935" />
+              <StatBar label="Salud Pública" value={stats.salud} icon="🏥" color="#00bcd4" />
+              <StatBar label="Índice Rebeldía" value={stats.rebeldia} icon="😤" color="#e53935" />
             </div>
+
             <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, padding: 16 }}>
-              <div style={{ fontSize: 11, color: "#6a6a8a", letterSpacing: 1, marginBottom: 12, textTransform: "uppercase" }}>Militar</div>
-              <StatBar label="Ejército" value={stats.militar} icon="⚔️" color="#f44336" />
+              <div style={{ fontSize: 11, color: "#6a6a8a", letterSpacing: 1, marginBottom: 12, textTransform: "uppercase" }}>Indicadores Militares</div>
+              <StatBar label="Fuerza Militar" value={stats.militar} icon="⚔️" color="#f44336" />
               <StatBar label="Defensa" value={62} icon="🛡️" color="#607d8b" />
               <StatBar label="Inteligencia" value={stats.intel} icon="🕵️" color="#795548" />
             </div>
@@ -371,20 +447,20 @@ Tono: serio, geopolítico, dramático. Máximo 100 palabras. Sin listas, solo p�
         {tab === "decretos" && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <div style={{ fontSize: 11, color: "#c9a84c", letterSpacing: 2, textTransform: "uppercase" }}>📜 Decretos</div>
-              <div style={{ background: decreeUsed.length >= 3 ? "rgba(229,57,53,0.1)" : "rgba(201,168,76,0.1)", border: `1px solid ${decreeUsed.length >= 3 ? "rgba(229,57,53,0.4)" : "rgba(201,168,76,0.3)"}`, color: decreeUsed.length >= 3 ? "#e53935" : "#c9a84c", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontFamily: "monospace" }}>
+              <div style={{ fontSize: 11, color: "#c9a84c", letterSpacing: 2, textTransform: "uppercase" }}>📜 Decretos Presidenciales</div>
+              <div style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", color: "#c9a84c", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontFamily: "monospace" }}>
                 {3 - decreeUsed.length}/3 restantes
               </div>
             </div>
 
             {selectedDecree && (
               <div style={{ background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.25)", borderRadius: 6, padding: 16, marginBottom: 16 }}>
-                <div style={{ fontSize: 13, color: "#c9a84c", marginBottom: 10, fontWeight: "bold" }}>
+                <div style={{ fontSize: 13, color: "#c9a84c", marginBottom: 8, fontWeight: "bold" }}>
                   {selectedDecree.icon} {selectedDecree.name} — Consecuencias
                 </div>
                 {aiLoading ? (
-                  <div style={{ color: "#6a6a8a", fontSize: 13, fontStyle: "italic", display: "flex", alignItems: "center", gap: 8 }}>
-                    <span>⏳</span> Evaluando impacto internacional...
+                  <div style={{ color: "#6a6a8a", fontSize: 13, fontStyle: "italic" }}>
+                    <span style={{ animation: "pulse 1s infinite" }}>Evaluando impacto internacional...</span>
                   </div>
                 ) : (
                   <div style={{ color: "#c0c0c0", fontSize: 13, lineHeight: 1.8 }}>{aiResponse}</div>
@@ -395,9 +471,8 @@ Tono: serio, geopolítico, dramático. Máximo 100 palabras. Sin listas, solo p�
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {DECREES.map(d => {
                 const used = decreeUsed.includes(d.id);
-                const exhausted = decreeUsed.length >= 3 && !used;
                 return (
-                  <button key={d.id} onClick={() => issueDecree(d)} disabled={used || exhausted} style={{ background: used ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.04)", border: `1px solid ${used ? "rgba(255,255,255,0.04)" : selectedDecree?.id === d.id ? "#c9a84c44" : "rgba(201,168,76,0.15)"}`, borderRadius: 6, padding: "14px 16px", textAlign: "left", cursor: used || exhausted ? "not-allowed" : "pointer", opacity: used || exhausted ? 0.4 : 1, transition: "all 0.2s" }}>
+                  <button key={d.id} onClick={() => issueDecree(d)} disabled={used || decreeUsed.length >= 3} style={{ background: used ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.04)", border: `1px solid ${used ? "rgba(255,255,255,0.04)" : "rgba(201,168,76,0.15)"}`, borderRadius: 6, padding: "14px 16px", textAlign: "left", cursor: used || decreeUsed.length >= 3 ? "not-allowed" : "pointer", opacity: used ? 0.4 : 1, transition: "all 0.2s" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                       <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                         <span style={{ fontSize: 22 }}>{d.icon}</span>
@@ -407,7 +482,7 @@ Tono: serio, geopolítico, dramático. Máximo 100 palabras. Sin listas, solo p�
                           <div style={{ fontSize: 11, color: "#c9a84c", marginTop: 6, fontFamily: "monospace" }}>{d.effect}</div>
                         </div>
                       </div>
-                      {used && <span style={{ fontSize: 10, color: "#555", border: "1px solid #333", padding: "2px 8px", borderRadius: 10, flexShrink: 0 }}>EMITIDO</span>}
+                      {used && <span style={{ fontSize: 10, color: "#555", border: "1px solid #333", padding: "2px 8px", borderRadius: 10 }}>EMITIDO</span>}
                     </div>
                   </button>
                 );
@@ -419,24 +494,20 @@ Tono: serio, geopolítico, dramático. Máximo 100 palabras. Sin listas, solo p�
         {/* DIPLOMACIA */}
         {tab === "diplomacia" && (
           <div>
-            <div style={{ fontSize: 11, color: "#c9a84c", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>🤝 Diplomacia</div>
+            <div style={{ fontSize: 11, color: "#c9a84c", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>🤝 Diplomacia Internacional</div>
 
-            {!allianceAccepted ? (
-              <div style={{ background: "rgba(76,175,80,0.06)", border: "1px solid rgba(76,175,80,0.25)", borderRadius: 6, padding: 14, marginBottom: 16 }}>
-                <div style={{ fontSize: 12, color: "#4caf50", marginBottom: 8, fontWeight: "bold" }}>📩 Propuesta Pendiente — Brasil</div>
-                <div style={{ fontSize: 13, color: "#aaa", marginBottom: 12, lineHeight: 1.6 }}>Brasil solicita un <strong style={{ color: "#e8e8e8" }}>Pacto de No Agresión</strong> por 30 días. A cambio ofrece +15% comercio bilateral y +5% PIB.</div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={handleAllianceAccept} style={{ flex: 1, background: "rgba(76,175,80,0.2)", border: "1px solid #4caf50", color: "#4caf50", padding: "10px", borderRadius: 4, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>✅ ACEPTAR</button>
-                  <button onClick={handleAllianceReject} style={{ flex: 1, background: "rgba(229,57,53,0.1)", border: "1px solid #e53935", color: "#e53935", padding: "10px", borderRadius: 4, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>❌ RECHAZAR</button>
-                </div>
+            {/* pending */}
+            <div style={{ background: "rgba(76,175,80,0.06)", border: "1px solid rgba(76,175,80,0.25)", borderRadius: 6, padding: 14, marginBottom: 16 }}>
+              <div style={{ fontSize: 12, color: "#4caf50", marginBottom: 8, fontWeight: "bold" }}>📩 Propuesta Pendiente — Brasil</div>
+              <div style={{ fontSize: 13, color: "#aaa", marginBottom: 12 }}>Brasil solicita un <strong style={{ color: "#e8e8e8" }}>Pacto de No Agresión</strong> por 30 días. A cambio ofrece +15% comercio bilateral.</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => showNotif("✅ Alianza con Brasil confirmada", "info")} style={{ flex: 1, background: "rgba(76,175,80,0.2)", border: "1px solid #4caf50", color: "#4caf50", padding: "10px", borderRadius: 4, fontSize: 12, cursor: "pointer" }}>✅ ACEPTAR</button>
+                <button onClick={() => showNotif("❌ Propuesta rechazada", "error")} style={{ flex: 1, background: "rgba(229,57,53,0.1)", border: "1px solid #e53935", color: "#e53935", padding: "10px", borderRadius: 4, fontSize: 12, cursor: "pointer" }}>❌ RECHAZAR</button>
               </div>
-            ) : (
-              <div style={{ background: "rgba(76,175,80,0.06)", border: "1px solid rgba(76,175,80,0.25)", borderRadius: 6, padding: 14, marginBottom: 16, textAlign: "center" }}>
-                <div style={{ fontSize: 20, marginBottom: 4 }}>🤝</div>
-                <div style={{ fontSize: 13, color: "#4caf50" }}>Alianza con Brasil activa — 30 días restantes</div>
-              </div>
-            )}
+            </div>
 
+            {/* allies list */}
+            <div style={{ fontSize: 11, color: "#6a6a8a", letterSpacing: 1, marginBottom: 10, textTransform: "uppercase" }}>Relaciones Activas</div>
             {ALLIES.map((a, i) => {
               const aideo = IDEOLOGIES[a.ideology];
               const statusColor = a.status === "aliado" ? "#4caf50" : a.status === "neutral" ? "#c9a84c" : "#e53935";
@@ -444,24 +515,20 @@ Tono: serio, geopolítico, dramático. Máximo 100 palabras. Sin listas, solo p�
                 <div key={i} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, padding: "12px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
                     <div style={{ fontSize: 13, color: "#e8e8e8", marginBottom: 4 }}>{aideo.icon} {a.country}</div>
-                    <div style={{ fontSize: 11, color: "#666" }}>{aideo.label} · Rel. {a.approval}%</div>
+                    <div style={{ fontSize: 11, color: "#666" }}>{aideo.label} · Aprobación {a.approval}%</div>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 11, color: statusColor, border: `1px solid ${statusColor}44`, padding: "3px 10px", borderRadius: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{a.status}</div>
-                    <button onClick={() => { tg?.HapticFeedback?.impactOccurred("light"); showNotif(`✉ Mensaje enviado a ${a.country}`, "info"); }} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "#666", padding: "3px 10px", borderRadius: 4, fontSize: 10, cursor: "pointer", fontFamily: "Georgia, serif" }}>✉ CONTACTAR</button>
+                    <div style={{ fontSize: 11, color: statusColor, border: `1px solid ${statusColor}44`, padding: "3px 10px", borderRadius: 10, textTransform: "uppercase", letterSpacing: 1 }}>{a.status}</div>
+                    <button onClick={() => showNotif(`Mensaje enviado a ${a.country}`, "info")} style={{ marginTop: 6, background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "#666", padding: "3px 10px", borderRadius: 4, fontSize: 10, cursor: "pointer" }}>✉ CONTACTAR</button>
                   </div>
                 </div>
               );
             })}
 
-            <div style={{ fontSize: 11, color: "#6a6a8a", letterSpacing: 1, marginBottom: 10, marginTop: 16, textTransform: "uppercase" }}>Acciones</div>
-            {[
-              ["🤝", "Proponer Alianza", "Invitar a otro país a aliarse", () => showNotif("🤝 Selecciona un país para proponer alianza", "info")],
-              ["📦", "Embargo Económico", "Bloquear comercio con un rival", () => { setStats(s => ({...s, pib: clamp(s.pib - 3)})); showNotif("📦 Embargo declarado — tu PIB baja 3%", "error"); }],
-              ["🕵️", "Operación Espionaje", "Infiltrar inteligencia rival", () => { setStats(s => ({...s, intel: clamp(s.intel + 10)})); showNotif("🕵️ Operación exitosa +10 Intel", "info"); }],
-              ["📢", "Discurso en ONU", "Influir en opinión global", () => { setStats(s => ({...s, aprobacion: clamp(s.aprobacion + 5)})); showNotif("📢 Discurso aplaudido +5 Aprobación", "info"); }],
-            ].map(([icon, name, desc, action], i) => (
-              <button key={i} onClick={() => { tg?.HapticFeedback?.impactOccurred("medium"); action(); }} style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 6, padding: "12px 14px", marginBottom: 8, textAlign: "left", cursor: "pointer", display: "flex", gap: 12, alignItems: "center", fontFamily: "Georgia, serif" }}>
+            {/* actions */}
+            <div style={{ fontSize: 11, color: "#6a6a8a", letterSpacing: 1, marginBottom: 10, marginTop: 16, textTransform: "uppercase" }}>Acciones Diplomáticas</div>
+            {[["🤝", "Proponer Alianza", "Invitar a otro país a aliarse contigo"],["📦", "Embargo Económico", "Bloquear comercio con un país enemigo"],["🕵️", "Operación Espionaje", "Infiltrar inteligencia en territorio rival"],["📢", "Discurso en ONU", "Influir en la opinión global"]].map(([icon, name, desc], i) => (
+              <button key={i} onClick={() => showNotif(`Acción "${name}" iniciada`, "info")} style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 6, padding: "12px 14px", marginBottom: 8, textAlign: "left", cursor: "pointer", display: "flex", gap: 12, alignItems: "center" }}>
                 <span style={{ fontSize: 20 }}>{icon}</span>
                 <div>
                   <div style={{ fontSize: 13, color: "#ddd" }}>{name}</div>
@@ -476,23 +543,32 @@ Tono: serio, geopolítico, dramático. Máximo 100 palabras. Sin listas, solo p�
         {tab === "partidos" && (
           <div>
             <div style={{ fontSize: 11, color: "#c9a84c", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>🏛️ Partidos Políticos</div>
+
+            {/* my party */}
             <div style={{ background: `${ideo.color}11`, border: `1px solid ${ideo.color}44`, borderRadius: 6, padding: 16, marginBottom: 20 }}>
               <div style={{ fontSize: 10, color: ideo.color, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>MI PARTIDO</div>
-              <div style={{ fontSize: 18, color: "#e8e8e8", marginBottom: 4 }}>{ideo.icon} {nationName}</div>
+              <div style={{ fontSize: 18, color: "#e8e8e8", marginBottom: 4 }}>{ideo.icon} {nationName || "Mi Partido"}</div>
               <div style={{ fontSize: 13, color: ideo.color, marginBottom: 12 }}>{ideo.label} · Fundador: {leaderName}</div>
-              <div style={{ display: "flex", gap: 20, marginBottom: 14 }}>
-                {[["1","MIEMBROS"],["1","PAÍSES"],["#1","RANKING"]].map(([v,l]) => (
-                  <div key={l} style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 20, color: "#c9a84c", fontFamily: "monospace", fontWeight: "bold" }}>{v}</div>
-                    <div style={{ fontSize: 10, color: "#666" }}>{l}</div>
-                  </div>
-                ))}
+              <div style={{ display: "flex", gap: 16 }}>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 20, color: "#c9a84c", fontFamily: "monospace", fontWeight: "bold" }}>1</div>
+                  <div style={{ fontSize: 10, color: "#666" }}>MIEMBROS</div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 20, color: "#c9a84c", fontFamily: "monospace", fontWeight: "bold" }}>1</div>
+                  <div style={{ fontSize: 10, color: "#666" }}>PAÍSES</div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 20, color: "#c9a84c", fontFamily: "monospace", fontWeight: "bold" }}>#?</div>
+                  <div style={{ fontSize: 10, color: "#666" }}>RANKING</div>
+                </div>
               </div>
-              <button onClick={() => { tg?.HapticFeedback?.impactOccurred("light"); showNotif("📤 Link de invitación copiado al portapapeles", "info"); }} style={{ width: "100%", background: `${ideo.color}22`, border: `1px solid ${ideo.color}66`, color: ideo.color, padding: "10px", borderRadius: 4, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif", letterSpacing: 1 }}>
+              <button onClick={() => showNotif("Link de invitación copiado", "info")} style={{ marginTop: 12, width: "100%", background: `${ideo.color}22`, border: `1px solid ${ideo.color}66`, color: ideo.color, padding: "10px", borderRadius: 4, fontSize: 12, cursor: "pointer", letterSpacing: 1 }}>
                 📤 INVITAR MIEMBROS
               </button>
             </div>
 
+            {/* global parties */}
             <div style={{ fontSize: 11, color: "#6a6a8a", letterSpacing: 1, marginBottom: 12, textTransform: "uppercase" }}>Partidos Globales</div>
             {PARTIES.map((p, i) => {
               const pideo = IDEOLOGIES[p.ideology];
@@ -504,14 +580,16 @@ Tono: serio, geopolítico, dramático. Máximo 100 palabras. Sin listas, solo p�
                       <div style={{ fontSize: 12, color: pideo.color }}>{pideo.label} · {p.members} miembros</div>
                     </div>
                     <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: 20, color: "#c9a84c", fontFamily: "monospace", fontWeight: "bold" }}>{p.power}</div>
+                      <div style={{ fontSize: 18, color: "#c9a84c", fontFamily: "monospace", fontWeight: "bold" }}>{p.power}</div>
                       <div style={{ fontSize: 10, color: "#666" }}>PODER</div>
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-                    {p.countries.map(c => <span key={c} style={{ fontSize: 10, color: "#777", background: "rgba(255,255,255,0.04)", padding: "2px 8px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)" }}>{c}</span>)}
+                    {p.countries.map(c => (
+                      <span key={c} style={{ fontSize: 10, color: "#777", background: "rgba(255,255,255,0.04)", padding: "2px 8px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)" }}>{c}</span>
+                    ))}
                   </div>
-                  <button onClick={() => { tg?.HapticFeedback?.impactOccurred("medium"); showNotif(`📨 Solicitud enviada a ${p.name}`, "info"); }} style={{ width: "100%", background: "transparent", border: `1px solid ${pideo.color}44`, color: pideo.color, padding: "8px", borderRadius: 4, fontSize: 11, cursor: "pointer", fontFamily: "Georgia, serif", letterSpacing: 1 }}>
+                  <button onClick={() => showNotif(`Solicitud enviada a ${p.name}`, "info")} style={{ width: "100%", background: "transparent", border: `1px solid ${pideo.color}44`, color: pideo.color, padding: "8px", borderRadius: 4, fontSize: 11, cursor: "pointer", letterSpacing: 1 }}>
                     SOLICITAR INGRESO
                   </button>
                 </div>
@@ -525,7 +603,7 @@ Tono: serio, geopolítico, dramático. Máximo 100 palabras. Sin listas, solo p�
           <div>
             <div style={{ fontSize: 11, color: "#c9a84c", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>📡 Noticias Mundiales</div>
             {EVENTS.map(ev => (
-              <div key={ev.id} style={{ background: ev.urgent ? "rgba(229,57,53,0.05)" : "rgba(255,255,255,0.02)", border: `1px solid ${ev.urgent ? "rgba(229,57,53,0.2)" : "rgba(255,255,255,0.06)"}`, borderRadius: 6, padding: 14, marginBottom: 10 }}>
+              <div key={ev.id} style={{ background: ev.urgent ? "rgba(229,57,53,0.05)" : "rgba(255,255,255,0.02)", border: `1px solid ${ev.urgent ? "rgba(229,57,53,0.2)" : "rgba(255,255,255,0.06)"}`, borderRadius: 6, padding: "14px", marginBottom: 10 }}>
                 <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                   <span style={{ fontSize: 26 }}>{ev.icon}</span>
                   <div style={{ flex: 1 }}>
@@ -545,11 +623,17 @@ Tono: serio, geopolítico, dramático. Máximo 100 palabras. Sin listas, solo p�
 
       {/* BOTTOM NAV */}
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "rgba(8,11,20,0.97)", borderTop: "1px solid rgba(201,168,76,0.15)", display: "flex", backdropFilter: "blur(10px)" }}>
-        {[["panel","📊","Panel"],["decretos","📜","Decretos"],["diplomacia","🤝","Diplo"],["partidos","🏛️","Partidos"],["eventos","📡","Noticias"]].map(([id,icon,label]) => (
-          <button key={id} onClick={() => { tg?.HapticFeedback?.selectionChanged(); setTab(id); }} style={{ flex: 1, background: "transparent", border: "none", padding: "10px 4px 14px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+        {[
+          ["panel", "📊", "Panel"],
+          ["decretos", "📜", "Decretos"],
+          ["diplomacia", "🤝", "Diplomacia"],
+          ["partidos", "🏛️", "Partidos"],
+          ["eventos", "📡", "Noticias"],
+        ].map(([id, icon, label]) => (
+          <button key={id} onClick={() => setTab(id)} style={{ flex: 1, background: "transparent", border: "none", padding: "10px 4px 14px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
             <span style={{ fontSize: 18 }}>{icon}</span>
             <span style={{ fontSize: 9, color: tab === id ? "#c9a84c" : "#444", letterSpacing: 0.5, textTransform: "uppercase" }}>{label}</span>
-            {tab === id && <div style={{ width: 20, height: 2, background: "#c9a84c", borderRadius: 1 }} />}
+            {tab === id && <div style={{ width: 20, height: 2, background: "#c9a84c", borderRadius: 1, marginTop: 1 }} />}
           </button>
         ))}
       </div>
