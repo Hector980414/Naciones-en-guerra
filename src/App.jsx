@@ -281,8 +281,30 @@ export default function App() {
       setJugador(newPlayer);
       tg?.HapticFeedback?.notificationOccurred("success");
       setScreen("game");
-      if(rol==="ciudadano") showNotif(`⚠️ ${selectedCountry} ya tiene presidente. Eres ciudadano.`,"error");
-      else showNotif(`✅ Eres el Presidente de ${selectedCountry}`,"info");
+      if(rol==="ciudadano") {
+        showNotif(`⚠️ ${selectedCountry} ya tiene presidente. Eres ciudadano.`,"error");
+      } else {
+        showNotif(`✅ Eres el Presidente de ${selectedCountry}`,"info");
+        // Crear empresas estatales automáticamente
+        const empresasEstatales = [
+          {nombre:`Granja Estatal de ${selectedCountry}`,sector:"alimentario",tipo:"granja",salario:150,xp_por_trabajo:6},
+          {nombre:`Empresa Estatal de ${selectedCountry}`,sector:"economico",tipo:"comercio",salario:200,xp_por_trabajo:8},
+          {nombre:`Fábrica Estatal de ${selectedCountry}`,sector:"militar",tipo:"fabrica_armas",salario:250,xp_por_trabajo:10},
+        ];
+        for (const emp of empresasEstatales) {
+          try {
+            await db.from("empresas").insert({
+              ...emp,
+              dueno_id: tgId,
+              partido: partyName || null,
+              pais: selectedCountry,
+              max_trabajadores: 200,
+              capital: 0,
+              activa: true
+            });
+          } catch {}
+        }
+      }
     } catch { showNotif("Error al registrar. Intenta de nuevo.","error"); }
     setSaving(false);
   };
@@ -342,8 +364,15 @@ export default function App() {
 
   const loadEmpresas = async () => {
     try {
-      const { data } = await db.from("empresas").select("*").eq("activa", true).limit(50);
-      if (data) setEmpresas(data);
+      // Load country empresas first, then others
+      const { data: paisEmpresas } = await db.from("empresas").select("*").eq("activa", true).eq("pais", selectedCountry || "").limit(30);
+      const { data: otrasEmpresas } = await db.from("empresas").select("*").eq("activa", true).neq("pais", selectedCountry || "").limit(20);
+      const todas = [...(paisEmpresas||[]), ...(otrasEmpresas||[])];
+      if (todas.length > 0) setEmpresas(todas);
+      else {
+        const { data } = await db.from("empresas").select("*").eq("activa", true).limit(50);
+        if (data) setEmpresas(data);
+      }
       // Load my work records
       const tgId = tg?.initDataUnsafe?.user?.id;
       if (tgId) {
@@ -1112,7 +1141,10 @@ export default function App() {
 
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
               <div style={{fontSize:11,color:"#c9a84c",letterSpacing:2,textTransform:"uppercase"}}>🏭 Empresas y Trabajo</div>
-              <button onClick={()=>setShowCrearEmpresa(true)} style={{background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.3)",color:"#c9a84c",padding:"6px 12px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:11,fontWeight:"bold"}}>+ FUNDAR</button>
+<div style={{display:"flex",gap:6}}>
+                <button onClick={loadEmpresas} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",color:"#888",padding:"6px 10px",borderRadius:6,cursor:"pointer",fontSize:11}}>🔄</button>
+                <button onClick={()=>setShowCrearEmpresa(true)} style={{background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.3)",color:"#c9a84c",padding:"6px 12px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:11,fontWeight:"bold"}}>+ FUNDAR</button>
+              </div>
             </div>
 
             {/* Mi dinero */}
@@ -1129,7 +1161,7 @@ export default function App() {
 
             {/* Filtro por país */}
             <div style={{fontSize:11,color:"#6a6a8a",letterSpacing:1,marginBottom:10,textTransform:"uppercase"}}>
-              Empresas disponibles ({empresas.filter(e=>!selectedCountry||e.pais===selectedCountry).length} en {selectedCountry})
+              Empresas en {selectedCountry} ({empresas.filter(e=>e.pais===selectedCountry).length}) · Otras ({empresas.filter(e=>e.pais!==selectedCountry).length})
             </div>
 
             {empresas.length === 0 ? (
