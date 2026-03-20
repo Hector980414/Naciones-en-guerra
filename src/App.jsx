@@ -309,6 +309,8 @@ export default function App() {
   const [newPartyName, setNewPartyName] = useState("");
   const [allianceAccepted, setAllianceAccepted] = useState(false);
   const [showPerfilModal, setShowPerfilModal] = useState(false);
+  const [confirmarEliminar, setConfirmarEliminar] = useState("");
+  const [showEliminarConfirm, setShowEliminarConfirm] = useState(false);
   const [nuevoNombre, setNuevoNombre] = useState("");
   const [showGuerraModal, setShowGuerraModal] = useState(false);
   const [guerraTarget, setGuerraTarget] = useState(null);
@@ -345,7 +347,6 @@ export default function App() {
   const initPlayer = async () => {
     const tgUser = tg?.initDataUnsafe?.user;
     const tgId = tgUser?.id || 99999999;
-    // Siempre leer fresh de Supabase
     try {
       const { data: existing } = await db.from("jugadores").select("*").eq("id",tgId).single();
       if(existing) {
@@ -357,7 +358,6 @@ export default function App() {
         const { data: nation } = await db.from("naciones").select("*").eq("jugador_id",tgId).single();
         if(nation) { setStats({pib:nation.pib,militar:nation.militar,aprobacion:nation.aprobacion,petroleo:nation.petroleo,comida:nation.comida,energia:nation.energia,educacion:nation.educacion,salud:nation.salud,rebeldia:nation.rebeldia,intel:nation.intel,industria:nation.industria}); setDecreeUsed(nation.decretos_usados||[]); }
         setScreen("game");
-        loadWorld();
       } else { setLeaderName(tgUser?.first_name||"Presidente"); setScreen("onboarding"); }
     } catch { setScreen("onboarding"); }
     loadWorld();
@@ -405,11 +405,25 @@ export default function App() {
         showNotif(`⚠️ ${selectedCountry} ya tiene presidente. Eres ciudadano.`,"error");
       } else {
         showNotif(`✅ Eres el Presidente de ${selectedCountry}`,"info");
-        setTimeout(async () => {
-          for (const emp of [{nombre:`Granja Estatal de ${selectedCountry}`,sector:"alimentario",tipo:"granja",salario:150,xp_por_trabajo:6},{nombre:`Empresa Estatal de ${selectedCountry}`,sector:"economico",tipo:"comercio",salario:200,xp_por_trabajo:8},{nombre:`Fábrica Estatal de ${selectedCountry}`,sector:"militar",tipo:"fabrica_armas",salario:250,xp_por_trabajo:10}]) {
-            try { await db.from("empresas").insert({...emp,dueno_id:tgId,partido:partyName||null,pais:selectedCountry,max_trabajadores:200,capital:0,activa:true}); } catch {}
-          }
-        }, 200);
+        // Crear empresas estatales automáticamente
+        const empresasEstatales = [
+          {nombre:`Granja Estatal de ${selectedCountry}`,sector:"alimentario",tipo:"granja",salario:150,xp_por_trabajo:6},
+          {nombre:`Empresa Estatal de ${selectedCountry}`,sector:"economico",tipo:"comercio",salario:200,xp_por_trabajo:8},
+          {nombre:`Fábrica Estatal de ${selectedCountry}`,sector:"militar",tipo:"fabrica_armas",salario:250,xp_por_trabajo:10},
+        ];
+        for (const emp of empresasEstatales) {
+          try {
+            await db.from("empresas").insert({
+              ...emp,
+              dueno_id: tgId,
+              partido: partyName || null,
+              pais: selectedCountry,
+              max_trabajadores: 200,
+              capital: 0,
+              activa: true
+            });
+          } catch {}
+        }
       }
     } catch { showNotif("Error al registrar. Intenta de nuevo.","error"); }
     setSaving(false);
@@ -681,6 +695,40 @@ export default function App() {
       setShowPerfilModal(false);
       showNotif("✅ Nombre actualizado","info");
     } catch { showNotif("Error al actualizar nombre","error"); }
+  };
+
+  const eliminarCuenta = async () => {
+    if (confirmarEliminar !== "ELIMINAR") {
+      showNotif("⛔ Escribe ELIMINAR para confirmar", "error");
+      return;
+    }
+    if (!jugador?.id) return;
+    try {
+      tg?.HapticFeedback?.notificationOccurred("error");
+      // Borrar todo en orden correcto
+      await db.from("trabajos").delete().eq("jugador_id", jugador.id);
+      await db.from("decretos_log").delete().eq("jugador_id", jugador.id);
+      await db.from("golpes").delete().eq("golpista_id", jugador.id);
+      await db.from("guerras").delete().or(`atacante_id.eq.${jugador.id},defensor_id.eq.${jugador.id}`);
+      await db.from("partido_miembros").delete().eq("jugador_id", jugador.id);
+      await db.from("pagos").delete().eq("jugador_id", jugador.id);
+      await db.from("empresas").update({activa:false}).eq("dueno_id", jugador.id);
+      await db.from("naciones").delete().eq("jugador_id", jugador.id);
+      await db.from("jugadores").delete().eq("id", jugador.id);
+      // Limpiar estado local
+      setJugador(null);
+      setScreen("onboarding");
+      setStep(0);
+      setSelectedCountry("");
+      setSelectedIdeology("");
+      setLeaderName("");
+      setPartyName("");
+      setShowPerfilModal(false);
+      setShowEliminarConfirm(false);
+      setConfirmarEliminar("");
+    } catch(e) {
+      showNotif("❌ Error al eliminar cuenta. Intenta de nuevo.", "error");
+    }
   };
 
   const cerrarSesion = () => {
@@ -959,10 +1007,35 @@ export default function App() {
                 <button onClick={cambiarNombre} disabled={!nuevoNombre.trim()} style={{background:`${ideo.color}22`,border:`1px solid ${ideo.color}55`,color:ideo.color,padding:"10px 14px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold"}}>OK</button>
               </div>
             </div>
-            <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setShowPerfilModal(false)} style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",color:"#888",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif"}}>CERRAR</button>
-              <button onClick={cerrarSesion} style={{flex:1,background:"rgba(229,57,53,0.15)",border:"1px solid rgba(229,57,53,0.4)",color:"#e53935",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold"}}>🚪 CERRAR SESIÓN</button>
-            </div>
+            {!showEliminarConfirm ? (
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                <div style={{display:"flex",gap:8}}>
+                  <button onClick={()=>setShowPerfilModal(false)} style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",color:"#888",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif"}}>CERRAR</button>
+                  <button onClick={cerrarSesion} style={{flex:1,background:"rgba(229,57,53,0.15)",border:"1px solid rgba(229,57,53,0.4)",color:"#e53935",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold"}}>🚪 CERRAR SESIÓN</button>
+                </div>
+                <button onClick={()=>setShowEliminarConfirm(true)} style={{width:"100%",background:"rgba(100,0,0,0.3)",border:"1px solid rgba(229,57,53,0.2)",color:"#c62828",padding:"10px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:12}}>🗑️ Eliminar cuenta permanentemente</button>
+              </div>
+            ) : (
+              <div style={{background:"rgba(229,57,53,0.08)",border:"1px solid rgba(229,57,53,0.4)",borderRadius:8,padding:14}}>
+                <div style={{fontSize:13,color:"#e53935",fontWeight:"bold",marginBottom:8,textAlign:"center"}}>⚠️ ACCIÓN IRREVERSIBLE</div>
+                <div style={{fontSize:12,color:"#aaa",marginBottom:12,lineHeight:1.7,textAlign:"center"}}>
+                  Perderás TODO tu progreso:<br/>
+                  partido, empresas, dinero, XP y nivel.<br/>
+                  <strong style={{color:"#e53935"}}>Esta acción NO se puede deshacer.</strong>
+                </div>
+                <div style={{fontSize:12,color:"#888",marginBottom:8}}>Escribe <strong style={{color:"#e53935"}}>ELIMINAR</strong> para confirmar:</div>
+                <input
+                  placeholder="ELIMINAR"
+                  value={confirmarEliminar}
+                  onChange={e=>setConfirmarEliminar(e.target.value.toUpperCase())}
+                  style={{width:"100%",background:"rgba(0,0,0,0.3)",border:`1px solid ${confirmarEliminar==="ELIMINAR"?"#e53935":"rgba(255,255,255,0.1)"}`,color:"#e53935",padding:"10px 12px",borderRadius:6,fontSize:14,marginBottom:12,boxSizing:"border-box",outline:"none",fontFamily:"monospace",textAlign:"center",letterSpacing:3}}
+                />
+                <div style={{display:"flex",gap:8}}>
+                  <button onClick={()=>{setShowEliminarConfirm(false);setConfirmarEliminar("");}} style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",color:"#888",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif"}}>CANCELAR</button>
+                  <button onClick={eliminarCuenta} disabled={confirmarEliminar!=="ELIMINAR"} style={{flex:1,background:confirmarEliminar==="ELIMINAR"?"rgba(229,57,53,0.3)":"rgba(255,255,255,0.03)",border:`1px solid ${confirmarEliminar==="ELIMINAR"?"#e53935":"rgba(255,255,255,0.06)"}`,color:confirmarEliminar==="ELIMINAR"?"#e53935":"#444",padding:"11px",borderRadius:6,cursor:confirmarEliminar==="ELIMINAR"?"pointer":"not-allowed",fontFamily:"Georgia,serif",fontWeight:"bold"}}>🗑️ ELIMINAR</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
