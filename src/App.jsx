@@ -84,6 +84,35 @@ function getConsequence(decretoId, ideologia, stats, historialIds) {
 
 const clamp=(v,mn=0,mx=100)=>Math.min(mx,Math.max(mn,Math.round(v)));
 
+// ── Sistema XP sin límite de niveles ─────────────────────
+function xpParaNivel(nivel) { return Math.round(100 * nivel * nivel); }
+function nivelDesdeXP(xp) {
+  let n = 1;
+  while (xpParaNivel(n + 1) <= xp) n++;
+  return n;
+}
+function tituloNivel(nivel) {
+  if (nivel <= 5)  return "Ciudadano Común";
+  if (nivel <= 10) return "Activista Político";
+  if (nivel <= 20) return "Líder Regional";
+  if (nivel <= 35) return "Político Experimentado";
+  if (nivel <= 50) return "Estadista Nacional";
+  if (nivel <= 75) return "Figura Internacional";
+  if (nivel <= 99) return "Leyenda Política";
+  return "Inmortal del Poder";
+}
+function colorNivel(nivel) {
+  if (nivel <= 5)  return "#9e9e9e";
+  if (nivel <= 10) return "#4caf50";
+  if (nivel <= 20) return "#2196f3";
+  if (nivel <= 35) return "#9c27b0";
+  if (nivel <= 50) return "#ff9800";
+  if (nivel <= 75) return "#e53935";
+  if (nivel <= 99) return "#c9a84c";
+  return "#fff176";
+}
+
+
 // ── Golpe de Estado — Cálculo de probabilidad ─────────────
 function calcularProbabilidadGolpe(golpista, nacion_golpista, presidente, nacion_presidente) {
   let prob = 0;
@@ -157,6 +186,12 @@ export default function App() {
   const [otrosJugadores, setOtrosJugadores] = useState([]);
   const [rankingData, setRankingData] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [xp, setXp] = useState(0);
+  const [nivel, setNivel] = useState(1);
+  const [dinero, setDinero] = useState(1000);
+  const [showXpModal, setShowXpModal] = useState(false);
+  const [xpGanado, setXpGanado] = useState(0);
+  const [xpMotivo, setXpMotivo] = useState("");
   const [showGolpeModal, setShowGolpeModal] = useState(false);
   const [golpeTarget, setGolpeTarget] = useState(null);
   const [golpeResult, setGolpeResult] = useState(null);
@@ -261,6 +296,7 @@ export default function App() {
     setDecreeResponse(consequence);
     const newDecrees=[...decreeUsed,decree.id];
     setDecreeUsed(newDecrees);
+    await gainXP(15, `Decreto: ${decree.name}`);
     try{await db.from("decretos_log").insert({jugador_id:jugador?.id,decreto_id:decree.id,decreto_nombre:decree.name,consecuencia:consequence});}catch{}
     await saveProgress(newStats,newDecrees);
     setDecreeLoading(false);
@@ -317,6 +353,7 @@ export default function App() {
         await db.from("jugadores").update({rol:"ciudadano",exiliado:true,exilio_hasta:new Date(Date.now()+86400000*3).toISOString()}).eq("id",golpeTarget.id);
         setJugador(j=>({...j,rol:"presidente",poder_politico:0}));
         setGolpeResult({exito:true,probabilidad:golpeTarget.probabilidad,roll:Math.round(roll)});
+        await gainXP(200, 'Golpe de Estado Exitoso');
       } else {
         // Golpista pierde poder político
         const nuevoPoder = Math.max(0,(jugador.poder_politico||0)-20);
@@ -327,10 +364,51 @@ export default function App() {
     } catch { showNotif("Error al ejecutar el golpe","error"); }
   };
 
+  const gainXP = async (cantidad, motivo) => {
+    const nuevoXp = (xp || 0) + cantidad;
+    const nuevoNivel = nivelDesdeXP(nuevoXp);
+    const subioNivel = nuevoNivel > nivel;
+    setXp(nuevoXp);
+    setNivel(nuevoNivel);
+    setXpGanado(cantidad);
+    setXpMotivo(motivo);
+    setShowXpModal(true);
+    setTimeout(() => setShowXpModal(false), 2500);
+    try {
+      await db.from("jugadores").update({
+        xp: nuevoXp,
+        nivel: nuevoNivel
+      }).eq("id", jugador?.id);
+    } catch {}
+    if (subioNivel) showNotif(`🎉 ¡Subiste al Nivel ${nuevoNivel}! ${tituloNivel(nuevoNivel)}`, "info");
+  };
+
+  const trabajar = async () => {
+    if(jugador?.ultimo_trabajo) {
+      const horas = (new Date() - new Date(jugador.ultimo_trabajo)) / 3600000;
+      if(horas < 24) {
+        const restantes = Math.ceil(24 - horas);
+        showNotif(`⏳ Puedes trabajar en ${restantes}h`, "error");
+        return;
+      }
+    }
+    const salario = 500 + (nivel * 50);
+    const nuevoDinero = (dinero || 0) + salario;
+    setDinero(nuevoDinero);
+    try {
+      await db.from("jugadores").update({
+        dinero: nuevoDinero,
+        ultimo_trabajo: new Date().toISOString()
+      }).eq("id", jugador?.id);
+      setJugador(j=>({...j, ultimo_trabajo: new Date().toISOString()}));
+    } catch {}
+    await gainXP(10, `Trabajo completado +$${salario}`);
+    showNotif(`💼 Trabajaste — +$${salario} · +10 XP`, "info");
+  };
+
   const acumularPoder = async () => {
     if(jugador?.rol!=="ciudadano"){showNotif("⚠️ Solo los ciudadanos acumulan poder político","error");return;}
     if(!jugador?.partido){showNotif("⚠️ Crea un partido político primero","error");return;}
-    // Cooldown 24 horas real
     if(jugador?.ultimo_acumulo) {
       const horas = (new Date() - new Date(jugador.ultimo_acumulo)) / 3600000;
       if(horas < 24) {
@@ -421,6 +499,14 @@ export default function App() {
     <div style={{minHeight:"100vh",background:"#0a0e1a",fontFamily:"Georgia,serif",color:"#e8e8e8",position:"relative"}}>
       <div style={{position:"fixed",inset:0,backgroundImage:"linear-gradient(rgba(201,168,76,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.025) 1px,transparent 1px)",backgroundSize:"50px 50px",pointerEvents:"none"}} />
 
+
+      {/* XP Gained Popup */}
+      {showXpModal && (
+        <div style={{position:"fixed",top:80,right:16,background:"linear-gradient(135deg,rgba(201,168,76,0.95),rgba(160,120,48,0.95))",borderRadius:10,padding:"10px 16px",zIndex:2000,boxShadow:"0 4px 20px rgba(201,168,76,0.4)",animation:"slideIn 0.3s ease"}}>
+          <div style={{fontSize:13,color:"#0a0e1a",fontWeight:"bold"}}>+{xpGanado} XP ⭐</div>
+          <div style={{fontSize:11,color:"#0a0e1a88"}}>{xpMotivo}</div>
+        </div>
+      )}
       {/* Notification */}
       {notification && <div style={{position:"fixed",top:12,left:"50%",transform:"translateX(-50%)",background:notification.type==="error"?"rgba(229,57,53,0.15)":"rgba(201,168,76,0.15)",border:`1px solid ${notification.type==="error"?"#e53935":"#c9a84c"}`,color:notification.type==="error"?"#e53935":"#c9a84c",padding:"10px 20px",borderRadius:6,fontSize:13,zIndex:1000,whiteSpace:"nowrap",backdropFilter:"blur(10px)"}}>{notification.msg}</div>}
 
@@ -550,15 +636,41 @@ export default function App() {
                   </div>
                   <div style={{fontSize:11,color:"#555",marginTop:6}}>Necesitas ≥10 para intentar golpe de estado</div>
                 </div>
-                <div style={{display:"flex",gap:8}}>
-                  {!jugador?.partido && <button onClick={()=>setShowCreateParty(true)} style={{flex:1,background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.3)",color:"#c9a84c",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:12}}>🏛️ CREAR PARTIDO</button>}
-                  <button onClick={acumularPoder} style={{flex:1,background:"rgba(76,175,80,0.15)",border:"1px solid rgba(76,175,80,0.3)",color:"#4caf50",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:12}}>⚡ ACUMULAR PODER</button>
+                {/* XP Bar */}
+                <div style={{background:"rgba(0,0,0,0.3)",borderRadius:8,padding:12,marginBottom:12}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                    <span style={{fontSize:12,color:colorNivel(nivel),fontWeight:"bold"}}>Nv.{nivel} — {tituloNivel(nivel)}</span>
+                    <span style={{fontSize:11,color:"#888",fontFamily:"monospace"}}>{xp} / {Math.round(100*(nivel+1)*(nivel+1))} XP</span>
+                  </div>
+                  <div style={{height:6,background:"rgba(255,255,255,0.06)",borderRadius:3,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:`${Math.min(100,((xp - Math.round(100*nivel*nivel)) / (Math.round(100*(nivel+1)*(nivel+1)) - Math.round(100*nivel*nivel)))*100)}%`,background:`linear-gradient(90deg,${colorNivel(nivel)},${colorNivel(nivel)}88)`,borderRadius:3,transition:"width 0.8s ease"}} />
+                  </div>
+                  <div style={{fontSize:11,color:"#555",marginTop:4}}>💰 Dinero: ${dinero?.toLocaleString()}</div>
+                </div>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                  <button onClick={trabajar} style={{flex:1,minWidth:100,background:"rgba(33,150,243,0.15)",border:"1px solid rgba(33,150,243,0.3)",color:"#2196f3",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:12}}>💼 TRABAJAR</button>
+                  {!jugador?.partido && <button onClick={()=>setShowCreateParty(true)} style={{flex:1,minWidth:100,background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.3)",color:"#c9a84c",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:12}}>🏛️ CREAR PARTIDO</button>}
+                  <button onClick={acumularPoder} style={{flex:1,minWidth:100,background:"rgba(76,175,80,0.15)",border:"1px solid rgba(76,175,80,0.3)",color:"#4caf50",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:12}}>⚡ ACUMULAR PODER</button>
                 </div>
               </div>
             )}
 
             {esPresidente && (
               <>
+                {/* XP Bar Presidente */}
+                <div style={{background:"rgba(201,168,76,0.06)",border:"1px solid rgba(201,168,76,0.15)",borderRadius:8,padding:12,marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div>
+                    <div style={{fontSize:12,color:colorNivel(nivel),fontWeight:"bold"}}>Nv.{nivel} — {tituloNivel(nivel)}</div>
+                    <div style={{height:4,width:120,background:"rgba(255,255,255,0.06)",borderRadius:2,overflow:"hidden",marginTop:4}}>
+                      <div style={{height:"100%",width:`${Math.min(100,((xp - Math.round(100*nivel*nivel)) / (Math.round(100*(nivel+1)*(nivel+1)) - Math.round(100*nivel*nivel)))*100)}%`,background:colorNivel(nivel),borderRadius:2}} />
+                    </div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:13,color:"#c9a84c",fontFamily:"monospace",fontWeight:"bold"}}>{xp} XP</div>
+                    <div style={{fontSize:11,color:"#666"}}>💰 ${dinero?.toLocaleString()}</div>
+                  </div>
+                  <button onClick={trabajar} style={{background:"rgba(33,150,243,0.15)",border:"1px solid rgba(33,150,243,0.3)",color:"#2196f3",padding:"8px 14px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:11}}>💼 TRABAJAR</button>
+                </div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
                   <div style={{background:"linear-gradient(135deg,rgba(201,168,76,0.1),rgba(201,168,76,0.05))",border:"1px solid rgba(201,168,76,0.25)",borderRadius:8,padding:12}}>
                     <div style={{fontSize:10,color:"#c9a84c",letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>ECONOMÍA</div>
