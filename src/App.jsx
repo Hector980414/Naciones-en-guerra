@@ -198,6 +198,11 @@ export default function App() {
   const [showCreateParty, setShowCreateParty] = useState(false);
   const [newPartyName, setNewPartyName] = useState("");
   const [allianceAccepted, setAllianceAccepted] = useState(false);
+  const [empresas, setEmpresas] = useState([]);
+  const [misTrabajosMap, setMisTrabajosMap] = useState({});
+  const [showCrearEmpresa, setShowCrearEmpresa] = useState(false);
+  const [nuevaEmpresa, setNuevaEmpresa] = useState({nombre:"",sector:"alimentario",tipo:"granja",pais:""});
+  const [trabajandoEn, setTrabajandoEn] = useState(null);
   const tickRef = useRef(null);
 
   useEffect(() => {
@@ -312,6 +317,136 @@ export default function App() {
       }
     } catch(e) {
       showNotif("❌ Error de conexión. Intenta de nuevo.", "error");
+    }
+  };
+
+
+  // ── Catálogo de empresas ────────────────────────────────
+  const TIPOS_EMPRESA = {
+    granja:       {label:"🌾 Granja",        sector:"alimentario", costo:5000,  salario:200, xp:8,  produccion:"comida",  desc:"Produce comida para el país"},
+    pesquera:     {label:"🐟 Pesquera",       sector:"alimentario", costo:8000,  salario:250, xp:10, produccion:"comida",  desc:"Pesca y comercio costero"},
+    agroindustria:{label:"🏭 Agroindustria",  sector:"alimentario", costo:12000, salario:350, xp:15, produccion:"comida",  desc:"Industria alimentaria avanzada"},
+    petrolera:    {label:"🛢️ Petrolera",      sector:"energia",     costo:10000, salario:400, xp:15, produccion:"petroleo",desc:"Extracción de petróleo"},
+    electrica:    {label:"⚡ Eléctrica",      sector:"energia",     costo:8000,  salario:300, xp:12, produccion:"energia", desc:"Generación de energía"},
+    solar:        {label:"☀️ Solar",          sector:"energia",     costo:15000, salario:350, xp:14, produccion:"energia", desc:"Energía renovable sostenible"},
+    fabrica_armas:{label:"⚔️ Fábrica Armas",  sector:"militar",     costo:12000, salario:450, xp:18, produccion:"militar", desc:"Armamento para el ejército"},
+    base_militar: {label:"🏰 Base Militar",   sector:"militar",     costo:18000, salario:500, xp:20, produccion:"militar", desc:"Entrenamiento e inteligencia"},
+    banco:        {label:"🏦 Banco",          sector:"economico",   costo:15000, salario:500, xp:18, produccion:"pib",     desc:"Impulsa el PIB nacional"},
+    comercio:     {label:"🚢 Comercio",       sector:"economico",   costo:8000,  salario:300, xp:12, produccion:"pib",     desc:"Comercio interno y externo"},
+    tecnologica:  {label:"💻 Tecnológica",    sector:"economico",   costo:20000, salario:600, xp:22, produccion:"educacion",desc:"Tecnología e innovación"},
+    hospital:     {label:"🏥 Hospital",       sector:"social",      costo:10000, salario:350, xp:14, produccion:"salud",   desc:"Mejora la salud pública"},
+    universidad:  {label:"🎓 Universidad",    sector:"social",      costo:12000, salario:400, xp:16, produccion:"educacion",desc:"Educación y capital humano"},
+  };
+
+  const SECTOR_ICONS = {alimentario:"🌾",energia:"⚡",militar:"⚔️",economico:"💰",social:"🏛️"};
+
+  const loadEmpresas = async () => {
+    try {
+      const { data } = await db.from("empresas").select("*").eq("activa", true).limit(50);
+      if (data) setEmpresas(data);
+      // Load my work records
+      const tgId = tg?.initDataUnsafe?.user?.id;
+      if (tgId) {
+        const { data: trabajos } = await db.from("trabajos").select("*").eq("jugador_id", tgId);
+        if (trabajos) {
+          const map = {};
+          trabajos.forEach(t => { map[t.empresa_id] = t; });
+          setMisTrabajosMap(map);
+        }
+      }
+    } catch(e) { console.error("loadEmpresas error:", e); }
+  };
+
+  const trabajarEn = async (empresa) => {
+    const tgId = jugador?.id || tg?.initDataUnsafe?.user?.id;
+    if (!tgId) { showNotif("❌ Inicia sesión primero", "error"); return; }
+    tg?.HapticFeedback?.impactOccurred("medium");
+
+    // Check cooldown
+    const miTrabajo = misTrabajosMap[empresa.id];
+    if (miTrabajo?.ultimo_trabajo) {
+      const intervalo = jugador?.trabajo_intervalo || 10;
+      const mins = (new Date() - new Date(miTrabajo.ultimo_trabajo)) / 60000;
+      if (mins < intervalo) {
+        const resta = Math.ceil(intervalo - mins);
+        showNotif(`⏳ Puedes trabajar aquí en ${resta} min`, "error");
+        return;
+      }
+    }
+
+    setTrabajandoEn(empresa.id);
+    try {
+      const tipo = TIPOS_EMPRESA[empresa.tipo] || {};
+      const bonusSalario = jugador?.bonus_salario || 0;
+      const bonusXp = jugador?.bonus_xp || 0;
+      const salario = Math.round(empresa.salario * (1 + bonusSalario/100));
+      const xpGanada = Math.round((tipo.xp || 8) * (1 + bonusXp/100));
+
+      // Update trabajo record
+      await db.from("trabajos").upsert({
+        jugador_id: tgId,
+        empresa_id: empresa.id,
+        ultimo_trabajo: new Date().toISOString(),
+        total_trabajos: (miTrabajo?.total_trabajos || 0) + 1
+      });
+
+      // Update empresa produccion
+      await db.from("empresas").update({
+        produccion_acumulada: (empresa.produccion_acumulada || 0) + 1,
+        trabajadores_actuales: Math.min(empresa.max_trabajadores, (empresa.trabajadores_actuales || 0) + 1)
+      }).eq("id", empresa.id);
+
+      // Pay worker
+      const nuevoDinero = (dinero || 0) + salario;
+      setDinero(nuevoDinero);
+      await db.from("jugadores").update({
+        dinero: nuevoDinero,
+        ultimo_trabajo: new Date().toISOString()
+      }).eq("id", tgId);
+
+      // Update local state
+      setMisTrabajosMap(prev => ({...prev, [empresa.id]: {...(prev[empresa.id]||{}), ultimo_trabajo: new Date().toISOString(), total_trabajos: (prev[empresa.id]?.total_trabajos||0)+1}}));
+      setEmpresas(prev => prev.map(e => e.id === empresa.id ? {...e, produccion_acumulada:(e.produccion_acumulada||0)+1} : e));
+
+      await gainXP(xpGanada, `Trabajo en ${empresa.nombre}`);
+      showNotif(`💼 +$${salario} · +${xpGanada} XP`, "info");
+    } catch(e) {
+      showNotif("❌ Error al trabajar", "error");
+    }
+    setTrabajandoEn(null);
+  };
+
+  const crearEmpresa = async () => {
+    if (!nuevaEmpresa.nombre.trim()) { showNotif("Escribe el nombre de la empresa", "error"); return; }
+    if (!jugador?.partido) { showNotif("Necesitas un partido político para crear empresas", "error"); return; }
+    const tipo = TIPOS_EMPRESA[nuevaEmpresa.tipo];
+    if (!tipo) return;
+    if ((dinero || 0) < tipo.costo) { showNotif(`❌ Necesitas $${tipo.costo.toLocaleString()} para esta empresa`, "error"); return; }
+
+    try {
+      const pais = nuevaEmpresa.pais || selectedCountry;
+      await db.from("empresas").insert({
+        nombre: nuevaEmpresa.nombre,
+        sector: tipo.sector,
+        tipo: nuevaEmpresa.tipo,
+        dueno_id: jugador.id,
+        partido: jugador.partido,
+        pais,
+        salario: tipo.salario,
+        xp_por_trabajo: tipo.xp,
+        capital: tipo.costo
+      });
+      // Deduct cost
+      const nuevoDinero = (dinero || 0) - tipo.costo;
+      setDinero(nuevoDinero);
+      await db.from("jugadores").update({ dinero: nuevoDinero }).eq("id", jugador.id);
+      setShowCrearEmpresa(false);
+      setNuevaEmpresa({nombre:"",sector:"alimentario",tipo:"granja",pais:""});
+      await loadEmpresas();
+      tg?.HapticFeedback?.notificationOccurred("success");
+      showNotif(`🏭 ${nuevaEmpresa.nombre} fundada exitosamente`, "info");
+    } catch(e) {
+      showNotif("Error al crear empresa", "error");
     }
   };
 
@@ -940,6 +1075,121 @@ export default function App() {
           </div>
         )}
 
+
+        {/* EMPRESAS Y TRABAJO */}
+        {tab==="empresas" && (
+          <div>
+            {/* Modal crear empresa */}
+            {showCrearEmpresa && (
+              <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+                <div style={{background:"#0f1420",border:"1px solid rgba(201,168,76,0.3)",borderRadius:12,padding:20,width:"100%",maxWidth:380}}>
+                  <div style={{fontSize:16,color:"#c9a84c",fontWeight:"bold",marginBottom:16,textAlign:"center"}}>🏭 Fundar Empresa</div>
+                  <input placeholder="Nombre de la empresa..." value={nuevaEmpresa.nombre} onChange={e=>setNuevaEmpresa(p=>({...p,nombre:e.target.value}))} style={{width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(201,168,76,0.3)",color:"#e8e8e8",padding:"10px 14px",borderRadius:6,fontSize:14,marginBottom:12,boxSizing:"border-box",outline:"none",fontFamily:"Georgia,serif"}} />
+                  <select value={nuevaEmpresa.tipo} onChange={e=>setNuevaEmpresa(p=>({...p,tipo:e.target.value,sector:TIPOS_EMPRESA[e.target.value]?.sector||"alimentario"}))} style={{width:"100%",background:"#0f1420",border:"1px solid rgba(201,168,76,0.3)",color:"#e8e8e8",padding:"10px 14px",borderRadius:6,fontSize:13,marginBottom:12,boxSizing:"border-box",outline:"none"}}>
+                    {Object.entries(TIPOS_EMPRESA).map(([key,val])=>(
+                      <option key={key} value={key}>{val.label} — ${val.costo.toLocaleString()}</option>
+                    ))}
+                  </select>
+                  {(() => {
+                    const tipo = TIPOS_EMPRESA[nuevaEmpresa.tipo];
+                    return tipo ? (
+                      <div style={{background:"rgba(201,168,76,0.06)",border:"1px solid rgba(201,168,76,0.2)",borderRadius:6,padding:10,marginBottom:14,fontSize:12,color:"#aaa",lineHeight:1.7}}>
+                        📝 {tipo.desc}<br/>
+                        💰 Salario base: ${tipo.salario}/trabajo<br/>
+                        ⭐ XP por trabajo: {tipo.xp}<br/>
+                        📦 Produce: {tipo.produccion}<br/>
+                        💵 Costo: <span style={{color:(dinero||0)>=tipo.costo?"#4caf50":"#e53935"}}>${tipo.costo.toLocaleString()}</span> {(dinero||0)<tipo.costo&&"(fondos insuficientes)"}
+                      </div>
+                    ) : null;
+                  })()}
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={()=>setShowCrearEmpresa(false)} style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",color:"#888",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif"}}>CANCELAR</button>
+                    <button onClick={crearEmpresa} style={{flex:2,background:"linear-gradient(135deg,#c9a84c,#a07830)",border:"none",color:"#0a0e1a",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold"}}>🏭 FUNDAR</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <div style={{fontSize:11,color:"#c9a84c",letterSpacing:2,textTransform:"uppercase"}}>🏭 Empresas y Trabajo</div>
+              <button onClick={()=>setShowCrearEmpresa(true)} style={{background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.3)",color:"#c9a84c",padding:"6px 12px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:11,fontWeight:"bold"}}>+ FUNDAR</button>
+            </div>
+
+            {/* Mi dinero */}
+            <div style={{background:"rgba(201,168,76,0.06)",border:"1px solid rgba(201,168,76,0.2)",borderRadius:8,padding:12,marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div>
+                <div style={{fontSize:11,color:"#6a6a8a",textTransform:"uppercase",letterSpacing:1}}>Mi Dinero</div>
+                <div style={{fontSize:22,color:"#c9a84c",fontFamily:"monospace",fontWeight:"bold"}}>${(dinero||0).toLocaleString()}</div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:11,color:"#6a6a8a",textTransform:"uppercase",letterSpacing:1}}>Nivel</div>
+                <div style={{fontSize:16,color:colorNivel(nivel),fontWeight:"bold"}}>Nv.{nivel}</div>
+              </div>
+            </div>
+
+            {/* Filtro por país */}
+            <div style={{fontSize:11,color:"#6a6a8a",letterSpacing:1,marginBottom:10,textTransform:"uppercase"}}>
+              Empresas disponibles ({empresas.filter(e=>!selectedCountry||e.pais===selectedCountry).length} en {selectedCountry})
+            </div>
+
+            {empresas.length === 0 ? (
+              <div style={{textAlign:"center",padding:30,color:"#555"}}>
+                <div style={{fontSize:32,marginBottom:8}}>🏭</div>
+                <div style={{fontSize:14,color:"#888",marginBottom:16}}>No hay empresas todavía</div>
+                <div style={{fontSize:12,color:"#555"}}>Sé el primero en fundar una empresa en {selectedCountry}</div>
+                <button onClick={()=>setShowCrearEmpresa(true)} style={{marginTop:16,background:"linear-gradient(135deg,#c9a84c,#a07830)",border:"none",color:"#0a0e1a",padding:"12px 24px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold"}}>🏭 FUNDAR PRIMERA EMPRESA</button>
+              </div>
+            ) : (
+              empresas.map((empresa,i) => {
+                const tipo = TIPOS_EMPRESA[empresa.tipo] || {};
+                const miTrabajo = misTrabajosMap[empresa.id];
+                const intervalo = jugador?.trabajo_intervalo || 10;
+                const minsPasados = miTrabajo?.ultimo_trabajo ? (new Date()-new Date(miTrabajo.ultimo_trabajo))/60000 : 999;
+                const puedoTrabajar = minsPasados >= intervalo;
+                const minutosRestantes = puedoTrabajar ? 0 : Math.ceil(intervalo - minsPasados);
+                const esMia = empresa.dueno_id === jugador?.id;
+                const bonusSalario = jugador?.bonus_salario || 0;
+                const salarioReal = Math.round(empresa.salario * (1 + bonusSalario/100));
+
+                return (
+                  <div key={i} style={{background:esMia?"rgba(201,168,76,0.06)":"rgba(255,255,255,0.02)",border:`1px solid ${esMia?"rgba(201,168,76,0.3)":"rgba(255,255,255,0.06)"}`,borderRadius:8,padding:14,marginBottom:10}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+                      <div>
+                        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                          <span style={{fontSize:18}}>{tipo.label?.split(" ")[0]||"🏭"}</span>
+                          <span style={{fontSize:14,color:esMia?"#c9a84c":"#e8e8e8",fontWeight:"bold"}}>{empresa.nombre}</span>
+                          {esMia && <span style={{fontSize:9,color:"#c9a84c",background:"rgba(201,168,76,0.15)",padding:"1px 6px",borderRadius:10}}>MÍA</span>}
+                        </div>
+                        <div style={{fontSize:11,color:"#666"}}>{empresa.pais} · {SECTOR_ICONS[empresa.sector]} {empresa.sector}</div>
+                      </div>
+                      <div style={{textAlign:"right"}}>
+                        <div style={{fontSize:13,color:"#4caf50",fontFamily:"monospace",fontWeight:"bold"}}>${salarioReal}</div>
+                        <div style={{fontSize:10,color:"#555"}}>por trabajo</div>
+                      </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div style={{display:"flex",gap:12,marginBottom:10,fontSize:11,color:"#888"}}>
+                      <span>👥 {empresa.trabajadores_actuales||0}/{empresa.max_trabajadores}</span>
+                      <span>📦 {empresa.produccion_acumulada||0} producción</span>
+                      <span>⭐ +{tipo.xp||8} XP</span>
+                      {miTrabajo && <span style={{color:"#c9a84c"}}>✓ {miTrabajo.total_trabajos||0} turnos</span>}
+                    </div>
+
+                    <button
+                      onClick={() => trabajarEn(empresa)}
+                      disabled={!puedoTrabajar || trabajandoEn === empresa.id}
+                      style={{width:"100%",background:puedoTrabajar?"linear-gradient(135deg,rgba(76,175,80,0.3),rgba(76,175,80,0.15))":"rgba(255,255,255,0.03)",border:`1px solid ${puedoTrabajar?"rgba(76,175,80,0.5)":"rgba(255,255,255,0.06)"}`,color:puedoTrabajar?"#4caf50":"#555",padding:"10px",borderRadius:6,cursor:puedoTrabajar?"pointer":"not-allowed",fontFamily:"Georgia,serif",fontWeight:"bold",fontSize:13,transition:"all 0.2s"}}
+                    >
+                      {trabajandoEn===empresa.id ? "⏳ Trabajando..." : puedoTrabajar ? `💼 TRABAJAR — $${salarioReal}` : `⏳ Disponible en ${minutosRestantes}min`}
+                    </button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
+
         {/* TIENDA */}
         {tab==="tienda" && (
           <div>
@@ -1035,7 +1285,7 @@ export default function App() {
 
       {/* Bottom Nav */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:"rgba(10,14,26,0.97)",borderTop:"1px solid rgba(201,168,76,0.2)",display:"flex",backdropFilter:"blur(20px)",paddingBottom:"env(safe-area-inset-bottom)"}}>
-        {[["panel","📊","Panel"],["decretos","📜","Decretos"],["diplomacia",esPresidente?"🤝":"⚔️",esPresidente?"Diplo":"Golpe"],["tienda","🛒","Tienda"],["ranking","🏆","Ranking"]].map(([id,icon,label])=>(
+        {[["panel","📊","Panel"],["decretos","📜","Decretos"],["empresas","🏭","Trabajo"],["tienda","🛒","Tienda"],["ranking","🏆","Ranking"]].map(([id,icon,label])=>(
           <button key={id} onClick={()=>{tg?.HapticFeedback?.selectionChanged();setTab(id);}} style={{flex:1,background:"transparent",border:"none",padding:"10px 4px 12px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,position:"relative"}}>
             {tab===id&&<div style={{position:"absolute",top:0,left:"20%",right:"20%",height:2,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",borderRadius:1}} />}
             <span style={{fontSize:18}}>{icon}</span>
