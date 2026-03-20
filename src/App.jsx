@@ -518,17 +518,9 @@ export default function App() {
     if (!tgId) { showNotif("❌ Inicia sesión primero", "error"); return; }
     tg?.HapticFeedback?.impactOccurred("medium");
 
-    // Check cooldown
-    const miTrabajo = misTrabajosMap[empresa.id];
-    if (miTrabajo?.ultimo_trabajo) {
-      const intervalo = jugador?.trabajo_intervalo || 10;
-      const mins = (new Date() - new Date(miTrabajo.ultimo_trabajo)) / 60000;
-      if (mins < intervalo) {
-        const resta = Math.ceil(intervalo - mins);
-        showNotif(`⏳ Puedes trabajar aquí en ${resta} min`, "error");
-        return;
-      }
-    }
+    // Validar en servidor (inmune a cambio de hora)
+    const vt = await validarEnServidor("trabajo", {empresa_id: empresa.id});
+    if(!vt.permitido){showNotif(`⏳ ${vt.razon}`,"error");return;}
 
     setTrabajandoEn(empresa.id);
     try {
@@ -750,10 +742,28 @@ export default function App() {
     showNotif("👋 Sesión cerrada","info");
   };
 
+
+  const validarEnServidor = async (accion, extra={}) => {
+    try {
+      const uid = jugador?.id || tg?.initDataUnsafe?.user?.id;
+      const res = await fetch("https://wdbupgqymgqfpobcbfze.supabase.co/functions/v1/validar-accion", {
+        method: "POST",
+        headers: {"Content-Type":"application/json","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkYnVwZ3F5bWdxZnBvYmNiZnplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NjM0NjAsImV4cCI6MjA4OTUzOTQ2MH0.Psq7trqKDSNltKK8bqaLdXgg56FSjK6sfM4EH4TRnBo"},
+        body: JSON.stringify({accion, jugador_id: uid, ...extra})
+      });
+      const data = await res.json();
+      return data;
+    } catch {
+      return {permitido: true}; // Si falla el servidor, permite (fallback)
+    }
+  };
+
   const issueDecree = async (decree) => {
     if(decreeUsed.includes(decree.id)) return;
-    if(decreeUsed.length>=3){showNotif("⛔ Ya usaste tus 3 decretos de hoy","error");return;}
     if(jugador?.rol!=="presidente"){showNotif("⛔ Solo los presidentes pueden emitir decretos","error");return;}
+    // Validar en servidor
+    const v = await validarEnServidor("decreto", {});
+    if(!v.permitido){showNotif(`⛔ ${v.razon}`,"error");return;}
     tg?.HapticFeedback?.impactOccurred("medium");
     setSelectedDecree(decree); setDecreeLoading(true); setDecreeResponse("");
     const newStats={...stats};
@@ -877,14 +887,9 @@ export default function App() {
   const acumularPoder = async () => {
     if(jugador?.rol!=="ciudadano"){showNotif("⚠️ Solo los ciudadanos acumulan poder político","error");return;}
     if(!jugador?.partido){showNotif("⚠️ Crea un partido político primero","error");return;}
-    if(jugador?.ultimo_acumulo) {
-      const horas = (new Date() - new Date(jugador.ultimo_acumulo)) / 3600000;
-      if(horas < 24) {
-        const restantes = Math.ceil(24 - horas);
-        showNotif(`⏳ Puedes acumular poder en ${restantes}h`, "error");
-        return;
-      }
-    }
+    // Validar en servidor (inmune a cambio de hora)
+    const vp = await validarEnServidor("poder", {});
+    if(!vp.permitido){showNotif(`⏳ ${vp.razon}`,"error");return;}
     const nuevo = Math.min(100,(jugador.poder_politico||0)+3);
     await db.from("jugadores").update({
       poder_politico: nuevo,
