@@ -329,11 +329,23 @@ export default function App() {
 
   const acumularPoder = async () => {
     if(jugador?.rol!=="ciudadano"){showNotif("⚠️ Solo los ciudadanos acumulan poder político","error");return;}
-    if(!jugador?.partido){showNotif("⚠️ Crea un partido político primero para acumular poder","error");return;}
-    const nuevo = Math.min(100,(jugador.poder_politico||0)+5);
-    await db.from("jugadores").update({poder_politico:nuevo}).eq("id",jugador.id);
-    setJugador(j=>({...j,poder_politico:nuevo}));
-    showNotif(`⚡ +5 Poder Político. Total: ${nuevo}/100`,"info");
+    if(!jugador?.partido){showNotif("⚠️ Crea un partido político primero","error");return;}
+    // Cooldown 24 horas real
+    if(jugador?.ultimo_acumulo) {
+      const horas = (new Date() - new Date(jugador.ultimo_acumulo)) / 3600000;
+      if(horas < 24) {
+        const restantes = Math.ceil(24 - horas);
+        showNotif(`⏳ Puedes acumular poder en ${restantes}h`, "error");
+        return;
+      }
+    }
+    const nuevo = Math.min(100,(jugador.poder_politico||0)+3);
+    await db.from("jugadores").update({
+      poder_politico: nuevo,
+      ultimo_acumulo: new Date().toISOString()
+    }).eq("id", jugador.id);
+    setJugador(j=>({...j, poder_politico:nuevo, ultimo_acumulo:new Date().toISOString()}));
+    showNotif(`⚡ +3 Poder Político. Total: ${nuevo}/100 · Próximo en 24h`, "info");
   };
 
   const formatTime=(s)=>`${String(Math.floor(s/3600)).padStart(2,"0")}:${String(Math.floor((s%3600)/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
