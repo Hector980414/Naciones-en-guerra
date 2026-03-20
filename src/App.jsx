@@ -1009,10 +1009,7 @@ export default function App() {
             </div>
             {!showEliminarConfirm ? (
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                <div style={{display:"flex",gap:8}}>
-                  <button onClick={()=>setShowPerfilModal(false)} style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",color:"#888",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif"}}>CERRAR</button>
-                  <button onClick={cerrarSesion} style={{flex:1,background:"rgba(229,57,53,0.15)",border:"1px solid rgba(229,57,53,0.4)",color:"#e53935",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold"}}>🚪 CERRAR SESIÓN</button>
-                </div>
+                <button onClick={()=>setShowPerfilModal(false)} style={{width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",color:"#888",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif"}}>CERRAR</button>
                 <button onClick={()=>setShowEliminarConfirm(true)} style={{width:"100%",background:"rgba(100,0,0,0.3)",border:"1px solid rgba(229,57,53,0.2)",color:"#c62828",padding:"10px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:12}}>🗑️ Eliminar cuenta permanentemente</button>
               </div>
             ) : (
