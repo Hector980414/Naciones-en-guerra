@@ -84,6 +84,116 @@ function getConsequence(decretoId, ideologia, stats, historialIds) {
 
 const clamp=(v,mn=0,mx=100)=>Math.min(mx,Math.max(mn,Math.round(v)));
 
+// ── Sistema de Guerras ────────────────────────────────────
+const TIPOS_GUERRA = {
+  golpe_estado: {
+    icon: "⚔️", label: "Golpe de Estado",
+    desc: "Derroca al presidente de tu propio país",
+    requiere: { rol: "ciudadano", poder_politico: 10 },
+    dificultad: "Media",
+    color: "#e53935",
+    calcular: (atacante, nacion_atacante, defensor, nacion_defensor) => {
+      let prob = 0;
+      prob += Math.min(40, (atacante.poder_politico||0) * 0.4);
+      prob += Math.min(25, (atacante.apoyo_militar||0) * 0.25);
+      const apr = nacion_defensor?.aprobacion || 50;
+      prob += apr < 20 ? 25 : apr < 35 ? 15 : apr < 50 ? 8 : -10;
+      const mil = nacion_defensor?.militar || 50;
+      prob += mil > 70 ? -20 : mil > 50 ? -10 : mil < 30 ? 15 : 0;
+      prob += (nacion_defensor?.rebeldia||30) > 60 ? 15 : (nacion_defensor?.rebeldia||30) > 40 ? 8 : 0;
+      return Math.min(90, Math.max(5, Math.round(prob)));
+    }
+  },
+  conquista: {
+    icon: "🏴", label: "Guerra de Conquista",
+    desc: "Ataca otro país para colonizar su territorio",
+    requiere: { rol: "presidente", militar: 50 },
+    dificultad: "Alta",
+    color: "#ff6f00",
+    calcular: (atacante, nacion_atacante, defensor, nacion_defensor) => {
+      let prob = 0;
+      const milAtk = nacion_atacante?.militar || 45;
+      const milDef = nacion_defensor?.militar || 45;
+      prob += Math.min(50, milAtk * 0.5);
+      prob -= Math.min(40, milDef * 0.4);
+      prob += (atacante.nivel||1) > (defensor?.nivel||1) ? 10 : -5;
+      if (atacante.ideologia === "fascismo") prob += 10;
+      if (atacante.ideologia === "autoritarismo") prob += 8;
+      prob += Math.random() * 20 - 10;
+      return Math.min(85, Math.max(5, Math.round(prob)));
+    }
+  },
+  revolucion: {
+    icon: "🔥", label: "Revolución Popular",
+    desc: "Cambia la ideología del país con apoyo popular",
+    requiere: { rol: "ciudadano", poder_politico: 50, rebeldia_pais: 50 },
+    dificultad: "Muy Alta",
+    color: "#9c27b0",
+    calcular: (atacante, nacion_atacante, defensor, nacion_defensor) => {
+      let prob = 0;
+      prob += Math.min(30, (atacante.poder_politico||0) * 0.3);
+      prob += (nacion_defensor?.rebeldia||30) > 70 ? 30 : (nacion_defensor?.rebeldia||30) > 50 ? 15 : 0;
+      prob -= (nacion_defensor?.aprobacion||50) > 60 ? 20 : 0;
+      prob -= (nacion_defensor?.militar||45) > 60 ? 15 : 0;
+      if (atacante.ideologia === "comunismo" || atacante.ideologia === "anarquia") prob += 10;
+      return Math.min(75, Math.max(3, Math.round(prob)));
+    }
+  },
+  liberacion: {
+    icon: "🗽", label: "Guerra de Liberación",
+    desc: "Libérate de un país colonizador",
+    requiere: { colonizado: true, rebeldia_pais: 70 },
+    dificultad: "Alta",
+    color: "#4caf50",
+    calcular: (atacante, nacion_atacante, defensor, nacion_defensor) => {
+      let prob = 0;
+      prob += (nacion_atacante?.rebeldia||30) > 70 ? 35 : 20;
+      prob += (atacante.poder_politico||0) > 30 ? 20 : 10;
+      prob -= (nacion_defensor?.militar||45) * 0.3;
+      return Math.min(80, Math.max(10, Math.round(prob)));
+    }
+  },
+  economica: {
+    icon: "💸", label: "Guerra Económica",
+    desc: "Embargo y sabotaje industrial sin combate",
+    requiere: { rol: "presidente", pib: 40 },
+    dificultad: "Baja",
+    color: "#ff9800",
+    calcular: (atacante, nacion_atacante, defensor, nacion_defensor) => {
+      let prob = 0;
+      prob += Math.min(40, (nacion_atacante?.pib||67) * 0.4);
+      prob -= Math.min(30, (nacion_defensor?.pib||67) * 0.3);
+      prob += (nacion_atacante?.intel||40) > 50 ? 15 : 5;
+      if (atacante.ideologia === "capitalismo") prob += 10;
+      return Math.min(85, Math.max(10, Math.round(prob)));
+    }
+  }
+};
+
+const RESULTADOS_GUERRA = {
+  golpe_estado: {
+    exito: "Has tomado el poder. El anterior presidente ha sido exiliado por 3 días.",
+    fracaso: "El golpe falló. Las fuerzas leales al presidente te reprimieron. Perdiste poder político.",
+  },
+  conquista: {
+    exito: "¡Victoria! Has conquistado una región del país enemigo. Tu ejército ondeó tu bandera.",
+    fracaso: "Tu ejército fue repelido. Sufriste bajas importantes. El enemigo reforzó sus defensas.",
+  },
+  revolucion: {
+    exito: "¡La revolución triunfó! El pueblo tomó el poder. La ideología del país ha cambiado.",
+    fracaso: "La revolución fue aplastada. El ejército dispersó a los manifestantes. Perdiste poder.",
+  },
+  liberacion: {
+    exito: "¡Libertad! Tu país se ha liberado del yugo colonizador. Nueva era de soberanía.",
+    fracaso: "El colonizador aplastó el movimiento de liberación. La represión aumentó.",
+  },
+  economica: {
+    exito: "El embargo devastó la economía enemiga. Su PIB cayó 15%. Tu industria creció.",
+    fracaso: "El sabotaje económico fue detectado y neutralizado. Relaciones diplomáticas rotas.",
+  }
+};
+
+
 // ── Sistema XP sin límite de niveles ─────────────────────
 function xpParaNivel(nivel) { return Math.round(100 * nivel * nivel); }
 function nivelDesdeXP(xp) {
@@ -198,6 +308,14 @@ export default function App() {
   const [showCreateParty, setShowCreateParty] = useState(false);
   const [newPartyName, setNewPartyName] = useState("");
   const [allianceAccepted, setAllianceAccepted] = useState(false);
+  const [showPerfilModal, setShowPerfilModal] = useState(false);
+  const [nuevoNombre, setNuevoNombre] = useState("");
+  const [showGuerraModal, setShowGuerraModal] = useState(false);
+  const [guerraTarget, setGuerraTarget] = useState(null);
+  const [guerraTipo, setGuerraTipo] = useState(null);
+  const [guerraResult, setGuerraResult] = useState(null);
+  const [guerraProb, setGuerraProb] = useState(0);
+  const [historialGuerras, setHistorialGuerras] = useState([]);
   const [empresas, setEmpresas] = useState([]);
   const [misTrabajosMap, setMisTrabajosMap] = useState({});
   const [showCrearEmpresa, setShowCrearEmpresa] = useState(false);
@@ -479,6 +597,116 @@ export default function App() {
     }
   };
 
+
+  const loadGuerras = async () => {
+    if (!jugador?.id) return;
+    try {
+      const { data } = await db.from("guerras").select("*").or(`atacante_id.eq.${jugador.id},defensor_id.eq.${jugador.id}`).order("created_at", {ascending:false}).limit(10);
+      if (data) setHistorialGuerras(data);
+    } catch {}
+  };
+
+  const iniciarGuerra = async (tipo, target, nacionTarget) => {
+    const tipoData = TIPOS_GUERRA[tipo];
+    if (!tipoData) return;
+    const nacionPropia = stats;
+    const prob = tipoData.calcular(jugador, nacionPropia, target, nacionTarget);
+    setGuerraTipo(tipo);
+    setGuerraTarget({...target, nacion: nacionTarget});
+    setGuerraProb(prob);
+    setGuerraResult(null);
+    setShowGuerraModal(true);
+  };
+
+  const ejecutarGuerra = async () => {
+    if (!guerraTarget || !guerraTipo) return;
+    tg?.HapticFeedback?.impactOccurred("heavy");
+    const roll = Math.random() * 100;
+    const exito = roll < guerraProb;
+    const tipoData = TIPOS_GUERRA[guerraTipo];
+    
+    try {
+      await db.from("guerras").insert({
+        tipo: guerraTipo,
+        atacante_id: jugador.id,
+        defensor_id: guerraTarget.id,
+        pais_atacante: selectedCountry,
+        pais_defensor: guerraTarget.pais,
+        estado: "resuelta",
+        resultado: exito ? "victoria" : "derrota",
+        fuerza_atacante: stats.militar || 45,
+        fuerza_defensor: guerraTarget.nacion?.militar || 45,
+        probabilidad: guerraProb,
+        resolved_at: new Date().toISOString()
+      });
+
+      if (exito) {
+        if (guerraTipo === "golpe_estado") {
+          await db.from("jugadores").update({rol:"presidente", poder_politico:0}).eq("id", jugador.id);
+          await db.from("jugadores").update({rol:"ciudadano", exiliado:true, exilio_hasta:new Date(Date.now()+86400000*3).toISOString()}).eq("id", guerraTarget.id);
+          setJugador(j=>({...j, rol:"presidente", poder_politico:0}));
+        } else if (guerraTipo === "conquista") {
+          const territorios = [...(jugador.territorios_conquistados||[]), guerraTarget.pais];
+          await db.from("jugadores").update({territorios_conquistados: territorios}).eq("id", jugador.id);
+          await db.from("jugadores").update({colonizado_por: jugador.id}).eq("id", guerraTarget.id);
+          setJugador(j=>({...j, territorios_conquistados: territorios}));
+          setStats(s=>({...s, militar: clamp(s.militar-10), pib: clamp(s.pib+5)}));
+        } else if (guerraTipo === "revolucion") {
+          await db.from("jugadores").update({ideologia: jugador.ideologia}).eq("id", guerraTarget.id);
+          setStats(s=>({...s, rebeldia: clamp(s.rebeldia-20), aprobacion: clamp(s.aprobacion+15)}));
+        } else if (guerraTipo === "liberacion") {
+          await db.from("jugadores").update({colonizado_por: null}).eq("id", jugador.id);
+          setJugador(j=>({...j, colonizado_por: null}));
+        } else if (guerraTipo === "economica") {
+          setStats(s=>({...s, pib: clamp(s.pib+5), industria: clamp(s.industria+3)}));
+          const defStats = guerraTarget.nacion || {};
+          await db.from("naciones").update({pib: clamp((defStats.pib||67)-15), industria: clamp((defStats.industria||49)-10)}).eq("jugador_id", guerraTarget.id);
+        }
+        await gainXP(150, `Victoria en ${tipoData.label}`);
+      } else {
+        if (guerraTipo === "golpe_estado") {
+          const nuevoPoder = Math.max(0,(jugador.poder_politico||0)-20);
+          await db.from("jugadores").update({poder_politico:nuevoPoder}).eq("id",jugador.id);
+          setJugador(j=>({...j, poder_politico:nuevoPoder}));
+        } else if (guerraTipo === "conquista") {
+          setStats(s=>({...s, militar: clamp(s.militar-15), pib: clamp(s.pib-5)}));
+        } else if (guerraTipo === "revolucion") {
+          const nuevoPoder = Math.max(0,(jugador.poder_politico||0)-30);
+          await db.from("jugadores").update({poder_politico:nuevoPoder}).eq("id",jugador.id);
+          setJugador(j=>({...j, poder_politico:nuevoPoder}));
+        }
+      }
+      setGuerraResult({exito, roll:Math.round(roll), prob:guerraProb});
+      await loadGuerras();
+    } catch(e) {
+      showNotif("Error al ejecutar la guerra","error");
+      setShowGuerraModal(false);
+    }
+  };
+
+  const cambiarNombre = async () => {
+    if (!nuevoNombre.trim() || !jugador) return;
+    try {
+      await db.from("jugadores").update({nombre:nuevoNombre}).eq("id",jugador.id);
+      setJugador(j=>({...j,nombre:nuevoNombre}));
+      setLeaderName(nuevoNombre);
+      setShowPerfilModal(false);
+      showNotif("✅ Nombre actualizado","info");
+    } catch { showNotif("Error al actualizar nombre","error"); }
+  };
+
+  const cerrarSesion = () => {
+    setJugador(null);
+    setScreen("onboarding");
+    setStep(0);
+    setSelectedCountry("");
+    setSelectedIdeology("");
+    setLeaderName("");
+    setPartyName("");
+    setStats({pib:67,militar:45,aprobacion:58,petroleo:34,comida:71,energia:52,educacion:63,salud:55,rebeldia:28,intel:40,industria:49});
+    showNotif("👋 Sesión cerrada","info");
+  };
+
   const issueDecree = async (decree) => {
     if(decreeUsed.includes(decree.id)) return;
     if(decreeUsed.length>=3){showNotif("⛔ Ya usaste tus 3 decretos de hoy","error");return;}
@@ -707,6 +935,95 @@ export default function App() {
       {/* Notification */}
       {notification && <div style={{position:"fixed",top:12,left:"50%",transform:"translateX(-50%)",background:notification.type==="error"?"rgba(229,57,53,0.15)":"rgba(201,168,76,0.15)",border:`1px solid ${notification.type==="error"?"#e53935":"#c9a84c"}`,color:notification.type==="error"?"#e53935":"#c9a84c",padding:"10px 20px",borderRadius:6,fontSize:13,zIndex:1000,whiteSpace:"nowrap",backdropFilter:"blur(10px)"}}>{notification.msg}</div>}
 
+
+      {/* Modal Perfil */}
+      {showPerfilModal && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",zIndex:600,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+          <div style={{background:"#0f1420",border:`1px solid ${ideo.color}44`,borderRadius:12,padding:24,width:"100%",maxWidth:380}}>
+            <div style={{textAlign:"center",marginBottom:20}}>
+              <div style={{width:70,height:70,borderRadius:"50%",background:`linear-gradient(135deg,${ideo.color},${ideo.color}88)`,border:`3px solid ${ideo.color}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,margin:"0 auto 12px"}}>{ideo.icon}</div>
+              <div style={{fontSize:16,color:"#e8e8e8",fontWeight:"bold"}}>{leaderName}</div>
+              <div style={{fontSize:12,color:ideo.color}}>{selectedCountry} · {ideo.label}</div>
+              <div style={{fontSize:11,color:colorNivel(nivel),marginTop:4}}>Nv.{nivel} — {tituloNivel(nivel)}</div>
+            </div>
+            <div style={{background:"rgba(255,255,255,0.03)",borderRadius:8,padding:14,marginBottom:14}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                <span style={{fontSize:12,color:"#888"}}>XP Total</span>
+                <span style={{fontSize:12,color:"#c9a84c",fontFamily:"monospace"}}>{xp} XP</span>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                <span style={{fontSize:12,color:"#888"}}>Dinero</span>
+                <span style={{fontSize:12,color:"#4caf50",fontFamily:"monospace"}}>${(dinero||0).toLocaleString()}</span>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                <span style={{fontSize:12,color:"#888"}}>Rol</span>
+                <span style={{fontSize:12,color:esPresidente?"#c9a84c":"#4caf50"}}>{esPresidente?"👑 Presidente":"🏴 Ciudadano"}</span>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between"}}>
+                <span style={{fontSize:12,color:"#888"}}>Partido</span>
+                <span style={{fontSize:12,color:"#e8e8e8"}}>{jugador?.partido||"Sin partido"}</span>
+              </div>
+            </div>
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:11,color:"#6a6a8a",marginBottom:8,textTransform:"uppercase",letterSpacing:1}}>Cambiar Nombre</div>
+              <div style={{display:"flex",gap:8}}>
+                <input placeholder="Nuevo nombre..." value={nuevoNombre} onChange={e=>setNuevoNombre(e.target.value)} style={{flex:1,background:"rgba(255,255,255,0.04)",border:`1px solid ${ideo.color}44`,color:"#e8e8e8",padding:"10px 12px",borderRadius:6,fontSize:13,outline:"none",fontFamily:"Georgia,serif"}} />
+                <button onClick={cambiarNombre} disabled={!nuevoNombre.trim()} style={{background:`${ideo.color}22`,border:`1px solid ${ideo.color}55`,color:ideo.color,padding:"10px 14px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold"}}>OK</button>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setShowPerfilModal(false)} style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",color:"#888",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif"}}>CERRAR</button>
+              <button onClick={cerrarSesion} style={{flex:1,background:"rgba(229,57,53,0.15)",border:"1px solid rgba(229,57,53,0.4)",color:"#e53935",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold"}}>🚪 CERRAR SESIÓN</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Guerra */}
+      {showGuerraModal && guerraTarget && guerraTipo && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",zIndex:600,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <div style={{background:"#0f1420",border:`1px solid ${TIPOS_GUERRA[guerraTipo]?.color}55`,borderRadius:12,padding:22,width:"100%",maxWidth:380}}>
+            {!guerraResult ? (
+              <>
+                <div style={{fontSize:28,textAlign:"center",marginBottom:8}}>{TIPOS_GUERRA[guerraTipo]?.icon}</div>
+                <h3 style={{color:TIPOS_GUERRA[guerraTipo]?.color,textAlign:"center",marginBottom:4,fontSize:16}}>{TIPOS_GUERRA[guerraTipo]?.label?.toUpperCase()}</h3>
+                <p style={{color:"#666",fontSize:12,textAlign:"center",marginBottom:16}}>{TIPOS_GUERRA[guerraTipo]?.desc}</p>
+                <div style={{background:"rgba(255,255,255,0.03)",borderRadius:8,padding:14,marginBottom:16}}>
+                  <div style={{fontSize:13,color:"#e8e8e8",marginBottom:10}}>Objetivo: <strong style={{color:TIPOS_GUERRA[guerraTipo]?.color}}>{guerraTarget.nombre} — {guerraTarget.pais}</strong></div>
+                  <div style={{display:"flex",flexDirection:"column",gap:6,fontSize:12,color:"#888"}}>
+                    {guerraTarget.nacion && <>
+                      <div>⚔️ Fuerza militar enemiga: <span style={{color:"#e53935"}}>{guerraTarget.nacion.militar||45}%</span></div>
+                      <div>👥 Aprobación del objetivo: <span style={{color:guerraTarget.nacion.aprobacion>50?"#e53935":"#4caf50"}}>{guerraTarget.nacion.aprobacion||50}%</span></div>
+                      {guerraTarget.nacion.rebeldia && <div>😤 Rebeldía: <span style={{color:"#c9a84c"}}>{guerraTarget.nacion.rebeldia}%</span></div>}
+                    </>}
+                    <div>Tu fuerza: <span style={{color:"#4caf50"}}>{guerraTipo==="golpe_estado"||guerraTipo==="revolucion"?`${jugador?.poder_politico||0} poder político`:`${stats.militar||45}% militar`}</span></div>
+                  </div>
+                  <div style={{textAlign:"center",marginTop:14}}>
+                    <div style={{fontSize:11,color:"#666",marginBottom:4}}>PROBABILIDAD DE ÉXITO</div>
+                    <div style={{fontSize:38,color:guerraProb>60?"#4caf50":guerraProb>35?"#c9a84c":"#e53935",fontFamily:"monospace",fontWeight:"bold"}}>{guerraProb}%</div>
+                    <div style={{fontSize:11,color:"#555",marginTop:4}}>Dificultad: {TIPOS_GUERRA[guerraTipo]?.dificultad}</div>
+                  </div>
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  <button onClick={()=>{setShowGuerraModal(false);setGuerraTarget(null);setGuerraTipo(null);}} style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",color:"#888",padding:"12px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif"}}>CANCELAR</button>
+                  <button onClick={ejecutarGuerra} style={{flex:2,background:`linear-gradient(135deg,${TIPOS_GUERRA[guerraTipo]?.color},${TIPOS_GUERRA[guerraTipo]?.color}88)`,border:"none",color:"#fff",padding:"12px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold",letterSpacing:1}}>{TIPOS_GUERRA[guerraTipo]?.icon} ATACAR</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{fontSize:52,textAlign:"center",marginBottom:12}}>{guerraResult.exito?"🏆":"💀"}</div>
+                <h3 style={{color:guerraResult.exito?"#4caf50":"#e53935",textAlign:"center",marginBottom:16,fontSize:18}}>{guerraResult.exito?"¡VICTORIA!":"DERROTA"}</h3>
+                <div style={{color:"#aaa",fontSize:13,lineHeight:1.8,marginBottom:20,textAlign:"center"}}>
+                  {guerraResult.exito ? RESULTADOS_GUERRA[guerraTipo]?.exito : RESULTADOS_GUERRA[guerraTipo]?.fracaso}
+                  <br/><br/>
+                  <span style={{fontSize:11,color:"#555"}}>Probabilidad {guerraResult.prob}% · Roll: {guerraResult.roll}</span>
+                </div>
+                <button onClick={()=>{setShowGuerraModal(false);setGuerraTarget(null);setGuerraTipo(null);setGuerraResult(null);loadWorld();}} style={{width:"100%",background:"linear-gradient(135deg,#c9a84c,#a07830)",border:"none",color:"#0a0e1a",padding:"14px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold"}}>CONTINUAR</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       {/* Golpe Modal */}
       {showGolpeModal && golpeTarget && (
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
@@ -773,7 +1090,7 @@ export default function App() {
       <div style={{background:"linear-gradient(180deg,rgba(10,14,26,0.98) 0%,rgba(10,14,26,0.95) 100%)",borderBottom:"1px solid rgba(201,168,76,0.25)",position:"sticky",top:0,zIndex:100,backdropFilter:"blur(20px)"}}>
         <div style={{background:"rgba(0,0,0,0.4)",padding:"6px 12px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <div style={{width:34,height:34,borderRadius:"50%",background:`linear-gradient(135deg,${ideo.color},${ideo.color}88)`,border:`2px solid ${ideo.color}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>{ideo.icon}</div>
+            <button onClick={()=>{setNuevoNombre(leaderName);setShowPerfilModal(true);}} style={{width:34,height:34,borderRadius:"50%",background:`linear-gradient(135deg,${ideo.color},${ideo.color}88)`,border:`2px solid ${ideo.color}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,cursor:"pointer",flexShrink:0}}>{ideo.icon}</button>
             <div>
               <div style={{fontSize:12,color:"#e8e8e8",fontWeight:"bold"}}>{leaderName}</div>
               <div style={{fontSize:10,display:"flex",alignItems:"center",gap:6}}>
@@ -1105,6 +1422,135 @@ export default function App() {
         )}
 
 
+
+        {/* GUERRA */}
+        {tab==="guerra" && (
+          <div>
+            <div style={{fontSize:11,color:"#c9a84c",letterSpacing:2,textTransform:"uppercase",marginBottom:14}}>⚔️ Centro de Guerra</div>
+
+            {/* Mi estado bélico */}
+            <div style={{background:"rgba(229,57,53,0.06)",border:"1px solid rgba(229,57,53,0.2)",borderRadius:8,padding:14,marginBottom:14}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                <div style={{fontSize:12,color:"#e53935",fontWeight:"bold",textTransform:"uppercase",letterSpacing:1}}>Estado Militar</div>
+                <div style={{fontSize:10,color:esPresidente?"#c9a84c":"#4caf50",background:esPresidente?"rgba(201,168,76,0.15)":"rgba(76,175,80,0.15)",padding:"2px 8px",borderRadius:10}}>{esPresidente?"👑 PRESIDENTE":"🏴 CIUDADANO"}</div>
+              </div>
+              <div style={{display:"flex",gap:16,fontSize:12,color:"#888"}}>
+                <span>⚔️ Ejército: <strong style={{color:"#e53935"}}>{stats.militar}%</strong></span>
+                <span>⚡ Poder: <strong style={{color:"#c9a84c"}}>{jugador?.poder_politico||0}/100</strong></span>
+                <span>😤 Rebeldía: <strong style={{color:stats.rebeldia>50?"#e53935":"#888"}}>{stats.rebeldia}%</strong></span>
+              </div>
+              {jugador?.colonizado_por && <div style={{marginTop:8,fontSize:12,color:"#e53935"}}>⚠️ Tu país está colonizado. Puedes declarar Guerra de Liberación.</div>}
+              {jugador?.territorios_conquistados?.length>0 && <div style={{marginTop:8,fontSize:12,color:"#c9a84c"}}>🏴 Territorios conquistados: {jugador.territorios_conquistados.join(", ")}</div>}
+            </div>
+
+            {/* Tipos de guerra disponibles */}
+            <div style={{fontSize:11,color:"#6a6a8a",letterSpacing:1,marginBottom:10,textTransform:"uppercase"}}>Tipos de Conflicto</div>
+            {Object.entries(TIPOS_GUERRA).map(([key, tipo]) => {
+              const req = tipo.requiere;
+              let disponible = true;
+              let razon = "";
+              if (req.rol === "presidente" && !esPresidente) { disponible = false; razon = "Solo presidentes"; }
+              if (req.rol === "ciudadano" && esPresidente) { disponible = false; razon = "Solo ciudadanos"; }
+              if (req.poder_politico && (jugador?.poder_politico||0) < req.poder_politico) { disponible = false; razon = `Necesitas ${req.poder_politico} poder político`; }
+              if (req.militar && stats.militar < req.militar) { disponible = false; razon = `Necesitas ${req.militar}% militar`; }
+              if (req.rebeldia_pais && stats.rebeldia < req.rebeldia_pais) { disponible = false; razon = `Necesitas ${req.rebeldia_pais}% rebeldía en el país`; }
+              if (req.colonizado && !jugador?.colonizado_por) { disponible = false; razon = "Solo si estás colonizado"; }
+              if (req.pib && stats.pib < req.pib) { disponible = false; razon = `Necesitas ${req.pib}% PIB`; }
+
+              return (
+                <div key={key} style={{background:disponible?`${tipo.color}10`:"rgba(255,255,255,0.02)",border:`1px solid ${disponible?tipo.color+"44":"rgba(255,255,255,0.06)"}`,borderRadius:8,padding:14,marginBottom:10,opacity:disponible?1:0.5}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+                    <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                      <span style={{fontSize:22}}>{tipo.icon}</span>
+                      <div>
+                        <div style={{fontSize:14,color:disponible?tipo.color:"#666",fontWeight:"bold"}}>{tipo.label}</div>
+                        <div style={{fontSize:11,color:"#666",marginTop:2}}>{tipo.desc}</div>
+                      </div>
+                    </div>
+                    <span style={{fontSize:10,color:tipo.color,background:`${tipo.color}15`,padding:"3px 8px",borderRadius:10,flexShrink:0}}>{tipo.dificultad}</span>
+                  </div>
+                  {!disponible && <div style={{fontSize:11,color:"#e53935",marginBottom:8}}>⛔ {razon}</div>}
+                  {disponible && (
+                    <div style={{fontSize:11,color:"#888",marginBottom:10}}>
+                      Selecciona un objetivo de la lista de jugadores abajo
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Lista de objetivos */}
+            <div style={{fontSize:11,color:"#6a6a8a",letterSpacing:1,marginBottom:10,marginTop:16,textTransform:"uppercase"}}>🎯 Jugadores — Selecciona Objetivo</div>
+            {otrosJugadores.filter(j=>j.id!==jugador?.id).map((j,i) => {
+              const jideo = IDEOLOGIES[j.ideologia]||IDEOLOGIES.democracia;
+              return (
+                <div key={i} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8,padding:"12px 14px",marginBottom:8}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                    <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                      <div style={{width:34,height:34,borderRadius:"50%",background:`${jideo.color}22`,border:`1px solid ${jideo.color}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>{jideo.icon}</div>
+                      <div>
+                        <div style={{fontSize:13,color:"#e8e8e8",fontWeight:"bold"}}>{j.nombre}</div>
+                        <div style={{fontSize:11,display:"flex",gap:6,alignItems:"center"}}>
+                          <span style={{color:jideo.color}}>{j.pais}</span>
+                          <span style={{background:j.rol==="presidente"?"rgba(201,168,76,0.15)":"rgba(76,175,80,0.15)",color:j.rol==="presidente"?"#c9a84c":"#4caf50",padding:"1px 6px",borderRadius:10,fontSize:9}}>{j.rol==="presidente"?"PRES":"CIU"}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                    {Object.entries(TIPOS_GUERRA).map(([key,tipo]) => {
+                      const req = tipo.requiere;
+                      let ok = true;
+                      if (req.rol==="presidente" && !esPresidente) ok=false;
+                      if (req.rol==="ciudadano" && esPresidente) ok=false;
+                      if (req.poder_politico && (jugador?.poder_politico||0)<req.poder_politico) ok=false;
+                      if (req.militar && stats.militar<req.militar) ok=false;
+                      if (req.rebeldia_pais && stats.rebeldia<req.rebeldia_pais) ok=false;
+                      if (req.pib && stats.pib<req.pib) ok=false;
+                      if (key==="golpe_estado" && j.pais!==selectedCountry) ok=false;
+                      if (key==="golpe_estado" && j.rol!=="presidente") ok=false;
+                      if (key==="liberacion" && !jugador?.colonizado_por) ok=false;
+                      if (!ok) return null;
+                      return (
+                        <button key={key} onClick={async()=>{
+                          const {data:nac} = await db.from("naciones").select("*").eq("jugador_id",j.id).single();
+                          iniciarGuerra(key, j, nac);
+                        }} style={{background:`${tipo.color}15`,border:`1px solid ${tipo.color}44`,color:tipo.color,padding:"5px 10px",borderRadius:6,fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold"}}>
+                          {tipo.icon} {tipo.label.split(" ")[0]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+            {otrosJugadores.filter(j=>j.id!==jugador?.id).length===0 && (
+              <div style={{textAlign:"center",color:"#555",padding:24,fontSize:13}}>No hay otros jugadores registrados todavía.</div>
+            )}
+
+            {/* Historial */}
+            {historialGuerras.length > 0 && (
+              <>
+                <div style={{fontSize:11,color:"#6a6a8a",letterSpacing:1,marginBottom:10,marginTop:16,textTransform:"uppercase"}}>📜 Historial de Conflictos</div>
+                {historialGuerras.slice(0,5).map((g,i)=>{
+                  const esAtacante = g.atacante_id === jugador?.id;
+                  const tipoData = TIPOS_GUERRA[g.tipo]||{icon:"⚔️",label:g.tipo,color:"#888"};
+                  const gano = (esAtacante && g.resultado==="victoria") || (!esAtacante && g.resultado==="derrota");
+                  return (
+                    <div key={i} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:6,padding:"10px 12px",marginBottom:6,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <div>
+                        <div style={{fontSize:12,color:"#e8e8e8"}}>{tipoData.icon} {tipoData.label}</div>
+                        <div style={{fontSize:11,color:"#666"}}>{esAtacante?`vs ${g.pais_defensor}`:`vs ${g.pais_atacante}`} · {g.probabilidad}% prob</div>
+                      </div>
+                      <span style={{fontSize:12,color:gano?"#4caf50":"#e53935",fontWeight:"bold"}}>{gano?"✓ Victoria":"✗ Derrota"}</span>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+          </div>
+        )}
+
         {/* EMPRESAS Y TRABAJO */}
         {tab==="empresas" && (
           <div>
@@ -1317,7 +1763,7 @@ export default function App() {
 
       {/* Bottom Nav */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:"rgba(10,14,26,0.97)",borderTop:"1px solid rgba(201,168,76,0.2)",display:"flex",backdropFilter:"blur(20px)",paddingBottom:"env(safe-area-inset-bottom)"}}>
-        {[["panel","📊","Panel"],["decretos","📜","Decretos"],["empresas","🏭","Trabajo"],["tienda","🛒","Tienda"],["ranking","🏆","Ranking"]].map(([id,icon,label])=>(
+        {[["panel","📊","Panel"],["decretos","📜","Gobernar"],["guerra","⚔️","Guerra"],["empresas","🏭","Trabajo"],["tienda","🛒","Tienda"]].map(([id,icon,label])=>(
           <button key={id} onClick={()=>{tg?.HapticFeedback?.selectionChanged();setTab(id);}} style={{flex:1,background:"transparent",border:"none",padding:"10px 4px 12px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,position:"relative"}}>
             {tab===id&&<div style={{position:"absolute",top:0,left:"20%",right:"20%",height:2,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",borderRadius:1}} />}
             <span style={{fontSize:18}}>{icon}</span>
