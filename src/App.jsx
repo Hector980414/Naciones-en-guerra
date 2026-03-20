@@ -345,6 +345,7 @@ export default function App() {
   const initPlayer = async () => {
     const tgUser = tg?.initDataUnsafe?.user;
     const tgId = tgUser?.id || 99999999;
+    // Siempre leer fresh de Supabase
     try {
       const { data: existing } = await db.from("jugadores").select("*").eq("id",tgId).single();
       if(existing) {
@@ -356,6 +357,7 @@ export default function App() {
         const { data: nation } = await db.from("naciones").select("*").eq("jugador_id",tgId).single();
         if(nation) { setStats({pib:nation.pib,militar:nation.militar,aprobacion:nation.aprobacion,petroleo:nation.petroleo,comida:nation.comida,energia:nation.energia,educacion:nation.educacion,salud:nation.salud,rebeldia:nation.rebeldia,intel:nation.intel,industria:nation.industria}); setDecreeUsed(nation.decretos_usados||[]); }
         setScreen("game");
+        loadWorld();
       } else { setLeaderName(tgUser?.first_name||"Presidente"); setScreen("onboarding"); }
     } catch { setScreen("onboarding"); }
     loadWorld();
@@ -403,25 +405,11 @@ export default function App() {
         showNotif(`⚠️ ${selectedCountry} ya tiene presidente. Eres ciudadano.`,"error");
       } else {
         showNotif(`✅ Eres el Presidente de ${selectedCountry}`,"info");
-        // Crear empresas estatales automáticamente
-        const empresasEstatales = [
-          {nombre:`Granja Estatal de ${selectedCountry}`,sector:"alimentario",tipo:"granja",salario:150,xp_por_trabajo:6},
-          {nombre:`Empresa Estatal de ${selectedCountry}`,sector:"economico",tipo:"comercio",salario:200,xp_por_trabajo:8},
-          {nombre:`Fábrica Estatal de ${selectedCountry}`,sector:"militar",tipo:"fabrica_armas",salario:250,xp_por_trabajo:10},
-        ];
-        for (const emp of empresasEstatales) {
-          try {
-            await db.from("empresas").insert({
-              ...emp,
-              dueno_id: tgId,
-              partido: partyName || null,
-              pais: selectedCountry,
-              max_trabajadores: 200,
-              capital: 0,
-              activa: true
-            });
-          } catch {}
-        }
+        setTimeout(async () => {
+          for (const emp of [{nombre:`Granja Estatal de ${selectedCountry}`,sector:"alimentario",tipo:"granja",salario:150,xp_por_trabajo:6},{nombre:`Empresa Estatal de ${selectedCountry}`,sector:"economico",tipo:"comercio",salario:200,xp_por_trabajo:8},{nombre:`Fábrica Estatal de ${selectedCountry}`,sector:"militar",tipo:"fabrica_armas",salario:250,xp_por_trabajo:10}]) {
+            try { await db.from("empresas").insert({...emp,dueno_id:tgId,partido:partyName||null,pais:selectedCountry,max_trabajadores:200,capital:0,activa:true}); } catch {}
+          }
+        }, 200);
       }
     } catch { showNotif("Error al registrar. Intenta de nuevo.","error"); }
     setSaving(false);
