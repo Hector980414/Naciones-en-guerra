@@ -282,6 +282,39 @@ export default function App() {
     setSaving(false);
   };
 
+
+  const iniciarPago = async (productoKey, precio, nombre) => {
+    tg?.HapticFeedback?.impactOccurred("medium");
+    showNotif(`⏳ Generando factura para ${nombre}...`, "info");
+    try {
+      const uid = jugador?.id || tg?.initDataUnsafe?.user?.id;
+      const orderId = `naciones_${uid}_${productoKey}_${Date.now()}`;
+      const res = await fetch("https://api.nowpayments.io/v1/invoice", {
+        method: "POST",
+        headers: { "x-api-key": "AY2MCK9-TNXMW8V-JYTMHVW-0TF26PP", "Content-Type": "application/json" },
+        body: JSON.stringify({
+          price_amount: precio,
+          price_currency: "usd",
+          pay_currency: "usdttrc20",
+          order_id: orderId,
+          order_description: `Naciones en Guerra — ${nombre}`,
+          ipn_callback_url: "https://wdbupgqymgqfpobcbfze.supabase.co/functions/v1/Pago",
+          success_url: "https://t.me/NacionesEnGuerra_Bot",
+          cancel_url: "https://t.me/NacionesEnGuerra_Bot"
+        })
+      });
+      const data = await res.json();
+      if (data.invoice_url) {
+        tg?.openLink(data.invoice_url);
+        showNotif("✅ Factura generada. Abriendo pago...", "info");
+      } else {
+        showNotif(`❌ Error: ${data.message || "Intenta de nuevo"}`, "error");
+      }
+    } catch(e) {
+      showNotif("❌ Error de conexión. Intenta de nuevo.", "error");
+    }
+  };
+
   const issueDecree = async (decree) => {
     if(decreeUsed.includes(decree.id)) return;
     if(decreeUsed.length>=3){showNotif("⛔ Ya usaste tus 3 decretos de hoy","error");return;}
@@ -906,11 +939,103 @@ export default function App() {
             })}
           </div>
         )}
+
+        {/* TIENDA */}
+        {tab==="tienda" && (
+          <div>
+            <div style={{fontSize:11,color:"#c9a84c",letterSpacing:2,textTransform:"uppercase",marginBottom:14}}>🛒 Tienda Premium</div>
+
+            {/* Banner premium activo */}
+            {jugador?.premium && (
+              <div style={{background:"linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.05))",border:"1px solid rgba(201,168,76,0.4)",borderRadius:8,padding:14,marginBottom:14,display:"flex",alignItems:"center",gap:12}}>
+                <span style={{fontSize:28}}>💎</span>
+                <div>
+                  <div style={{fontSize:13,color:"#c9a84c",fontWeight:"bold"}}>{jugador.premium_plan} Activo</div>
+                  <div style={{fontSize:11,color:"#888"}}>Expira: {jugador.premium_hasta?.slice(0,10)||"N/A"}</div>
+                </div>
+              </div>
+            )}
+
+            {/* Planes Premium */}
+            <div style={{fontSize:11,color:"#6a6a8a",letterSpacing:1,marginBottom:10,textTransform:"uppercase"}}>💎 Planes Premium — 30 días</div>
+            {[
+              {key:"premium_basico",    icon:"⭐", nombre:"Pase Básico",       precio:11, color:"#9e9e9e", beneficios:["Trabajar cada 7min","Salario +25%","XP +25%","Badge ⭐"]},
+              {key:"premium_estandar", icon:"💎", nombre:"Pase Estándar",     precio:15, color:"#2196f3", beneficios:["Trabajar cada 5min","Salario +50%","XP +50%","+1 decreto/día","Badge 💎"]},
+              {key:"premium_presid",   icon:"👑", nombre:"Pase Presidencial", precio:20, color:"#c9a84c", beneficios:["Trabajar cada 3min","Salario +100%","XP +100%","+3 decretos/día","Escudo anti-golpe","Badge 👑"]},
+            ].map((plan,i)=>(
+              <div key={i} style={{background:`linear-gradient(135deg,${plan.color}12,${plan.color}06)`,border:`1px solid ${plan.color}44`,borderRadius:8,padding:14,marginBottom:10}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+                  <div>
+                    <div style={{fontSize:16,color:plan.color,fontWeight:"bold",marginBottom:4}}>{plan.icon} {plan.nombre}</div>
+                    <div style={{fontSize:11,color:"#666"}}>30 días de beneficios</div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:22,color:plan.color,fontFamily:"monospace",fontWeight:"bold"}}>${plan.precio}</div>
+                    <div style={{fontSize:10,color:"#555"}}>USDT TRC20</div>
+                  </div>
+                </div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}}>
+                  {plan.beneficios.map((b,j)=>(
+                    <span key={j} style={{fontSize:10,color:plan.color,background:`${plan.color}15`,padding:"3px 8px",borderRadius:10,border:`1px solid ${plan.color}33`}}>✓ {b}</span>
+                  ))}
+                </div>
+                <button onClick={()=>iniciarPago(plan.key,plan.precio,plan.nombre)} style={{width:"100%",background:`linear-gradient(135deg,${plan.color},${plan.color}88)`,border:"none",color:"#0a0e1a",padding:"12px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold",fontSize:13,letterSpacing:1}}>
+                  💳 COMPRAR — ${plan.precio} USDT
+                </button>
+              </div>
+            ))}
+
+            {/* Recursos */}
+            <div style={{fontSize:11,color:"#6a6a8a",letterSpacing:1,marginBottom:10,marginTop:16,textTransform:"uppercase"}}>💰 Recursos — $11 USDT c/u</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
+              {[
+                {key:"pack_economico",icon:"💰",nombre:"Pack Económico",desc:"+20% PIB 24h",color:"#c9a84c"},
+                {key:"pack_militar",  icon:"⚔️",nombre:"Pack Militar",   desc:"+20% Ejército 24h",color:"#e53935"},
+                {key:"pack_petroleo", icon:"🛢️",nombre:"Pack Petróleo",  desc:"+30 Petróleo",color:"#ff8f00"},
+                {key:"pack_comida",   icon:"🌾",nombre:"Pack Comida",    desc:"+30 Comida",color:"#4caf50"},
+              ].map((rec,i)=>(
+                <button key={i} onClick={()=>iniciarPago(rec.key,11,rec.nombre)} style={{background:"rgba(255,255,255,0.03)",border:`1px solid ${rec.color}33`,borderRadius:8,padding:12,cursor:"pointer",textAlign:"left",fontFamily:"Georgia,serif"}}>
+                  <div style={{fontSize:22,marginBottom:6}}>{rec.icon}</div>
+                  <div style={{fontSize:12,color:"#e8e8e8",fontWeight:"bold",marginBottom:4}}>{rec.nombre}</div>
+                  <div style={{fontSize:11,color:"#666",marginBottom:8}}>{rec.desc}</div>
+                  <div style={{fontSize:12,color:rec.color,fontWeight:"bold"}}>$11 USDT</div>
+                </button>
+              ))}
+            </div>
+
+            {/* Ventajas tácticas */}
+            <div style={{fontSize:11,color:"#6a6a8a",letterSpacing:1,marginBottom:10,textTransform:"uppercase"}}>⚡ Ventajas Tácticas</div>
+            {[
+              {key:"escudo_golpe",  icon:"🛡️",nombre:"Escudo Anti-Golpe", desc:"Inmune 24h a golpes",   precio:12,color:"#2196f3"},
+              {key:"poder_pol",     icon:"⚡",nombre:"Poder Político x2", desc:"+20 poder político",     precio:11,color:"#9c27b0"},
+              {key:"decretos_extra",icon:"📜",nombre:"Decretos Extra",    desc:"+3 decretos hoy",        precio:11,color:"#ff9800"},
+              {key:"reset_trabajo", icon:"🔄",nombre:"Reset Cooldown",    desc:"Reinicia trabajo ahora", precio:11,color:"#4caf50"},
+            ].map((tact,i)=>(
+              <div key={i} style={{background:"rgba(255,255,255,0.02)",border:`1px solid ${tact.color}33`,borderRadius:8,padding:"12px 14px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                  <span style={{fontSize:22}}>{tact.icon}</span>
+                  <div>
+                    <div style={{fontSize:13,color:"#e8e8e8",fontWeight:"bold"}}>{tact.nombre}</div>
+                    <div style={{fontSize:11,color:"#666"}}>{tact.desc}</div>
+                  </div>
+                </div>
+                <button onClick={()=>iniciarPago(tact.key,tact.precio,tact.nombre)} style={{background:`${tact.color}22`,border:`1px solid ${tact.color}55`,color:tact.color,padding:"8px 14px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold",fontSize:12,flexShrink:0}}>
+                  ${tact.precio}
+                </button>
+              </div>
+            ))}
+
+            <div style={{fontSize:11,color:"#555",textAlign:"center",marginTop:16,lineHeight:1.7}}>
+              Pago seguro con USDT TRC20 via NOWPayments.<br/>
+              Los beneficios se activan automáticamente.
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Bottom Nav */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:"rgba(10,14,26,0.97)",borderTop:"1px solid rgba(201,168,76,0.2)",display:"flex",backdropFilter:"blur(20px)",paddingBottom:"env(safe-area-inset-bottom)"}}>
-        {[["panel","📊","Panel"],["decretos","📜","Decretos"],["diplomacia",esPresidente?"🤝":"⚔️",esPresidente?"Diplo":"Golpe"],["partidos","🏛️","Partidos"],["ranking","🏆","Ranking"]].map(([id,icon,label])=>(
+        {[["panel","📊","Panel"],["decretos","📜","Decretos"],["diplomacia",esPresidente?"🤝":"⚔️",esPresidente?"Diplo":"Golpe"],["tienda","🛒","Tienda"],["ranking","🏆","Ranking"]].map(([id,icon,label])=>(
           <button key={id} onClick={()=>{tg?.HapticFeedback?.selectionChanged();setTab(id);}} style={{flex:1,background:"transparent",border:"none",padding:"10px 4px 12px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,position:"relative"}}>
             {tab===id&&<div style={{position:"absolute",top:0,left:"20%",right:"20%",height:2,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",borderRadius:1}} />}
             <span style={{fontSize:18}}>{icon}</span>
