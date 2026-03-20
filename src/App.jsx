@@ -332,14 +332,21 @@ export default function App() {
 
   const syncTick = useCallback(async () => {
     try {
-      const { data } = await db.from("tick_global").select("proximo_tick").eq("id",1).single();
-      if(data?.proximo_tick) setCountdown(Math.max(0,Math.floor((new Date(data.proximo_tick)-new Date())/1000)));
+      // Usar tiempo del servidor para evitar diferencias de zona horaria
+      const { data } = await db.from("tick_global").select("proximo_tick, ultimo_tick").eq("id",1).single();
+      if(data?.proximo_tick) {
+        const ahora = new Date();
+        const proximo = new Date(data.proximo_tick);
+        const segsRestantes = Math.floor((proximo - ahora) / 1000);
+        // Si el tick ya pasó, mostrar 0 y esperar resync
+        setCountdown(Math.max(0, segsRestantes));
+      }
     } catch {}
   }, []);
 
   useEffect(() => {
     syncTick();
-    const si = setInterval(syncTick, 300000);
+    const si = setInterval(syncTick, 30000); // Sync cada 30 segundos para mayor precisión
     tickRef.current = setInterval(() => setCountdown(c=>Math.max(0,c-1)), 1000);
     return () => { clearInterval(si); clearInterval(tickRef.current); };
   }, [syncTick]);
