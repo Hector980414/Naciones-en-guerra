@@ -474,18 +474,20 @@ export default function App() {
       } else {
         showNotif(`✅ Eres el Presidente de ${selectedCountry}`,"info");
         // Crear empresas estatales automáticamente
-        const empresasEstatales = [
-          {nombre:`Granja Estatal de ${selectedCountry}`,sector:"alimentario",tipo:"granja",salario:150,xp_por_trabajo:6},
-          {nombre:`Empresa Estatal de ${selectedCountry}`,sector:"economico",tipo:"comercio",salario:200,xp_por_trabajo:8},
-          {nombre:`Fábrica Estatal de ${selectedCountry}`,sector:"militar",tipo:"fabrica_armas",salario:250,xp_por_trabajo:10},
+        // Crear 3 fábricas estatales en tabla fabricas
+        const fabricasEstatales = [
+          {nombre:`Granja Estatal de ${selectedCountry}`,  tipo_recurso:"Comida",   tasa_salarial:70, produccion_base:80},
+          {nombre:`Comercio Estatal de ${selectedCountry}`,tipo_recurso:"Oro",      tasa_salarial:70, produccion_base:80},
+          {nombre:`Fábrica Estatal de ${selectedCountry}`, tipo_recurso:"Mineral",  tasa_salarial:70, produccion_base:80},
         ];
-        for (const emp of empresasEstatales) {
+        for (const fab of fabricasEstatales) {
           try {
-            await db.from("empresas").insert({
-              ...emp,
-              dueno_id: tgId,
+            await db.from("fabricas").insert({
+              ...fab,
+              owner_id: tgId,
               partido: partyName || null,
               pais: selectedCountry,
+              nivel: 1,
               max_trabajadores: 200,
               capital: 0,
               activa: true
