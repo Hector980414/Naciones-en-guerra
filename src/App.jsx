@@ -2070,7 +2070,7 @@ export default function App() {
       {/* Bottom Nav */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:"rgba(10,14,26,0.97)",borderTop:"1px solid rgba(201,168,76,0.2)",display:"flex",backdropFilter:"blur(20px)",paddingBottom:"env(safe-area-inset-bottom)"}}>
         {[["panel","📊","Panel"],["decretos","📜","Gobernar"],["guerra","⚔️","Guerra"],["empresas","🏭","Trabajo"],["tienda","🛒","Tienda"]].map(([id,icon,label])=>(
-          <button key={id} onClick={()=>{tg?.HapticFeedback?.selectionChanged();setTab(id);}} style={{flex:1,background:"transparent",border:"none",padding:"10px 4px 12px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,position:"relative"}}>
+          <button key={id} onClick={()=>{tg?.HapticFeedback?.selectionChanged();setTab(id);if(id==="empresas")loadFabricas();}} style={{flex:1,background:"transparent",border:"none",padding:"10px 4px 12px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,position:"relative"}}>
             {tab===id&&<div style={{position:"absolute",top:0,left:"20%",right:"20%",height:2,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",borderRadius:1}} />}
             <span style={{fontSize:18}}>{icon}</span>
             <span style={{fontSize:9,color:tab===id?"#c9a84c":"#444",letterSpacing:0.5,textTransform:"uppercase"}}>{label}</span>
