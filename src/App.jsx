@@ -416,6 +416,10 @@ export default function App() {
         setSelectedCountry(existing.pais);
         setSelectedIdeology(existing.ideologia);
         setPartyName(existing.partido||"");
+        // Cargar dinero y energía SIEMPRE frescos desde Supabase
+        setDinero(existing.dinero ?? 1000);
+        const enActual = calcularEnergiaActual(existing.energia, existing.ultima_energia);
+        setEnergia(enActual);
         const { data: nation } = await db.from("naciones").select("*").eq("jugador_id",tgId).single();
         if(nation) { setStats({pib:nation.pib,militar:nation.militar,aprobacion:nation.aprobacion,petroleo:nation.petroleo,comida:nation.comida,energia:nation.energia,educacion:nation.educacion,salud:nation.salud,rebeldia:nation.rebeldia,intel:nation.intel,industria:nation.industria}); setDecreeUsed(nation.decretos_usados||[]); }
         setScreen("game");
@@ -880,6 +884,14 @@ export default function App() {
       setDinero(d => (d||0) + data.salario);
       await gainXP(data.xp_ganado, `Trabajo en ${fabrica.nombre}`);
       setJugador(j => ({...j, energia: data.energia_restante}));
+      // Recargar datos frescos del jugador desde Supabase
+      const { data: jugadorFresh } = await db.from("jugadores").select("dinero,energia,xp,nivel").eq("id", tgId).single();
+      if (jugadorFresh) {
+        setDinero(jugadorFresh.dinero ?? dinero);
+        setEnergia(jugadorFresh.energia ?? data.energia_restante);
+        setXp(jugadorFresh.xp ?? xp);
+        setNivel(nivelDesdeXP(jugadorFresh.xp ?? xp));
+      }
       showNotif(`💼 +$${data.salario} · +${data.xp_ganado}XP · ⚡${data.energia_restante}/100`, "info");
       // Refresh fábricas
       setFabricas(prev => prev.map(f => f.id === fabrica.id
@@ -1882,7 +1894,6 @@ export default function App() {
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
               <div style={{fontSize:11,color:"#c9a84c",letterSpacing:2,textTransform:"uppercase"}}>🏭 Fábricas y Trabajo</div>
               <div style={{display:"flex",gap:6}}>
-                <button onClick={loadFabricas} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",color:"#888",padding:"6px 10px",borderRadius:6,cursor:"pointer",fontSize:11}}>🔄</button>
                 <button onClick={()=>setShowCrearFabrica(true)} style={{background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.3)",color:"#c9a84c",padding:"6px 12px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:11,fontWeight:"bold"}}>+ FUNDAR</button>
               </div>
             </div>
