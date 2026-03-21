@@ -1822,37 +1822,6 @@ export default function App() {
         {/* FÁBRICAS Y TRABAJO */}
         {tab==="empresas" && (
           <div>
-            {/* Modal crear empresa */}
-            {showCrearEmpresa && (
-              <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-                <div style={{background:"#0f1420",border:"1px solid rgba(201,168,76,0.3)",borderRadius:12,padding:20,width:"100%",maxWidth:380}}>
-                  <div style={{fontSize:16,color:"#c9a84c",fontWeight:"bold",marginBottom:16,textAlign:"center"}}>🏭 Fundar Empresa</div>
-                  <input placeholder="Nombre de la empresa..." value={nuevaEmpresa.nombre} onChange={e=>setNuevaEmpresa(p=>({...p,nombre:e.target.value}))} style={{width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(201,168,76,0.3)",color:"#e8e8e8",padding:"10px 14px",borderRadius:6,fontSize:14,marginBottom:12,boxSizing:"border-box",outline:"none",fontFamily:"Georgia,serif"}} />
-                  <select value={nuevaEmpresa.tipo} onChange={e=>setNuevaEmpresa(p=>({...p,tipo:e.target.value,sector:TIPOS_EMPRESA[e.target.value]?.sector||"alimentario"}))} style={{width:"100%",background:"#0f1420",border:"1px solid rgba(201,168,76,0.3)",color:"#e8e8e8",padding:"10px 14px",borderRadius:6,fontSize:13,marginBottom:12,boxSizing:"border-box",outline:"none"}}>
-                    {Object.entries(TIPOS_EMPRESA).map(([key,val])=>(
-                      <option key={key} value={key}>{val.label} — ${val.costo.toLocaleString()}</option>
-                    ))}
-                  </select>
-                  {(() => {
-                    const tipo = TIPOS_EMPRESA[nuevaEmpresa.tipo];
-                    return tipo ? (
-                      <div style={{background:"rgba(201,168,76,0.06)",border:"1px solid rgba(201,168,76,0.2)",borderRadius:6,padding:10,marginBottom:14,fontSize:12,color:"#aaa",lineHeight:1.7}}>
-                        📝 {tipo.desc}<br/>
-                        💰 Salario base: ${tipo.salario}/trabajo<br/>
-                        ⭐ XP por trabajo: {tipo.xp}<br/>
-                        📦 Produce: {tipo.produccion}<br/>
-                        💵 Costo: <span style={{color:(dinero||0)>=tipo.costo?"#4caf50":"#e53935"}}>${tipo.costo.toLocaleString()}</span> {(dinero||0)<tipo.costo&&"(fondos insuficientes)"}
-                      </div>
-                    ) : null;
-                  })()}
-                  <div style={{display:"flex",gap:8}}>
-                    <button onClick={()=>setShowCrearEmpresa(false)} style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",color:"#888",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif"}}>CANCELAR</button>
-                    <button onClick={crearEmpresa} style={{flex:2,background:"linear-gradient(135deg,#c9a84c,#a07830)",border:"none",color:"#0a0e1a",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold"}}>🏭 FUNDAR</button>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Modal crear fábrica */}
             {showCrearFabrica && (
               <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
@@ -1863,15 +1832,17 @@ export default function App() {
                     {Object.entries(TIPOS_RECURSO).map(([k,v])=><option key={k} value={k}>{v.icon} {k}</option>)}
                   </select>
                   <div style={{marginBottom:14}}>
-                    <div style={{fontSize:12,color:"#888",marginBottom:6}}>Tasa salarial para trabajadores: <strong style={{color:"#c9a84c"}}>{nuevaFabrica.tasa_salarial}%</strong></div>
+                    <div style={{fontSize:12,color:"#888",marginBottom:6}}>Tasa salarial: <strong style={{color:"#c9a84c"}}>{nuevaFabrica.tasa_salarial}%</strong></div>
                     <input type="range" min="10" max="95" value={nuevaFabrica.tasa_salarial} onChange={e=>setNuevaFabrica(p=>({...p,tasa_salarial:parseInt(e.target.value)}))} style={{width:"100%",accentColor:"#c9a84c"}} />
                     <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#555"}}>
-                      <span>10% mín</span><span style={{color:"#4caf50"}}>Trabajador: {nuevaFabrica.tasa_salarial}%</span><span>Dueño: {90-nuevaFabrica.tasa_salarial}% · Estado: 10%</span>
+                      <span>Trabajador: {nuevaFabrica.tasa_salarial}%</span>
+                      <span>Dueño: {90-nuevaFabrica.tasa_salarial}%</span>
+                      <span>Estado: 10%</span>
                     </div>
                   </div>
                   <div style={{display:"flex",gap:8}}>
                     <button onClick={()=>setShowCrearFabrica(false)} style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",color:"#888",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif"}}>CANCELAR</button>
-                    <button onClick={crearFabrica} disabled={(dinero||0)<5000} style={{flex:2,background:(dinero||0)>=5000?"linear-gradient(135deg,#c9a84c,#a07830)":"#2a2a3a",border:"none",color:(dinero||0)>=5000?"#0a0e1a":"#444",padding:"11px",borderRadius:6,cursor:(dinero||0)>=5000?"pointer":"not-allowed",fontFamily:"Georgia,serif",fontWeight:"bold"}}>🏭 FUNDAR ${(dinero||0)<5000?"(sin fondos)":""}</button>
+                    <button onClick={crearFabrica} disabled={(dinero||0)<5000} style={{flex:2,background:(dinero||0)>=5000?"linear-gradient(135deg,#c9a84c,#a07830)":"#2a2a3a",border:"none",color:(dinero||0)>=5000?"#0a0e1a":"#444",padding:"11px",borderRadius:6,cursor:(dinero||0)>=5000?"pointer":"not-allowed",fontFamily:"Georgia,serif",fontWeight:"bold"}}>🏭 FUNDAR</button>
                   </div>
                 </div>
               </div>
@@ -1879,30 +1850,13 @@ export default function App() {
 
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
               <div style={{fontSize:11,color:"#c9a84c",letterSpacing:2,textTransform:"uppercase"}}>🏭 Fábricas y Trabajo</div>
-<div style={{display:"flex",gap:6}}>
-                <button onClick={loadEmpresas} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",color:"#888",padding:"6px 10px",borderRadius:6,cursor:"pointer",fontSize:11}}>🔄</button>
+              <div style={{display:"flex",gap:6}}>
+                <button onClick={loadFabricas} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",color:"#888",padding:"6px 10px",borderRadius:6,cursor:"pointer",fontSize:11}}>🔄</button>
                 <button onClick={()=>setShowCrearFabrica(true)} style={{background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.3)",color:"#c9a84c",padding:"6px 12px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:11,fontWeight:"bold"}}>+ FUNDAR</button>
               </div>
             </div>
 
-            {/* Mi dinero */}
-            <div style={{background:"rgba(201,168,76,0.06)",border:"1px solid rgba(201,168,76,0.2)",borderRadius:8,padding:12,marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <div>
-                <div style={{fontSize:11,color:"#6a6a8a",textTransform:"uppercase",letterSpacing:1}}>Mi Dinero</div>
-                <div style={{fontSize:22,color:"#c9a84c",fontFamily:"monospace",fontWeight:"bold"}}>${(dinero||0).toLocaleString()}</div>
-              </div>
-              <div style={{textAlign:"right"}}>
-                <div style={{fontSize:11,color:"#6a6a8a",textTransform:"uppercase",letterSpacing:1}}>Nivel</div>
-                <div style={{fontSize:16,color:colorNivel(nivel),fontWeight:"bold"}}>Nv.{nivel}</div>
-              </div>
-            </div>
-
-            {/* Filtro por país */}
-            <div style={{fontSize:11,color:"#6a6a8a",letterSpacing:1,marginBottom:10,textTransform:"uppercase"}}>
-              Empresas en {selectedCountry} ({empresas.filter(e=>e.pais===selectedCountry).length}) · Otras ({empresas.filter(e=>e.pais!==selectedCountry).length})
-            </div>
-
-            {/* Energía barra grande */}
+            {/* Barra de energía */}
             <div style={{background:"rgba(3,169,244,0.08)",border:"1px solid rgba(3,169,244,0.25)",borderRadius:8,padding:14,marginBottom:14}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                 <div style={{fontSize:13,color:"#03a9f4",fontWeight:"bold"}}>⚡ Energía</div>
@@ -1912,70 +1866,61 @@ export default function App() {
                 <div style={{height:"100%",width:`${energia}%`,background:`linear-gradient(90deg,${energia>30?"#03a9f4":"#e53935"},${energia>30?"#4fc3f7":"#ef9a9a"})`,borderRadius:5,transition:"width 1s ease"}}/>
               </div>
               <div style={{fontSize:11,color:"#555"}}>
-                {energia >= 10 ? `✅ Puedes trabajar ${Math.floor(energia/10)} veces` : `⏳ Recargando... +1 cada minuto · Faltan ${10-energia} para trabajar`}
+                {energia>=10?`✅ Puedes trabajar ${Math.floor(energia/10)} veces`:`⏳ Recargando... +1 por minuto · Faltan ${10-energia} para trabajar`}
               </div>
             </div>
 
-            {(fabricas.length === 0 && empresas.length === 0) ? (
+            {fabricas.length===0 ? (
               <div style={{textAlign:"center",padding:30,color:"#555"}}>
                 <div style={{fontSize:32,marginBottom:8}}>🏭</div>
-                <div style={{fontSize:14,color:"#888",marginBottom:16}}>No hay fábricas todavía</div>
-                <div style={{fontSize:12,color:"#555"}}>Sé el primero en fundar una en {selectedCountry}</div>
-                <button onClick={()=>setShowCrearFabrica(true)} style={{marginTop:16,background:"linear-gradient(135deg,#c9a84c,#a07830)",border:"none",color:"#0a0e1a",padding:"12px 24px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold"}}>🏭 FUNDAR PRIMERA FÁBRICA</button>
+                <div style={{fontSize:14,color:"#888",marginBottom:8}}>No hay fábricas todavía</div>
+                <div style={{fontSize:12,color:"#555",marginBottom:16}}>Sé el primero en fundar una en {selectedCountry}</div>
+                <button onClick={()=>setShowCrearFabrica(true)} style={{background:"linear-gradient(135deg,#c9a84c,#a07830)",border:"none",color:"#0a0e1a",padding:"12px 24px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold"}}>🏭 FUNDAR PRIMERA FÁBRICA</button>
               </div>
-            ) : (
-              empresas.map((empresa,i) => {
-                const tipo = TIPOS_EMPRESA[empresa.tipo] || {};
-                const miTrabajo = misTrabajosMap[empresa.id];
-                const intervalo = jugador?.trabajo_intervalo || 10;
-                const minsPasados = miTrabajo?.ultimo_trabajo ? (new Date()-new Date(miTrabajo.ultimo_trabajo))/60000 : 999;
-                const puedoTrabajar = minsPasados >= intervalo;
-                const minutosRestantes = puedoTrabajar ? 0 : Math.ceil(intervalo - minsPasados);
-                const esMia = empresa.dueno_id === jugador?.id;
-                const bonusSalario = jugador?.bonus_salario || 0;
-                const salarioReal = Math.round(empresa.salario * (1 + bonusSalario/100));
-
-                return (
-                  <div key={i} style={{background:esMia?"rgba(201,168,76,0.06)":"rgba(255,255,255,0.02)",border:`1px solid ${esMia?"rgba(201,168,76,0.3)":"rgba(255,255,255,0.06)"}`,borderRadius:8,padding:14,marginBottom:10}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
-                      <div>
-                        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                          <span style={{fontSize:18}}>{tipo.label?.split(" ")[0]||"🏭"}</span>
-                          <span style={{fontSize:14,color:esMia?"#c9a84c":"#e8e8e8",fontWeight:"bold"}}>{empresa.nombre}</span>
-                          {esMia && <span style={{fontSize:9,color:"#c9a84c",background:"rgba(201,168,76,0.15)",padding:"1px 6px",borderRadius:10}}>MÍA</span>}
-                        </div>
-                        <div style={{fontSize:11,color:"#666"}}>{empresa.pais} · {SECTOR_ICONS[empresa.sector]} {empresa.sector}</div>
+            ) : fabricas.map((fab,i) => {
+              const tipo = TIPOS_RECURSO[fab.tipo_recurso]||{icon:"🏭",color:"#888"};
+              const esMia = fab.owner_id===jugador?.id;
+              const esEstatal = fab.nombre.toLowerCase().includes("estatal")||fab.nombre.toLowerCase().includes("granja")||fab.nombre.toLowerCase().includes("petrolera");
+              const nivelReq = esEstatal?0:fab.nivel>=3?15:fab.nivel>=2?8:3;
+              const puedoAcceder = nivel>=nivelReq;
+              const puedoTrabajar = energia>=10&&puedoAcceder;
+              const produccion = fab.nivel*(fab.produccion_base||100);
+              const salarioEstimado = Math.floor((produccion*0.9)*fab.tasa_salarial/100);
+              return (
+                <div key={i} style={{background:esEstatal?"rgba(33,150,243,0.06)":esMia?"rgba(201,168,76,0.06)":"rgba(255,255,255,0.02)",border:`1px solid ${esEstatal?"rgba(33,150,243,0.3)":esMia?"rgba(201,168,76,0.3)":tipo.color+"33"}`,borderRadius:8,padding:14,marginBottom:10,opacity:puedoAcceder?1:0.5}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+                    <div>
+                      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                        <span style={{fontSize:20}}>{tipo.icon}</span>
+                        <span style={{fontSize:14,color:esEstatal?"#2196f3":esMia?"#c9a84c":"#e8e8e8",fontWeight:"bold"}}>{fab.nombre}</span>
+                        {esEstatal&&<span style={{fontSize:9,color:"#2196f3",background:"rgba(33,150,243,0.15)",padding:"1px 6px",borderRadius:10}}>ESTATAL</span>}
+                        {esMia&&!esEstatal&&<span style={{fontSize:9,color:"#c9a84c",background:"rgba(201,168,76,0.15)",padding:"1px 6px",borderRadius:10}}>MÍA</span>}
                       </div>
-                      <div style={{textAlign:"right"}}>
-                        <div style={{fontSize:13,color:"#4caf50",fontFamily:"monospace",fontWeight:"bold"}}>${salarioReal}</div>
-                        <div style={{fontSize:10,color:"#555"}}>por trabajo</div>
-                      </div>
+                      <div style={{fontSize:11,color:"#666"}}>{fab.pais} · Nv.{fab.nivel} · {fab.tipo_recurso}</div>
                     </div>
-
-                    {/* Stats */}
-                    <div style={{display:"flex",gap:12,marginBottom:10,fontSize:11,color:"#888"}}>
-                      <span>👥 {empresa.trabajadores_actuales||0}/{empresa.max_trabajadores}</span>
-                      <span>📦 {empresa.produccion_acumulada||0} producción</span>
-                      <span>⭐ +{tipo.xp||8} XP</span>
-                      {miTrabajo && <span style={{color:"#c9a84c"}}>✓ {miTrabajo.total_trabajos||0} turnos</span>}
+                    <div style={{textAlign:"right"}}>
+                      <div style={{fontSize:14,color:"#4caf50",fontFamily:"monospace",fontWeight:"bold"}}>${salarioEstimado}</div>
+                      <div style={{fontSize:10,color:"#555"}}>por turno</div>
                     </div>
-
-                    <button
-                      onClick={() => trabajarEn(empresa)}
-                      disabled={!puedoTrabajar || trabajandoEn === empresa.id}
-                      style={{width:"100%",background:puedoTrabajar?"linear-gradient(135deg,rgba(76,175,80,0.3),rgba(76,175,80,0.15))":"rgba(255,255,255,0.03)",border:`1px solid ${puedoTrabajar?"rgba(76,175,80,0.5)":"rgba(255,255,255,0.06)"}`,color:puedoTrabajar?"#4caf50":"#555",padding:"10px",borderRadius:6,cursor:puedoTrabajar?"pointer":"not-allowed",fontFamily:"Georgia,serif",fontWeight:"bold",fontSize:13,transition:"all 0.2s"}}
-                    >
-                      {trabajandoEn===empresa.id ? "⏳ Trabajando..." : puedoTrabajar ? `💼 TRABAJAR — $${salarioReal}` : `⏳ Disponible en ${minutosRestantes}min`}
-                    </button>
                   </div>
-                );
-              })
-            )}
+                  <div style={{display:"flex",gap:10,marginBottom:10,fontSize:11,color:"#888",flexWrap:"wrap"}}>
+                    <span>👥 {fab.trabajadores_actuales||0}/{fab.max_trabajadores}</span>
+                    <span>💰 {fab.tasa_salarial}% para ti</span>
+                    <span>🏛️ 10% estado</span>
+                    {nivelReq>0&&<span style={{color:puedoAcceder?"#4caf50":"#e53935"}}>🔒 Nv.{nivelReq}+</span>}
+                  </div>
+                  {!puedoAcceder&&<div style={{fontSize:11,color:"#e53935",marginBottom:8}}>⛔ Necesitas nivel {nivelReq} para trabajar aquí</div>}
+                  <button onClick={()=>realizarTrabajo(fab)} disabled={!puedoTrabajar||trabajandoEn===fab.id} style={{width:"100%",background:puedoTrabajar?"linear-gradient(135deg,rgba(76,175,80,0.3),rgba(76,175,80,0.15))":"rgba(255,255,255,0.03)",border:`1px solid ${puedoTrabajar?"rgba(76,175,80,0.5)":"rgba(255,255,255,0.06)"}`,color:puedoTrabajar?"#4caf50":"#555",padding:"11px",borderRadius:6,cursor:puedoTrabajar?"pointer":"not-allowed",fontFamily:"Georgia,serif",fontWeight:"bold",fontSize:13}}>
+                    {trabajandoEn===fab.id?"⏳ Trabajando...":!puedoAcceder?`🔒 Nivel ${nivelReq} requerido`:puedoTrabajar?`💼 TRABAJAR — $${salarioEstimado} · ⚡-10`:`⚡ Sin energía (${energia}/10)`}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
 
         {/* TIENDA */}
-        {tab==="tienda" && (
+        {tab===b==="tienda" && (
           <div>
             <div style={{fontSize:11,color:"#c9a84c",letterSpacing:2,textTransform:"uppercase",marginBottom:14}}>🛒 Tienda Premium</div>
 
