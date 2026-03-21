@@ -85,7 +85,7 @@ function getConsequence(decretoId, ideologia, stats, historialIds) {
 const clamp=(v,mn=0,mx=100)=>Math.min(mx,Math.max(mn,Math.round(v)));
 
 // ── Reloj del Juego ───────────────────────────────────────
-const JUEGO_INICIO = new Date("2026-01-01T00:00:00Z");
+const JUEGO_INICIO = new Date("2026-03-21T00:00:00Z"); // Inicio: hoy 21 marzo 2026
 const MESES_JUEGO = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 
 function calcularFechaJuego() {
