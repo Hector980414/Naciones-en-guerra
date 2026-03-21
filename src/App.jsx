@@ -758,6 +758,22 @@ export default function App() {
     }
   };
 
+
+  const validarEnServidor = async (accion, extra={}) => {
+    try {
+      const uid = jugador?.id || tg?.initDataUnsafe?.user?.id;
+      const res = await fetch("https://wdbupgqymgqfpobcbfze.supabase.co/functions/v1/validar-accion", {
+        method: "POST",
+        headers: {"Content-Type":"application/json","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkYnVwZ3F5bWdxZnBvYmNiZnplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NjM0NjAsImV4cCI6MjA4OTUzOTQ2MH0.Psq7trqKDSNltKK8bqaLdXgg56FSjK6sfM4EH4TRnBo"},
+        body: JSON.stringify({accion, jugador_id: uid, ...extra})
+      });
+      const data = await res.json();
+      return data;
+    } catch {
+      return {permitido: true}; // Si falla el servidor, permite (fallback)
+    }
+  };
+
   const issueDecree = async (decree) => {
     if(decreeUsed.includes(decree.id)) return;
     if(jugador?.rol!=="presidente"){showNotif("⛔ Solo los presidentes pueden emitir decretos","error");return;}
