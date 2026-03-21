@@ -85,11 +85,8 @@ function getConsequence(decretoId, ideologia, stats, historialIds) {
 const clamp=(v,mn=0,mx=100)=>Math.min(mx,Math.max(mn,Math.round(v)));
 
 function formatDinero(n) {
-  if (!n) return "$0";
-  if (n >= 1000000000) return `$${(n/1000000000).toFixed(1).replace(/\.0$/,"")}B`;
-  if (n >= 1000000) return `$${(n/1000000).toFixed(1).replace(/\.0$/,"")}M`;
-  if (n >= 1000) return `$${(n/1000).toFixed(1).replace(/\.0$/,"")}K`;
-  return `$${n.toLocaleString()}`;
+  if (!n && n !== 0) return "$0";
+  return "$" + Math.floor(n).toLocaleString("es-ES");
 }
 
 
