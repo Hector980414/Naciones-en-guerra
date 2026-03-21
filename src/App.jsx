@@ -1913,47 +1913,64 @@ export default function App() {
             {fabricas.length===0?(
               <div style={{textAlign:"center",padding:30,color:"#555"}}>
                 <div style={{fontSize:32,marginBottom:8}}>🏭</div>
-                <div style={{fontSize:14,color:"#888",marginBottom:8}}>No hay fábricas</div>
+                <div style={{fontSize:14,color:"#888",marginBottom:8}}>No hay fábricas todavía</div>
                 <button onClick={()=>setShowCrearFabrica(true)} style={{background:"linear-gradient(135deg,#c9a84c,#a07830)",border:"none",color:"#0a0e1a",padding:"12px 24px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold"}}>🏭 FUNDAR PRIMERA</button>
               </div>
-            ):fabricas.map((fab,i)=>{
-              const tipo=TIPOS_RECURSO[fab.tipo_recurso]||{icon:"🏭",color:"#888"};
-              const esMia=fab.owner_id===jugador?.id;
-              const esEstatal=fab.nombre.toLowerCase().includes("estatal")||fab.nombre.toLowerCase().includes("granja")||fab.nombre.toLowerCase().includes("petrolera");
-              const nivelReq=esEstatal?0:fab.nivel>=3?15:fab.nivel>=2?8:3;
-              const puedoAcceder=nivel>=nivelReq;
-              const puedoTrabajar=energia>=10&&puedoAcceder;
-              const salarioEstimado=Math.floor((fab.nivel*(fab.produccion_base||100)*0.9)*fab.tasa_salarial/100);
-              return(
-                <div key={i} style={{background:esEstatal?"rgba(33,150,243,0.06)":esMia?"rgba(201,168,76,0.06)":"rgba(255,255,255,0.02)",border:`1px solid ${esEstatal?"rgba(33,150,243,0.3)":esMia?"rgba(201,168,76,0.3)":tipo.color+"33"}`,borderRadius:8,padding:14,marginBottom:10,opacity:puedoAcceder?1:0.5}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
-                    <div>
-                      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
-                        <span style={{fontSize:20}}>{tipo.icon}</span>
-                        <span style={{fontSize:14,color:esEstatal?"#2196f3":esMia?"#c9a84c":"#e8e8e8",fontWeight:"bold"}}>{fab.nombre}</span>
-                        {esEstatal&&<span style={{fontSize:9,color:"#2196f3",background:"rgba(33,150,243,0.15)",padding:"1px 6px",borderRadius:10,marginLeft:4}}>ESTATAL</span>}
-                        {esMia&&!esEstatal&&<span style={{fontSize:9,color:"#c9a84c",background:"rgba(201,168,76,0.15)",padding:"1px 6px",borderRadius:10,marginLeft:4}}>MÍA</span>}
-                      </div>
-                      <div style={{fontSize:11,color:"#666"}}>{fab.pais} · Nv.{fab.nivel} · {fab.tipo_recurso}</div>
+            ) : (() => {
+              const CATS = [
+                {key:"estatal",  label:"🏛️ Estatales",   color:"#2196f3", filter:f=>f.nombre.toLowerCase().includes("estatal")||f.nombre.toLowerCase().includes("granja")||f.nombre.toLowerCase().includes("petrolera")},
+                {key:"comida",   label:"🌾 Alimentario",  color:"#4caf50", filter:f=>f.tipo_recurso==="Comida"&&!f.nombre.toLowerCase().includes("estatal")&&!f.nombre.toLowerCase().includes("granja")},
+                {key:"energia",  label:"⚡ Energético",   color:"#03a9f4", filter:f=>f.tipo_recurso==="Energía"},
+                {key:"mineral",  label:"⛏️ Minero",       color:"#795548", filter:f=>f.tipo_recurso==="Mineral"},
+                {key:"petroleo", label:"🛢️ Petrolero",    color:"#ff8f00", filter:f=>f.tipo_recurso==="Petróleo"&&!f.nombre.toLowerCase().includes("estatal")&&!f.nombre.toLowerCase().includes("petrolera")},
+                {key:"militar",  label:"⚔️ Militar",      color:"#e53935", filter:f=>f.tipo_recurso==="Armas"},
+                {key:"oro",      label:"🪙 Económico",    color:"#c9a84c", filter:f=>f.tipo_recurso==="Oro"},
+              ];
+              return CATS.map(cat => {
+                const lista = fabricas.filter(cat.filter);
+                if (lista.length === 0) return null;
+                return (
+                  <div key={cat.key} style={{marginBottom:20}}>
+                    <div style={{fontSize:11,color:cat.color,letterSpacing:2,textTransform:"uppercase",marginBottom:8,paddingBottom:6,borderBottom:`1px solid ${cat.color}33`,display:"flex",justifyContent:"space-between"}}>
+                      <span>{cat.label}</span>
+                      <span style={{color:"#555"}}>{lista.length} fábrica{lista.length!==1?"s":""}</span>
                     </div>
-                    <div style={{textAlign:"right"}}>
-                      <div style={{fontSize:14,color:"#4caf50",fontFamily:"monospace",fontWeight:"bold"}}>${salarioEstimado}</div>
-                      <div style={{fontSize:10,color:"#555"}}>por turno</div>
-                    </div>
+                    {lista.map((fab,i) => {
+                      const tipo = TIPOS_RECURSO[fab.tipo_recurso]||{icon:"🏭",color:"#888"};
+                      const esMia = fab.owner_id===jugador?.id;
+                      const esEstatal = fab.nombre.toLowerCase().includes("estatal")||fab.nombre.toLowerCase().includes("granja")||fab.nombre.toLowerCase().includes("petrolera");
+                      const nivelReq = esEstatal?0:fab.nivel>=3?15:fab.nivel>=2?8:3;
+                      const puedoAcceder = nivel>=nivelReq;
+                      const puedoTrabajar = energia>=10&&puedoAcceder;
+                      const salarioEstimado = Math.floor((fab.nivel*(fab.produccion_base||100)*0.9)*fab.tasa_salarial/100);
+                      return (
+                        <div key={i} style={{background:esEstatal?"rgba(33,150,243,0.06)":esMia?"rgba(201,168,76,0.06)":"rgba(255,255,255,0.02)",border:`1px solid ${esEstatal?"rgba(33,150,243,0.3)":esMia?"rgba(201,168,76,0.3)":cat.color+"33"}`,borderRadius:8,padding:14,marginBottom:8,opacity:puedoAcceder?1:0.5}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+                            <div>
+                              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                                <span style={{fontSize:18}}>{tipo.icon}</span>
+                                <span style={{fontSize:13,color:esEstatal?"#2196f3":esMia?"#c9a84c":"#e8e8e8",fontWeight:"bold"}}>{fab.nombre}</span>
+                                {esEstatal&&<span style={{fontSize:9,color:"#2196f3",background:"rgba(33,150,243,0.15)",padding:"1px 6px",borderRadius:10}}>ESTATAL</span>}
+                                {esMia&&!esEstatal&&<span style={{fontSize:9,color:"#c9a84c",background:"rgba(201,168,76,0.15)",padding:"1px 6px",borderRadius:10}}>MÍA</span>}
+                              </div>
+                              <div style={{fontSize:10,color:"#666"}}>{fab.pais} · Nv.{fab.nivel} · {fab.tasa_salarial}% para ti</div>
+                            </div>
+                            <div style={{textAlign:"right"}}>
+                              <div style={{fontSize:14,color:"#4caf50",fontFamily:"monospace",fontWeight:"bold"}}>${salarioEstimado}</div>
+                              <div style={{fontSize:10,color:"#555"}}>por turno</div>
+                            </div>
+                          </div>
+                          {!puedoAcceder&&<div style={{fontSize:11,color:"#e53935",marginBottom:6}}>⛔ Necesitas nivel {nivelReq}</div>}
+                          <button onClick={()=>realizarTrabajo(fab)} disabled={!puedoTrabajar||trabajandoEn===fab.id} style={{width:"100%",background:puedoTrabajar?"linear-gradient(135deg,rgba(76,175,80,0.3),rgba(76,175,80,0.15))":"rgba(255,255,255,0.03)",border:`1px solid ${puedoTrabajar?"rgba(76,175,80,0.5)":"rgba(255,255,255,0.06)"}`,color:puedoTrabajar?"#4caf50":"#555",padding:"10px",borderRadius:6,cursor:puedoTrabajar?"pointer":"not-allowed",fontFamily:"Georgia,serif",fontWeight:"bold",fontSize:12}}>
+                            {trabajandoEn===fab.id?"⏳ Trabajando...":!puedoAcceder?`🔒 Nivel ${nivelReq} requerido`:puedoTrabajar?`💼 TRABAJAR — $${salarioEstimado} · ⚡-10`:`⚡ Sin energía (${energia}/10)`}
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div style={{display:"flex",gap:8,marginBottom:10,fontSize:11,color:"#888",flexWrap:"wrap"}}>
-                    <span>👥 {fab.trabajadores_actuales||0}/{fab.max_trabajadores}</span>
-                    <span>💰 {fab.tasa_salarial}% ti</span>
-                    <span>🏛️ 10% estado</span>
-                    {nivelReq>0&&<span style={{color:puedoAcceder?"#4caf50":"#e53935"}}>🔒 Nv.{nivelReq}+</span>}
-                  </div>
-                  {!puedoAcceder&&<div style={{fontSize:11,color:"#e53935",marginBottom:8}}>⛔ Necesitas nivel {nivelReq}</div>}
-                  <button onClick={()=>realizarTrabajo(fab)} disabled={!puedoTrabajar||trabajandoEn===fab.id} style={{width:"100%",background:puedoTrabajar?"linear-gradient(135deg,rgba(76,175,80,0.3),rgba(76,175,80,0.15))":"rgba(255,255,255,0.03)",border:`1px solid ${puedoTrabajar?"rgba(76,175,80,0.5)":"rgba(255,255,255,0.06)"}`,color:puedoTrabajar?"#4caf50":"#555",padding:"11px",borderRadius:6,cursor:puedoTrabajar?"pointer":"not-allowed",fontFamily:"Georgia,serif",fontWeight:"bold",fontSize:13}}>
-                    {trabajandoEn===fab.id?"⏳ Trabajando...":!puedoAcceder?`🔒 Nivel ${nivelReq} requerido`:puedoTrabajar?`💼 TRABAJAR — $${salarioEstimado} · ⚡-10`:`⚡ Sin energía (${energia}/10)`}
-                  </button>
-                </div>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
         )}
 
