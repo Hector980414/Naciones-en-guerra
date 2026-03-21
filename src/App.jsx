@@ -866,6 +866,13 @@ export default function App() {
       setDinero(d => (d||0) + data.salario);
       await gainXP(data.xp_ganado, `Trabajo en ${fabrica.nombre}`);
       setJugador(j => ({...j, energia: data.energia_restante}));
+      const { data: jugadorFresh } = await db.from("jugadores").select("dinero,energia,xp,nivel").eq("id", tgId).single();
+      if (jugadorFresh) {
+        setDinero(jugadorFresh.dinero ?? dinero);
+        setEnergia(jugadorFresh.energia ?? data.energia_restante);
+        setXp(jugadorFresh.xp ?? xp);
+        setNivel(nivelDesdeXP(jugadorFresh.xp ?? xp));
+      }
       showNotif(`💼 +$${data.salario} · +${data.xp_ganado}XP · ⚡${data.energia_restante}/100`, "info");
       // Refresh fábricas
       setFabricas(prev => prev.map(f => f.id === fabrica.id
@@ -1953,7 +1960,6 @@ export default function App() {
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
               <div style={{fontSize:11,color:"#c9a84c",letterSpacing:2,textTransform:"uppercase"}}>🏭 Fábricas y Trabajo</div>
               <div style={{display:"flex",gap:6}}>
-                <button onClick={loadFabricas} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",color:"#888",padding:"6px 10px",borderRadius:6,cursor:"pointer",fontSize:11}}>🔄</button>
                 <button onClick={()=>setShowCrearFabrica(true)} style={{background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.3)",color:"#c9a84c",padding:"6px 12px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:11,fontWeight:"bold"}}>+ FUNDAR</button>
               </div>
             </div>
@@ -2202,7 +2208,7 @@ export default function App() {
       {/* Bottom Nav */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:"rgba(10,14,26,0.97)",borderTop:"1px solid rgba(201,168,76,0.2)",display:"flex",backdropFilter:"blur(20px)",paddingBottom:"env(safe-area-inset-bottom)"}}>
         {[["panel","📊","Panel"],["decretos","📜","Gobernar"],["guerra","⚔️","Guerra"],["empresas","🏭","Trabajo"],["tienda","🛒","Tienda"]].map(([id,icon,label])=>(
-          <button key={id} onClick={()=>{tg?.HapticFeedback?.selectionChanged();setTab(id);}} style={{flex:1,background:"transparent",border:"none",padding:"10px 4px 12px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,position:"relative"}}>
+          <button key={id} onClick={()=>{tg?.HapticFeedback?.selectionChanged();setTab(id);if(id==="empresas")loadFabricas();}} style={{flex:1,background:"transparent",border:"none",padding:"10px 4px 12px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,position:"relative"}}>
             {tab===id&&<div style={{position:"absolute",top:0,left:"20%",right:"20%",height:2,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",borderRadius:1}} />}
             <span style={{fontSize:18}}>{icon}</span>
             <span style={{fontSize:9,color:tab===id?"#c9a84c":"#444",letterSpacing:0.5,textTransform:"uppercase"}}>{label}</span>
