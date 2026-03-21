@@ -828,6 +828,30 @@ export default function App() {
     } catch(e) { console.error("loadFabricas:", e); }
   };
 
+  // Realtime — actualiza fábricas automáticamente cuando alguien crea una
+  useEffect(() => {
+    const channel = db.channel("fabricas-realtime")
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "fabricas"
+      }, (payload) => {
+        if (payload.eventType === "INSERT") {
+          setFabricas(prev => {
+            const existe = prev.find(f => f.id === payload.new.id);
+            if (existe) return prev;
+            return [...prev, payload.new];
+          });
+        } else if (payload.eventType === "UPDATE") {
+          setFabricas(prev => prev.map(f => f.id === payload.new.id ? payload.new : f));
+        } else if (payload.eventType === "DELETE") {
+          setFabricas(prev => prev.filter(f => f.id !== payload.old.id));
+        }
+      })
+      .subscribe();
+    return () => { db.removeChannel(channel); };
+  }, []);
+
   const realizarTrabajo = async (fabrica) => {
     const tgId = jugador?.id || tg?.initDataUnsafe?.user?.id;
     if (!tgId) return;
