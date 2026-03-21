@@ -84,12 +84,6 @@ function getConsequence(decretoId, ideologia, stats, historialIds) {
 
 const clamp=(v,mn=0,mx=100)=>Math.min(mx,Math.max(mn,Math.round(v)));
 
-function formatDinero(n) {
-  if (!n && n !== 0) return "$0";
-  return "$" + Math.floor(n).toLocaleString("es-ES");
-}
-
-
 // ── Reloj del Juego ───────────────────────────────────────
 const JUEGO_INICIO = new Date("2026-03-21T00:00:00Z"); // Inicio: hoy 21 marzo 2026
 const MESES_JUEGO = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
@@ -361,6 +355,12 @@ export default function App() {
   const [trabajandoEn, setTrabajandoEn] = useState(null);
   const [energia, setEnergia] = useState(100);
   const [fabricas, setFabricas] = useState([]);
+  const [misVisas, setMisVisas] = useState([]);
+  const [showVisaModal, setShowVisaModal] = useState(false);
+  const [visaTarget, setVisaTarget] = useState(null);
+  const [visaSeleccionada, setVisaSeleccionada] = useState(null);
+  const [catActiva, setCatActiva] = useState("estatal");
+  const [vistaOtroPais, setVistaOtroPais] = useState(false);
   const [showCrearFabrica, setShowCrearFabrica] = useState(false);
   const [nuevaFabrica, setNuevaFabrica] = useState({nombre:"",tipo_recurso:"Comida",tasa_salarial:70});
   const tickRef = useRef(null);
@@ -416,13 +416,6 @@ export default function App() {
         setSelectedCountry(existing.pais);
         setSelectedIdeology(existing.ideologia);
         setPartyName(existing.partido||"");
-        // Cargar dinero, energía y XP SIEMPRE frescos desde Supabase
-        setDinero(existing.dinero ?? 1000);
-        // Energía: usar valor del servidor directamente
-        setEnergia(existing.energia ?? 100);
-        const xpVal = existing.xp || 0;
-        setXp(xpVal);
-        setNivel(nivelDesdeXP(xpVal));
         const { data: nation } = await db.from("naciones").select("*").eq("jugador_id",tgId).single();
         if(nation) { setStats({pib:nation.pib,militar:nation.militar,aprobacion:nation.aprobacion,petroleo:nation.petroleo,comida:nation.comida,energia:nation.energia,educacion:nation.educacion,salud:nation.salud,rebeldia:nation.rebeldia,intel:nation.intel,industria:nation.industria}); setDecreeUsed(nation.decretos_usados||[]); }
         setScreen("game");
@@ -822,6 +815,16 @@ export default function App() {
     Oro:      {icon:"🪙", color:"#c9a84c", stat:"pib"},
   };
 
+
+  // ── Visas de trabajo ─────────────────────────────────────
+  const VISAS = [
+    {tipo:"3_anios",   label:"3 años",     dias:3*365,   precio:300,  desc:"Válida por 3 años de juego"},
+    {tipo:"5_anios",   label:"5 años",     dias:5*365,   precio:450,  desc:"Válida por 5 años de juego"},
+    {tipo:"10_anios",  label:"10 años",    dias:10*365,  precio:700,  desc:"Válida por 10 años de juego"},
+    {tipo:"20_anios",  label:"20 años",    dias:20*365,  precio:1200, desc:"Válida por 20 años de juego"},
+    {tipo:"permanente",label:"Permanente", dias:99*365,  precio:2500, desc:"Nunca expira"},
+  ];
+
   const calcularEnergiaActual = (energiaGuardada, ultimaEnergia) => {
     const minsPasados = (Date.now() - new Date(ultimaEnergia||Date.now()).getTime()) / 60000;
     const regenerada = Math.min(Math.floor(minsPasados), 100 - (energiaGuardada||100));
@@ -834,30 +837,6 @@ export default function App() {
       if (fab) setFabricas(fab);
     } catch(e) { console.error("loadFabricas:", e); }
   };
-
-  // Realtime — actualiza fábricas automáticamente cuando alguien crea una
-  useEffect(() => {
-    const channel = db.channel("fabricas-realtime")
-      .on("postgres_changes", {
-        event: "*",
-        schema: "public",
-        table: "fabricas"
-      }, (payload) => {
-        if (payload.eventType === "INSERT") {
-          setFabricas(prev => {
-            const existe = prev.find(f => f.id === payload.new.id);
-            if (existe) return prev;
-            return [...prev, payload.new];
-          });
-        } else if (payload.eventType === "UPDATE") {
-          setFabricas(prev => prev.map(f => f.id === payload.new.id ? payload.new : f));
-        } else if (payload.eventType === "DELETE") {
-          setFabricas(prev => prev.filter(f => f.id !== payload.old.id));
-        }
-      })
-      .subscribe();
-    return () => { db.removeChannel(channel); };
-  }, []);
 
   const realizarTrabajo = async (fabrica) => {
     const tgId = jugador?.id || tg?.initDataUnsafe?.user?.id;
@@ -887,14 +866,6 @@ export default function App() {
       setDinero(d => (d||0) + data.salario);
       await gainXP(data.xp_ganado, `Trabajo en ${fabrica.nombre}`);
       setJugador(j => ({...j, energia: data.energia_restante}));
-      // Recargar datos frescos del jugador desde Supabase
-      const { data: jugadorFresh } = await db.from("jugadores").select("dinero,energia,xp,nivel").eq("id", tgId).single();
-      if (jugadorFresh) {
-        setDinero(jugadorFresh.dinero ?? dinero);
-        setEnergia(jugadorFresh.energia ?? data.energia_restante);
-        setXp(jugadorFresh.xp ?? xp);
-        setNivel(nivelDesdeXP(jugadorFresh.xp ?? xp));
-      }
       showNotif(`💼 +$${data.salario} · +${data.xp_ganado}XP · ⚡${data.energia_restante}/100`, "info");
       // Refresh fábricas
       setFabricas(prev => prev.map(f => f.id === fabrica.id
@@ -937,6 +908,94 @@ export default function App() {
     } catch(e) {
       showNotif("Error al crear fábrica", "error");
     }
+  };
+
+
+  const loadVisas = async () => {
+    if (!jugador?.id) return;
+    try {
+      const { data } = await db.from("visas")
+        .select("*")
+        .eq("solicitante_id", jugador.id)
+        .eq("estado", "aprobada");
+      if (data) setMisVisas(data);
+    } catch {}
+  };
+
+  const tengoVisa = (pais) => {
+    if (pais === selectedCountry) return true;
+    return misVisas.some(v => v.pais_destino === pais && new Date(v.expira_at) > new Date());
+  };
+
+  const solicitarVisa = async () => {
+    if (!visaTarget || !visaSeleccionada) return;
+    const visa = VISAS.find(v => v.tipo === visaSeleccionada);
+    if (!visa) return;
+    if ((dinero||0) < visa.precio) {
+      showNotif(`❌ Necesitas $${visa.precio.toLocaleString()} para esta visa`, "error");
+      return;
+    }
+    try {
+      // Buscar presidente del país destino
+      const { data: pres } = await db.from("jugadores")
+        .select("id,nombre")
+        .eq("pais", visaTarget)
+        .eq("rol", "presidente")
+        .single();
+
+      if (!pres) {
+        showNotif("⚠️ Ese país no tiene presidente — puedes trabajar libremente", "info");
+        setShowVisaModal(false);
+        return;
+      }
+
+      // Descontar dinero al solicitante
+      const nuevoDinero = (dinero||0) - visa.precio;
+      setDinero(nuevoDinero);
+      await db.from("jugadores").update({dinero: nuevoDinero}).eq("id", jugador.id);
+
+      // Crear solicitud de visa
+      const expira = new Date();
+      expira.setDate(expira.getDate() + visa.dias);
+
+      await db.from("visas").insert({
+        solicitante_id: jugador.id,
+        pais_destino: visaTarget,
+        presidente_id: pres.id,
+        tipo: visa.tipo,
+        duracion_dias: visa.dias,
+        precio: visa.precio,
+        estado: "pendiente",
+        expira_at: expira.toISOString()
+      });
+
+      setShowVisaModal(false);
+      setVisaTarget(null);
+      setVisaSeleccionada(null);
+      showNotif(`📋 Visa solicitada a ${pres.nombre}. Esperando aprobación.`, "info");
+    } catch(e) {
+      showNotif("Error al solicitar visa", "error");
+    }
+  };
+
+  const responderVisa = async (visaId, aprobar, solicitanteId, precio) => {
+    try {
+      if (aprobar) {
+        await db.from("visas").update({estado:"aprobada"}).eq("id", visaId);
+        // 30% al presidente
+        const ganancia = Math.floor(precio * 0.3);
+        const nuevoDinero = (dinero||0) + ganancia;
+        setDinero(nuevoDinero);
+        await db.from("jugadores").update({dinero: nuevoDinero}).eq("id", jugador.id);
+        showNotif(`✅ Visa aprobada · +$${ganancia} (30%)`, "info");
+      } else {
+        await db.from("visas").update({estado:"rechazada"}).eq("id", visaId);
+        // Devolver dinero al solicitante
+        const { data: sol } = await db.from("jugadores").select("dinero").eq("id", solicitanteId).single();
+        await db.from("jugadores").update({dinero: (sol?.dinero||0) + precio}).eq("id", solicitanteId);
+        showNotif("❌ Visa rechazada — dinero devuelto al solicitante", "info");
+      }
+    } catch { showNotif("Error al responder visa", "error"); }
   };
 
   const issueDecree = async (decree) => {
@@ -1346,10 +1405,7 @@ export default function App() {
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <button onClick={()=>{setNuevoNombre(leaderName);setShowPerfilModal(true);}} style={{width:34,height:34,borderRadius:"50%",background:`linear-gradient(135deg,${ideo.color},${ideo.color}88)`,border:`2px solid ${ideo.color}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,cursor:"pointer",flexShrink:0}}>{ideo.icon}</button>
             <div>
-              <div style={{fontSize:12,color:"#e8e8e8",fontWeight:"bold",display:"flex",alignItems:"center",gap:8}}>
-                {leaderName}
-                <span style={{fontSize:12,color:"#c9a84c",fontFamily:"monospace",fontWeight:"bold"}}>{formatDinero(dinero)}</span>
-              </div>
+              <div style={{fontSize:12,color:"#e8e8e8",fontWeight:"bold"}}>{leaderName}</div>
               <div style={{fontSize:10,display:"flex",alignItems:"center",gap:6}}>
                 <span style={{color:ideo.color}}>{selectedCountry}</span>
                 <span style={{background:esPresidente?"rgba(201,168,76,0.2)":"rgba(76,175,80,0.2)",color:esPresidente?"#c9a84c":"#4caf50",padding:"1px 6px",borderRadius:10,fontSize:9,letterSpacing:0.5}}>
@@ -1429,7 +1485,7 @@ export default function App() {
                     <span style={{fontSize:11,color:"#888",fontFamily:"monospace"}}>{xp} / {Math.round(100*(nivel+1)*(nivel+1))} XP</span>
                   </div>
                   <div style={{height:6,background:"rgba(255,255,255,0.06)",borderRadius:3,overflow:"hidden"}}>
-                    <div style={{height:"100%",width:`${Math.min(100, Math.max(0, ((xp - xpParaNivel(nivel)) / (xpParaNivel(nivel+1) - xpParaNivel(nivel))) * 100))}%`,background:`linear-gradient(90deg,${colorNivel(nivel)},${colorNivel(nivel)}88)`,borderRadius:3,transition:"width 0.8s ease"}} />
+                    <div style={{height:"100%",width:`${Math.min(100,((xp - Math.round(100*nivel*nivel)) / (Math.round(100*(nivel+1)*(nivel+1)) - Math.round(100*nivel*nivel)))*100)}%`,background:`linear-gradient(90deg,${colorNivel(nivel)},${colorNivel(nivel)}88)`,borderRadius:3,transition:"width 0.8s ease"}} />
                   </div>
                   <div style={{fontSize:11,color:"#555",marginTop:4}}>💰 Dinero: ${dinero?.toLocaleString()}</div>
                 </div>
@@ -1448,7 +1504,7 @@ export default function App() {
                   <div>
                     <div style={{fontSize:12,color:colorNivel(nivel),fontWeight:"bold"}}>Nv.{nivel} — {tituloNivel(nivel)}</div>
                     <div style={{height:4,width:120,background:"rgba(255,255,255,0.06)",borderRadius:2,overflow:"hidden",marginTop:4}}>
-                      <div style={{height:"100%",width:`${Math.min(100, Math.max(0, ((xp - xpParaNivel(nivel)) / (xpParaNivel(nivel+1) - xpParaNivel(nivel))) * 100))}%`,background:colorNivel(nivel),borderRadius:2}} />
+                      <div style={{height:"100%",width:`${Math.min(100,((xp - Math.round(100*nivel*nivel)) / (Math.round(100*(nivel+1)*(nivel+1)) - Math.round(100*nivel*nivel)))*100)}%`,background:colorNivel(nivel),borderRadius:2}} />
                     </div>
                   </div>
                   <div style={{textAlign:"right"}}>
@@ -1897,6 +1953,7 @@ export default function App() {
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
               <div style={{fontSize:11,color:"#c9a84c",letterSpacing:2,textTransform:"uppercase"}}>🏭 Fábricas y Trabajo</div>
               <div style={{display:"flex",gap:6}}>
+                <button onClick={loadFabricas} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",color:"#888",padding:"6px 10px",borderRadius:6,cursor:"pointer",fontSize:11}}>🔄</button>
                 <button onClick={()=>setShowCrearFabrica(true)} style={{background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.3)",color:"#c9a84c",padding:"6px 12px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:11,fontWeight:"bold"}}>+ FUNDAR</button>
               </div>
             </div>
@@ -1917,59 +1974,134 @@ export default function App() {
                 <button onClick={()=>setShowCrearFabrica(true)} style={{background:"linear-gradient(135deg,#c9a84c,#a07830)",border:"none",color:"#0a0e1a",padding:"12px 24px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold"}}>🏭 FUNDAR PRIMERA</button>
               </div>
             ) : (() => {
+              // Categorías de fábricas
               const CATS = [
-                {key:"estatal",  label:"🏛️ Estatales",   color:"#2196f3", filter:f=>f.nombre.toLowerCase().includes("estatal")||f.nombre.toLowerCase().includes("granja")||f.nombre.toLowerCase().includes("petrolera")},
-                {key:"comida",   label:"🌾 Alimentario",  color:"#4caf50", filter:f=>f.tipo_recurso==="Comida"&&!f.nombre.toLowerCase().includes("estatal")&&!f.nombre.toLowerCase().includes("granja")},
-                {key:"energia",  label:"⚡ Energético",   color:"#03a9f4", filter:f=>f.tipo_recurso==="Energía"},
-                {key:"mineral",  label:"⛏️ Minero",       color:"#795548", filter:f=>f.tipo_recurso==="Mineral"},
-                {key:"petroleo", label:"🛢️ Petrolero",    color:"#ff8f00", filter:f=>f.tipo_recurso==="Petróleo"&&!f.nombre.toLowerCase().includes("estatal")&&!f.nombre.toLowerCase().includes("petrolera")},
-                {key:"militar",  label:"⚔️ Militar",      color:"#e53935", filter:f=>f.tipo_recurso==="Armas"},
-                {key:"oro",      label:"🪙 Económico",    color:"#c9a84c", filter:f=>f.tipo_recurso==="Oro"},
+                {key:"estatal",  label:"🏛️ Estatales",  color:"#2196f3", filter:f=>f.nombre.toLowerCase().includes("estatal")||f.nombre.toLowerCase().includes("granja")||f.nombre.toLowerCase().includes("petrolera")},
+                {key:"comida",   label:"🌾 Granjas",     color:"#4caf50", filter:f=>f.tipo_recurso==="Comida"&&!f.nombre.toLowerCase().includes("estatal")&&!f.nombre.toLowerCase().includes("granja")},
+                {key:"petroleo", label:"🛢️ Petroleras",  color:"#ff8f00", filter:f=>f.tipo_recurso==="Petróleo"&&!f.nombre.toLowerCase().includes("estatal")&&!f.nombre.toLowerCase().includes("petrolera")},
+                {key:"energia",  label:"⚡ Energéticas", color:"#03a9f4", filter:f=>f.tipo_recurso==="Energía"},
+                {key:"mineral",  label:"⛏️ Mineras",     color:"#795548", filter:f=>f.tipo_recurso==="Mineral"},
+                {key:"militar",  label:"⚔️ Militares",   color:"#e53935", filter:f=>f.tipo_recurso==="Armas"},
+                {key:"oro",      label:"🪙 Económicas",  color:"#c9a84c", filter:f=>f.tipo_recurso==="Oro"},
               ];
-              return CATS.map(cat => {
-                const lista = fabricas.filter(cat.filter);
-                if (lista.length === 0) return null;
+
+              // Separar fábricas por país
+              const fabsPais = fabricas.filter(f => f.pais === selectedCountry);
+              const fabsOtros = fabricas.filter(f => f.pais !== selectedCountry);
+
+              const renderFabrica = (fab, i) => {
+                const tipo = TIPOS_RECURSO[fab.tipo_recurso]||{icon:"🏭",color:"#888"};
+                const esMia = fab.owner_id===jugador?.id;
+                const esEstatal = fab.nombre.toLowerCase().includes("estatal")||fab.nombre.toLowerCase().includes("granja")||fab.nombre.toLowerCase().includes("petrolera");
+                const nivelReq = esEstatal?0:fab.nivel>=3?15:fab.nivel>=2?8:3;
+                const puedoAcceder = nivel>=nivelReq;
+                const tieneVisa = tengoVisa(fab.pais);
+                const puedoTrabajar = energia>=10&&puedoAcceder&&tieneVisa;
+                const salarioEstimado = Math.floor((fab.nivel*(fab.produccion_base||100)*0.9)*fab.tasa_salarial/100);
                 return (
-                  <div key={cat.key} style={{marginBottom:20}}>
-                    <div style={{fontSize:11,color:cat.color,letterSpacing:2,textTransform:"uppercase",marginBottom:8,paddingBottom:6,borderBottom:`1px solid ${cat.color}33`,display:"flex",justifyContent:"space-between"}}>
-                      <span>{cat.label}</span>
-                      <span style={{color:"#555"}}>{lista.length} fábrica{lista.length!==1?"s":""}</span>
-                    </div>
-                    {lista.map((fab,i) => {
-                      const tipo = TIPOS_RECURSO[fab.tipo_recurso]||{icon:"🏭",color:"#888"};
-                      const esMia = fab.owner_id===jugador?.id;
-                      const esEstatal = fab.nombre.toLowerCase().includes("estatal")||fab.nombre.toLowerCase().includes("granja")||fab.nombre.toLowerCase().includes("petrolera");
-                      const nivelReq = esEstatal?0:fab.nivel>=3?15:fab.nivel>=2?8:3;
-                      const puedoAcceder = nivel>=nivelReq;
-                      const puedoTrabajar = energia>=10&&puedoAcceder;
-                      const salarioEstimado = Math.floor((fab.nivel*(fab.produccion_base||100)*0.9)*fab.tasa_salarial/100);
-                      return (
-                        <div key={i} style={{background:esEstatal?"rgba(33,150,243,0.06)":esMia?"rgba(201,168,76,0.06)":"rgba(255,255,255,0.02)",border:`1px solid ${esEstatal?"rgba(33,150,243,0.3)":esMia?"rgba(201,168,76,0.3)":cat.color+"33"}`,borderRadius:8,padding:14,marginBottom:8,opacity:puedoAcceder?1:0.5}}>
-                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
-                            <div>
-                              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
-                                <span style={{fontSize:18}}>{tipo.icon}</span>
-                                <span style={{fontSize:13,color:esEstatal?"#2196f3":esMia?"#c9a84c":"#e8e8e8",fontWeight:"bold"}}>{fab.nombre}</span>
-                                {esEstatal&&<span style={{fontSize:9,color:"#2196f3",background:"rgba(33,150,243,0.15)",padding:"1px 6px",borderRadius:10}}>ESTATAL</span>}
-                                {esMia&&!esEstatal&&<span style={{fontSize:9,color:"#c9a84c",background:"rgba(201,168,76,0.15)",padding:"1px 6px",borderRadius:10}}>MÍA</span>}
-                              </div>
-                              <div style={{fontSize:10,color:"#666"}}>{fab.pais} · Nv.{fab.nivel} · {fab.tasa_salarial}% para ti</div>
-                            </div>
-                            <div style={{textAlign:"right"}}>
-                              <div style={{fontSize:14,color:"#4caf50",fontFamily:"monospace",fontWeight:"bold"}}>${salarioEstimado}</div>
-                              <div style={{fontSize:10,color:"#555"}}>por turno</div>
-                            </div>
-                          </div>
-                          {!puedoAcceder&&<div style={{fontSize:11,color:"#e53935",marginBottom:6}}>⛔ Necesitas nivel {nivelReq}</div>}
-                          <button onClick={()=>realizarTrabajo(fab)} disabled={!puedoTrabajar||trabajandoEn===fab.id} style={{width:"100%",background:puedoTrabajar?"linear-gradient(135deg,rgba(76,175,80,0.3),rgba(76,175,80,0.15))":"rgba(255,255,255,0.03)",border:`1px solid ${puedoTrabajar?"rgba(76,175,80,0.5)":"rgba(255,255,255,0.06)"}`,color:puedoTrabajar?"#4caf50":"#555",padding:"10px",borderRadius:6,cursor:puedoTrabajar?"pointer":"not-allowed",fontFamily:"Georgia,serif",fontWeight:"bold",fontSize:12}}>
-                            {trabajandoEn===fab.id?"⏳ Trabajando...":!puedoAcceder?`🔒 Nivel ${nivelReq} requerido`:puedoTrabajar?`💼 TRABAJAR — $${salarioEstimado} · ⚡-10`:`⚡ Sin energía (${energia}/10)`}
-                          </button>
+                  <div key={i} style={{background:esEstatal?"rgba(33,150,243,0.06)":esMia?"rgba(201,168,76,0.06)":"rgba(255,255,255,0.02)",border:`1px solid ${esEstatal?"rgba(33,150,243,0.3)":esMia?"rgba(201,168,76,0.3)":tipo.color+"33"}`,borderRadius:8,padding:12,marginBottom:8,opacity:puedoAcceder?1:0.5}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+                      <div>
+                        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                          <span style={{fontSize:16}}>{tipo.icon}</span>
+                          <span style={{fontSize:13,color:esEstatal?"#2196f3":esMia?"#c9a84c":"#e8e8e8",fontWeight:"bold"}}>{fab.nombre}</span>
+                          {esEstatal&&<span style={{fontSize:9,color:"#2196f3",background:"rgba(33,150,243,0.15)",padding:"1px 6px",borderRadius:10}}>ESTATAL</span>}
+                          {esMia&&!esEstatal&&<span style={{fontSize:9,color:"#c9a84c",background:"rgba(201,168,76,0.15)",padding:"1px 6px",borderRadius:10}}>MÍA</span>}
                         </div>
+                        <div style={{fontSize:10,color:"#666"}}>{fab.pais} · Nv.{fab.nivel} · {fab.tasa_salarial}% para ti · 👥{fab.trabajadores_actuales||0}</div>
+                      </div>
+                      <div style={{fontSize:14,color:"#4caf50",fontFamily:"monospace",fontWeight:"bold"}}>${salarioEstimado}</div>
+                    </div>
+                    {!puedoAcceder&&<div style={{fontSize:10,color:"#e53935",marginBottom:4}}>⛔ Nivel {nivelReq} requerido</div>}
+                    {!tieneVisa&&<div style={{fontSize:10,color:"#ff9800",marginBottom:4}}>🛂 Necesitas visa de trabajo para este país</div>}
+                    <button onClick={()=>{if(!tieneVisa&&fab.pais!==selectedCountry){setVisaTarget(fab.pais);setShowVisaModal(true);}else realizarTrabajo(fab);}} disabled={(!puedoTrabajar&&tieneVisa)||trabajandoEn===fab.id}
+                      style={{width:"100%",background:puedoTrabajar?"linear-gradient(135deg,rgba(76,175,80,0.3),rgba(76,175,80,0.15))":"rgba(255,255,255,0.03)",border:`1px solid ${puedoTrabajar?"rgba(76,175,80,0.5)":"rgba(255,255,255,0.06)"}`,color:puedoTrabajar?"#4caf50":"#555",padding:"9px",borderRadius:6,cursor:puedoTrabajar?"pointer":"not-allowed",fontFamily:"Georgia,serif",fontWeight:"bold",fontSize:12}}>
+                      {trabajandoEn===fab.id?"⏳ Trabajando...":!tieneVisa&&fab.pais!==selectedCountry?`🛂 Obtener visa`:!puedoAcceder?`🔒 Nivel ${nivelReq}`:puedoTrabajar?`💼 TRABAJAR — $${salarioEstimado} · ⚡-10`:`⚡ Sin energía`}
+                    </button>
+                  </div>
+                );
+              };
+
+              const fabsFiltradas = (vistaOtroPais ? fabsOtros : fabsPais).filter(f => {
+                const cat = CATS.find(cc => cc.key === catActiva);
+                return cat ? cat.filter(f) : true;
+              });
+
+              return (
+                <>
+                  {/* Toggle mi país / otros países */}
+                  <div style={{display:"flex",gap:8,marginBottom:12}}>
+                    <button onClick={()=>setVistaOtroPais(false)} style={{flex:1,background:!vistaOtroPais?"rgba(201,168,76,0.2)":"rgba(255,255,255,0.03)",border:`1px solid ${!vistaOtroPais?"rgba(201,168,76,0.5)":"rgba(255,255,255,0.08)"}`,color:!vistaOtroPais?"#c9a84c":"#666",padding:"10px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold",fontSize:12}}>
+                      🏠 Mi País ({fabsPais.length})
+                    </button>
+                    <button onClick={()=>setVistaOtroPais(true)} style={{flex:1,background:vistaOtroPais?"rgba(255,152,0,0.2)":"rgba(255,255,255,0.03)",border:`1px solid ${vistaOtroPais?"rgba(255,152,0,0.5)":"rgba(255,255,255,0.08)"}`,color:vistaOtroPais?"#ff9800":"#666",padding:"10px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold",fontSize:12}}>
+                      🌍 Otros Países ({fabsOtros.length})
+                    </button>
+                  </div>
+
+                  {/* Info visa si está en otros países */}
+                  {vistaOtroPais && (
+                    <div style={{background:"rgba(255,152,0,0.08)",border:"1px solid rgba(255,152,0,0.3)",borderRadius:8,padding:12,marginBottom:12,fontSize:12,color:"#ff9800"}}>
+                      🛂 Para trabajar en otro país necesitas una <strong>visa de trabajo</strong>.<br/>
+                      <span style={{color:"#888",fontSize:11}}>Toca el botón "Obtener visa" en la fábrica deseada.</span>
+                    </div>
+                  )}
+
+                  {/* Botones de categoría */}
+                  <div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:12,paddingBottom:4}}>
+                    {CATS.map(cat => {
+                      const count = (vistaOtroPais?fabsOtros:fabsPais).filter(cat.filter).length;
+                      if (count === 0) return null;
+                      return (
+                        <button key={cat.key} onClick={()=>setCatActiva(cat.key)}
+                          style={{flexShrink:0,background:catActiva===cat.key?`${cat.color}22`:"rgba(255,255,255,0.03)",border:`1px solid ${catActiva===cat.key?cat.color:"rgba(255,255,255,0.08)"}`,color:catActiva===cat.key?cat.color:"#666",padding:"7px 12px",borderRadius:20,cursor:"pointer",fontSize:11,fontFamily:"Georgia,serif",whiteSpace:"nowrap"}}>
+                          {cat.label} ({count})
+                        </button>
                       );
                     })}
                   </div>
-                );
-              });
+
+                  {/* Lista de fábricas */}
+                  {fabsFiltradas.length === 0 ? (
+                    <div style={{textAlign:"center",color:"#555",padding:20,fontSize:13}}>
+                      No hay fábricas en esta categoría
+                    </div>
+                  ) : fabsFiltradas.map((fab,i) => renderFabrica(fab,i))}
+
+                  {/* Modal solicitar visa */}
+                  {showVisaModal && visaTarget && (
+                    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",zIndex:600,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+                      <div style={{background:"#0f1420",border:"1px solid rgba(255,152,0,0.4)",borderRadius:12,padding:22,width:"100%",maxWidth:380}}>
+                        <div style={{fontSize:28,textAlign:"center",marginBottom:8}}>🛂</div>
+                        <h3 style={{color:"#ff9800",textAlign:"center",marginBottom:4,fontSize:16}}>VISA DE TRABAJO</h3>
+                        <p style={{color:"#888",fontSize:12,textAlign:"center",marginBottom:16}}>País destino: <strong style={{color:"#e8e8e8"}}>{visaTarget}</strong></p>
+                        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+                          {VISAS.map(v => (
+                            <button key={v.tipo} onClick={()=>setVisaSeleccionada(v.tipo)}
+                              style={{background:visaSeleccionada===v.tipo?"rgba(255,152,0,0.2)":"rgba(255,255,255,0.03)",border:`1px solid ${visaSeleccionada===v.tipo?"rgba(255,152,0,0.6)":"rgba(255,255,255,0.08)"}`,color:visaSeleccionada===v.tipo?"#ff9800":"#888",padding:"12px 16px",borderRadius:8,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",fontFamily:"Georgia,serif"}}>
+                              <div style={{textAlign:"left"}}>
+                                <div style={{fontSize:13,fontWeight:"bold"}}>{v.label}</div>
+                                <div style={{fontSize:11,opacity:0.7}}>{v.desc}</div>
+                              </div>
+                              <div style={{fontSize:14,fontWeight:"bold",color:(dinero||0)>=v.precio?"#4caf50":"#e53935"}}>${v.precio.toLocaleString()}</div>
+                            </button>
+                          ))}
+                        </div>
+                        <div style={{fontSize:11,color:"#555",marginBottom:14,textAlign:"center"}}>
+                          30% va al presidente del país · 70% se quema del juego
+                        </div>
+                        <div style={{display:"flex",gap:8}}>
+                          <button onClick={()=>{setShowVisaModal(false);setVisaTarget(null);setVisaSeleccionada(null);}} style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",color:"#888",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif"}}>CANCELAR</button>
+                          <button onClick={solicitarVisa} disabled={!visaSeleccionada||(dinero||0)<(VISAS.find(v=>v.tipo===visaSeleccionada)?.precio||0)}
+                            style={{flex:2,background:visaSeleccionada&&(dinero||0)>=(VISAS.find(v=>v.tipo===visaSeleccionada)?.precio||0)?"linear-gradient(135deg,#ff9800,#e65100)":"#2a2a3a",border:"none",color:visaSeleccionada?"#fff":"#444",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold"}}>
+                            🛂 SOLICITAR VISA
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
             })()}
           </div>
         )}
@@ -2070,7 +2202,7 @@ export default function App() {
       {/* Bottom Nav */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:"rgba(10,14,26,0.97)",borderTop:"1px solid rgba(201,168,76,0.2)",display:"flex",backdropFilter:"blur(20px)",paddingBottom:"env(safe-area-inset-bottom)"}}>
         {[["panel","📊","Panel"],["decretos","📜","Gobernar"],["guerra","⚔️","Guerra"],["empresas","🏭","Trabajo"],["tienda","🛒","Tienda"]].map(([id,icon,label])=>(
-          <button key={id} onClick={()=>{tg?.HapticFeedback?.selectionChanged();setTab(id);if(id==="empresas")loadFabricas();}} style={{flex:1,background:"transparent",border:"none",padding:"10px 4px 12px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,position:"relative"}}>
+          <button key={id} onClick={()=>{tg?.HapticFeedback?.selectionChanged();setTab(id);}} style={{flex:1,background:"transparent",border:"none",padding:"10px 4px 12px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,position:"relative"}}>
             {tab===id&&<div style={{position:"absolute",top:0,left:"20%",right:"20%",height:2,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",borderRadius:1}} />}
             <span style={{fontSize:18}}>{icon}</span>
             <span style={{fontSize:9,color:tab===id?"#c9a84c":"#444",letterSpacing:0.5,textTransform:"uppercase"}}>{label}</span>
