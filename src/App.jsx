@@ -416,10 +416,13 @@ export default function App() {
         setSelectedCountry(existing.pais);
         setSelectedIdeology(existing.ideologia);
         setPartyName(existing.partido||"");
-        // Cargar dinero y energía SIEMPRE frescos desde Supabase
+        // Cargar dinero, energía y XP SIEMPRE frescos desde Supabase
         setDinero(existing.dinero ?? 1000);
         const enActual = calcularEnergiaActual(existing.energia, existing.ultima_energia);
         setEnergia(enActual);
+        const xpVal = existing.xp || 0;
+        setXp(xpVal);
+        setNivel(nivelDesdeXP(xpVal));
         const { data: nation } = await db.from("naciones").select("*").eq("jugador_id",tgId).single();
         if(nation) { setStats({pib:nation.pib,militar:nation.militar,aprobacion:nation.aprobacion,petroleo:nation.petroleo,comida:nation.comida,energia:nation.energia,educacion:nation.educacion,salud:nation.salud,rebeldia:nation.rebeldia,intel:nation.intel,industria:nation.industria}); setDecreeUsed(nation.decretos_usados||[]); }
         setScreen("game");
