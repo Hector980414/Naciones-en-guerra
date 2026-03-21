@@ -418,8 +418,8 @@ export default function App() {
         setPartyName(existing.partido||"");
         // Cargar dinero, energía y XP SIEMPRE frescos desde Supabase
         setDinero(existing.dinero ?? 1000);
-        const enActual = calcularEnergiaActual(existing.energia, existing.ultima_energia);
-        setEnergia(enActual);
+        // Energía: usar valor del servidor directamente
+        setEnergia(existing.energia ?? 100);
         const xpVal = existing.xp || 0;
         setXp(xpVal);
         setNivel(nivelDesdeXP(xpVal));
