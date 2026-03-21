@@ -383,7 +383,10 @@ export default function App() {
     // Re-sincronizar con servidor cada 10 segundos — cualquier trampa se corrige rápido
     const si = setInterval(syncTick, 10000);
     // Countdown local solo para UI fluida entre sincronizaciones
-    tickRef.current = setInterval(() => setCountdown(c => Math.max(0, c - 1)), 1000);
+    tickRef.current = setInterval(() => {
+      setCountdown(c => Math.max(0, c - 1));
+      setFechaJuego(calcularFechaJuego());
+    }, 1000);
     return () => { clearInterval(si); clearInterval(tickRef.current); };
   }, [syncTick]);
 
