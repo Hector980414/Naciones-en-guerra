@@ -1429,7 +1429,7 @@ export default function App() {
                     <span style={{fontSize:11,color:"#888",fontFamily:"monospace"}}>{xp} / {Math.round(100*(nivel+1)*(nivel+1))} XP</span>
                   </div>
                   <div style={{height:6,background:"rgba(255,255,255,0.06)",borderRadius:3,overflow:"hidden"}}>
-                    <div style={{height:"100%",width:`${Math.min(100,((xp - Math.round(100*nivel*nivel)) / (Math.round(100*(nivel+1)*(nivel+1)) - Math.round(100*nivel*nivel)))*100)}%`,background:`linear-gradient(90deg,${colorNivel(nivel)},${colorNivel(nivel)}88)`,borderRadius:3,transition:"width 0.8s ease"}} />
+                    <div style={{height:"100%",width:`${Math.min(100, Math.max(0, ((xp - xpParaNivel(nivel)) / (xpParaNivel(nivel+1) - xpParaNivel(nivel))) * 100))}%`,background:`linear-gradient(90deg,${colorNivel(nivel)},${colorNivel(nivel)}88)`,borderRadius:3,transition:"width 0.8s ease"}} />
                   </div>
                   <div style={{fontSize:11,color:"#555",marginTop:4}}>💰 Dinero: ${dinero?.toLocaleString()}</div>
                 </div>
@@ -1448,7 +1448,7 @@ export default function App() {
                   <div>
                     <div style={{fontSize:12,color:colorNivel(nivel),fontWeight:"bold"}}>Nv.{nivel} — {tituloNivel(nivel)}</div>
                     <div style={{height:4,width:120,background:"rgba(255,255,255,0.06)",borderRadius:2,overflow:"hidden",marginTop:4}}>
-                      <div style={{height:"100%",width:`${Math.min(100,((xp - Math.round(100*nivel*nivel)) / (Math.round(100*(nivel+1)*(nivel+1)) - Math.round(100*nivel*nivel)))*100)}%`,background:colorNivel(nivel),borderRadius:2}} />
+                      <div style={{height:"100%",width:`${Math.min(100, Math.max(0, ((xp - xpParaNivel(nivel)) / (xpParaNivel(nivel+1) - xpParaNivel(nivel))) * 100))}%`,background:colorNivel(nivel),borderRadius:2}} />
                     </div>
                   </div>
                   <div style={{textAlign:"right"}}>
