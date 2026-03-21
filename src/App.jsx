@@ -84,6 +84,15 @@ function getConsequence(decretoId, ideologia, stats, historialIds) {
 
 const clamp=(v,mn=0,mx=100)=>Math.min(mx,Math.max(mn,Math.round(v)));
 
+function formatDinero(n) {
+  if (!n) return "$0";
+  if (n >= 1000000000) return `$${(n/1000000000).toFixed(1).replace(/\.0$/,"")}B`;
+  if (n >= 1000000) return `$${(n/1000000).toFixed(1).replace(/\.0$/,"")}M`;
+  if (n >= 1000) return `$${(n/1000).toFixed(1).replace(/\.0$/,"")}K`;
+  return `$${n.toLocaleString()}`;
+}
+
+
 // ── Reloj del Juego ───────────────────────────────────────
 const JUEGO_INICIO = new Date("2026-03-21T00:00:00Z"); // Inicio: hoy 21 marzo 2026
 const MESES_JUEGO = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
@@ -1301,7 +1310,10 @@ export default function App() {
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <button onClick={()=>{setNuevoNombre(leaderName);setShowPerfilModal(true);}} style={{width:34,height:34,borderRadius:"50%",background:`linear-gradient(135deg,${ideo.color},${ideo.color}88)`,border:`2px solid ${ideo.color}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,cursor:"pointer",flexShrink:0}}>{ideo.icon}</button>
             <div>
-              <div style={{fontSize:12,color:"#e8e8e8",fontWeight:"bold"}}>{leaderName}</div>
+              <div style={{fontSize:12,color:"#e8e8e8",fontWeight:"bold",display:"flex",alignItems:"center",gap:8}}>
+                {leaderName}
+                <span style={{fontSize:12,color:"#c9a84c",fontFamily:"monospace",fontWeight:"bold"}}>{formatDinero(dinero)}</span>
+              </div>
               <div style={{fontSize:10,display:"flex",alignItems:"center",gap:6}}>
                 <span style={{color:ideo.color}}>{selectedCountry}</span>
                 <span style={{background:esPresidente?"rgba(201,168,76,0.2)":"rgba(76,175,80,0.2)",color:esPresidente?"#c9a84c":"#4caf50",padding:"1px 6px",borderRadius:10,fontSize:9,letterSpacing:0.5}}>
