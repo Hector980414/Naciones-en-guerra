@@ -1822,7 +1822,6 @@ export default function App() {
         {/* FÁBRICAS Y TRABAJO */}
         {tab==="empresas" && (
           <div>
-            {/* Modal crear fábrica */}
             {showCrearFabrica && (
               <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
                 <div style={{background:"#0f1420",border:"1px solid rgba(201,168,76,0.3)",borderRadius:12,padding:20,width:"100%",maxWidth:380}}>
@@ -1847,7 +1846,6 @@ export default function App() {
                 </div>
               </div>
             )}
-
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
               <div style={{fontSize:11,color:"#c9a84c",letterSpacing:2,textTransform:"uppercase"}}>🏭 Fábricas y Trabajo</div>
               <div style={{display:"flex",gap:6}}>
@@ -1855,8 +1853,6 @@ export default function App() {
                 <button onClick={()=>setShowCrearFabrica(true)} style={{background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.3)",color:"#c9a84c",padding:"6px 12px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:11,fontWeight:"bold"}}>+ FUNDAR</button>
               </div>
             </div>
-
-            {/* Barra de energía */}
             <div style={{background:"rgba(3,169,244,0.08)",border:"1px solid rgba(3,169,244,0.25)",borderRadius:8,padding:14,marginBottom:14}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                 <div style={{fontSize:13,color:"#03a9f4",fontWeight:"bold"}}>⚡ Energía</div>
@@ -1865,36 +1861,31 @@ export default function App() {
               <div style={{height:10,background:"rgba(255,255,255,0.06)",borderRadius:5,overflow:"hidden",marginBottom:6}}>
                 <div style={{height:"100%",width:`${energia}%`,background:`linear-gradient(90deg,${energia>30?"#03a9f4":"#e53935"},${energia>30?"#4fc3f7":"#ef9a9a"})`,borderRadius:5,transition:"width 1s ease"}}/>
               </div>
-              <div style={{fontSize:11,color:"#555"}}>
-                {energia>=10?`✅ Puedes trabajar ${Math.floor(energia/10)} veces`:`⏳ Recargando... +1 por minuto · Faltan ${10-energia} para trabajar`}
-              </div>
+              <div style={{fontSize:11,color:"#555"}}>{energia>=10?`✅ Puedes trabajar ${Math.floor(energia/10)} veces`:`⏳ Recargando +1/min · Faltan ${10-energia} para trabajar`}</div>
             </div>
-
-            {fabricas.length===0 ? (
+            {fabricas.length===0?(
               <div style={{textAlign:"center",padding:30,color:"#555"}}>
                 <div style={{fontSize:32,marginBottom:8}}>🏭</div>
-                <div style={{fontSize:14,color:"#888",marginBottom:8}}>No hay fábricas todavía</div>
-                <div style={{fontSize:12,color:"#555",marginBottom:16}}>Sé el primero en fundar una en {selectedCountry}</div>
-                <button onClick={()=>setShowCrearFabrica(true)} style={{background:"linear-gradient(135deg,#c9a84c,#a07830)",border:"none",color:"#0a0e1a",padding:"12px 24px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold"}}>🏭 FUNDAR PRIMERA FÁBRICA</button>
+                <div style={{fontSize:14,color:"#888",marginBottom:8}}>No hay fábricas</div>
+                <button onClick={()=>setShowCrearFabrica(true)} style={{background:"linear-gradient(135deg,#c9a84c,#a07830)",border:"none",color:"#0a0e1a",padding:"12px 24px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold"}}>🏭 FUNDAR PRIMERA</button>
               </div>
-            ) : fabricas.map((fab,i) => {
-              const tipo = TIPOS_RECURSO[fab.tipo_recurso]||{icon:"🏭",color:"#888"};
-              const esMia = fab.owner_id===jugador?.id;
-              const esEstatal = fab.nombre.toLowerCase().includes("estatal")||fab.nombre.toLowerCase().includes("granja")||fab.nombre.toLowerCase().includes("petrolera");
-              const nivelReq = esEstatal?0:fab.nivel>=3?15:fab.nivel>=2?8:3;
-              const puedoAcceder = nivel>=nivelReq;
-              const puedoTrabajar = energia>=10&&puedoAcceder;
-              const produccion = fab.nivel*(fab.produccion_base||100);
-              const salarioEstimado = Math.floor((produccion*0.9)*fab.tasa_salarial/100);
-              return (
+            ):fabricas.map((fab,i)=>{
+              const tipo=TIPOS_RECURSO[fab.tipo_recurso]||{icon:"🏭",color:"#888"};
+              const esMia=fab.owner_id===jugador?.id;
+              const esEstatal=fab.nombre.toLowerCase().includes("estatal")||fab.nombre.toLowerCase().includes("granja")||fab.nombre.toLowerCase().includes("petrolera");
+              const nivelReq=esEstatal?0:fab.nivel>=3?15:fab.nivel>=2?8:3;
+              const puedoAcceder=nivel>=nivelReq;
+              const puedoTrabajar=energia>=10&&puedoAcceder;
+              const salarioEstimado=Math.floor((fab.nivel*(fab.produccion_base||100)*0.9)*fab.tasa_salarial/100);
+              return(
                 <div key={i} style={{background:esEstatal?"rgba(33,150,243,0.06)":esMia?"rgba(201,168,76,0.06)":"rgba(255,255,255,0.02)",border:`1px solid ${esEstatal?"rgba(33,150,243,0.3)":esMia?"rgba(201,168,76,0.3)":tipo.color+"33"}`,borderRadius:8,padding:14,marginBottom:10,opacity:puedoAcceder?1:0.5}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
                     <div>
                       <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
                         <span style={{fontSize:20}}>{tipo.icon}</span>
                         <span style={{fontSize:14,color:esEstatal?"#2196f3":esMia?"#c9a84c":"#e8e8e8",fontWeight:"bold"}}>{fab.nombre}</span>
-                        {esEstatal&&<span style={{fontSize:9,color:"#2196f3",background:"rgba(33,150,243,0.15)",padding:"1px 6px",borderRadius:10}}>ESTATAL</span>}
-                        {esMia&&!esEstatal&&<span style={{fontSize:9,color:"#c9a84c",background:"rgba(201,168,76,0.15)",padding:"1px 6px",borderRadius:10}}>MÍA</span>}
+                        {esEstatal&&<span style={{fontSize:9,color:"#2196f3",background:"rgba(33,150,243,0.15)",padding:"1px 6px",borderRadius:10,marginLeft:4}}>ESTATAL</span>}
+                        {esMia&&!esEstatal&&<span style={{fontSize:9,color:"#c9a84c",background:"rgba(201,168,76,0.15)",padding:"1px 6px",borderRadius:10,marginLeft:4}}>MÍA</span>}
                       </div>
                       <div style={{fontSize:11,color:"#666"}}>{fab.pais} · Nv.{fab.nivel} · {fab.tipo_recurso}</div>
                     </div>
@@ -1903,13 +1894,13 @@ export default function App() {
                       <div style={{fontSize:10,color:"#555"}}>por turno</div>
                     </div>
                   </div>
-                  <div style={{display:"flex",gap:10,marginBottom:10,fontSize:11,color:"#888",flexWrap:"wrap"}}>
+                  <div style={{display:"flex",gap:8,marginBottom:10,fontSize:11,color:"#888",flexWrap:"wrap"}}>
                     <span>👥 {fab.trabajadores_actuales||0}/{fab.max_trabajadores}</span>
-                    <span>💰 {fab.tasa_salarial}% para ti</span>
+                    <span>💰 {fab.tasa_salarial}% ti</span>
                     <span>🏛️ 10% estado</span>
                     {nivelReq>0&&<span style={{color:puedoAcceder?"#4caf50":"#e53935"}}>🔒 Nv.{nivelReq}+</span>}
                   </div>
-                  {!puedoAcceder&&<div style={{fontSize:11,color:"#e53935",marginBottom:8}}>⛔ Necesitas nivel {nivelReq} para trabajar aquí</div>}
+                  {!puedoAcceder&&<div style={{fontSize:11,color:"#e53935",marginBottom:8}}>⛔ Necesitas nivel {nivelReq}</div>}
                   <button onClick={()=>realizarTrabajo(fab)} disabled={!puedoTrabajar||trabajandoEn===fab.id} style={{width:"100%",background:puedoTrabajar?"linear-gradient(135deg,rgba(76,175,80,0.3),rgba(76,175,80,0.15))":"rgba(255,255,255,0.03)",border:`1px solid ${puedoTrabajar?"rgba(76,175,80,0.5)":"rgba(255,255,255,0.06)"}`,color:puedoTrabajar?"#4caf50":"#555",padding:"11px",borderRadius:6,cursor:puedoTrabajar?"pointer":"not-allowed",fontFamily:"Georgia,serif",fontWeight:"bold",fontSize:13}}>
                     {trabajandoEn===fab.id?"⏳ Trabajando...":!puedoAcceder?`🔒 Nivel ${nivelReq} requerido`:puedoTrabajar?`💼 TRABAJAR — $${salarioEstimado} · ⚡-10`:`⚡ Sin energía (${energia}/10)`}
                   </button>
@@ -1919,8 +1910,8 @@ export default function App() {
           </div>
         )}
 
-        {/* TIENDA */}
-        {tab===b==="tienda" && (
+                {/* TIENDA */}
+        {tab==="tienda" && (
           <div>
             <div style={{fontSize:11,color:"#c9a84c",letterSpacing:2,textTransform:"uppercase",marginBottom:14}}>🛒 Tienda Premium</div>
 
@@ -2015,7 +2006,7 @@ export default function App() {
       {/* Bottom Nav */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:"rgba(10,14,26,0.97)",borderTop:"1px solid rgba(201,168,76,0.2)",display:"flex",backdropFilter:"blur(20px)",paddingBottom:"env(safe-area-inset-bottom)"}}>
         {[["panel","📊","Panel"],["decretos","📜","Gobernar"],["guerra","⚔️","Guerra"],["empresas","🏭","Trabajo"],["tienda","🛒","Tienda"]].map(([id,icon,label])=>(
-          <button key={id} onClick={()=>{tg?.HapticFeedback?.selectionChanged();setTab(id);if(id==="empresas")loadFabricas();}} style={{flex:1,background:"transparent",border:"none",padding:"10px 4px 12px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,position:"relative"}}>
+          <button key={id} onClick={()=>{tg?.HapticFeedback?.selectionChanged();setTab(id);}} style={{flex:1,background:"transparent",border:"none",padding:"10px 4px 12px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,position:"relative"}}>
             {tab===id&&<div style={{position:"absolute",top:0,left:"20%",right:"20%",height:2,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",borderRadius:1}} />}
             <span style={{fontSize:18}}>{icon}</span>
             <span style={{fontSize:9,color:tab===id?"#c9a84c":"#444",letterSpacing:0.5,textTransform:"uppercase"}}>{label}</span>
