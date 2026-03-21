@@ -84,6 +84,35 @@ function getConsequence(decretoId, ideologia, stats, historialIds) {
 
 const clamp=(v,mn=0,mx=100)=>Math.min(mx,Math.max(mn,Math.round(v)));
 
+// ── Reloj del Juego ───────────────────────────────────────
+const JUEGO_INICIO = new Date("2026-01-01T00:00:00Z");
+const MESES_JUEGO = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+
+function calcularFechaJuego() {
+  const msTranscurridos = Date.now() - JUEGO_INICIO.getTime();
+  const diasJuego = Math.floor(msTranscurridos / 3600000);
+  const msEnHora = msTranscurridos % 3600000;
+  const horasJuego = Math.floor(msEnHora / 150000);
+  const minsJuego = Math.floor((msEnHora % 150000) / 2500);
+  const fechaBase = new Date(JUEGO_INICIO);
+  fechaBase.setDate(fechaBase.getDate() + diasJuego);
+  const dia = fechaBase.getDate();
+  const mes = MESES_JUEGO[fechaBase.getMonth()];
+  const anio = fechaBase.getFullYear();
+  const hora = String(horasJuego).padStart(2,"0");
+  const min = String(minsJuego).padStart(2,"0");
+  return { dia, mes, anio, hora, min };
+}
+
+function iconoHora(hora) {
+  const h = parseInt(hora);
+  if (h >= 6 && h < 12) return "🌅";
+  if (h >= 12 && h < 18) return "☀️";
+  if (h >= 18 && h < 22) return "🌆";
+  return "🌙";
+}
+
+
 // ── Sistema de Guerras ────────────────────────────────────
 const TIPOS_GUERRA = {
   golpe_estado: {
@@ -293,6 +322,7 @@ export default function App() {
   const [decreeLoading, setDecreeLoading] = useState(false);
   const [notification, setNotification] = useState(null);
   const [countdown, setCountdown] = useState(3600);
+  const [fechaJuego, setFechaJuego] = useState(calcularFechaJuego());
   const [otrosJugadores, setOtrosJugadores] = useState([]);
   const [rankingData, setRankingData] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -332,22 +362,28 @@ export default function App() {
 
   const syncTick = useCallback(async () => {
     try {
-      // Usar tiempo del servidor para evitar diferencias de zona horaria
-      const { data } = await db.from("tick_global").select("proximo_tick, ultimo_tick").eq("id",1).single();
-      if(data?.proximo_tick) {
-        const ahora = new Date();
-        const proximo = new Date(data.proximo_tick);
-        const segsRestantes = Math.floor((proximo - ahora) / 1000);
-        // Si el tick ya pasó, mostrar 0 y esperar resync
-        setCountdown(Math.max(0, segsRestantes));
+      // Pedir al servidor cuántos segundos faltan — inmune a manipulación de hora
+      const { data } = await db.rpc('segundos_para_tick');
+      if (data !== null && data !== undefined) {
+        setCountdown(Math.max(0, Math.round(data)));
       }
-    } catch {}
+    } catch {
+      // Fallback: calcular localmente si RPC falla
+      try {
+        const { data: tick } = await db.from("tick_global").select("proximo_tick").eq("id",1).single();
+        if (tick?.proximo_tick) {
+          setCountdown(Math.max(0, Math.floor((new Date(tick.proximo_tick) - new Date()) / 1000)));
+        }
+      } catch {}
+    }
   }, []);
 
   useEffect(() => {
     syncTick();
-    const si = setInterval(syncTick, 30000); // Sync cada 30 segundos para mayor precisión
-    tickRef.current = setInterval(() => setCountdown(c=>Math.max(0,c-1)), 1000);
+    // Re-sincronizar con servidor cada 10 segundos — cualquier trampa se corrige rápido
+    const si = setInterval(syncTick, 10000);
+    // Countdown local solo para UI fluida entre sincronizaciones
+    tickRef.current = setInterval(() => setCountdown(c => Math.max(0, c - 1)), 1000);
     return () => { clearInterval(si); clearInterval(tickRef.current); };
   }, [syncTick]);
 
@@ -518,9 +554,17 @@ export default function App() {
     if (!tgId) { showNotif("❌ Inicia sesión primero", "error"); return; }
     tg?.HapticFeedback?.impactOccurred("medium");
 
-    // Validar en servidor (inmune a cambio de hora)
-    const vt = await validarEnServidor("trabajo", {empresa_id: empresa.id});
-    if(!vt.permitido){showNotif(`⏳ ${vt.razon}`,"error");return;}
+    // Check cooldown
+    const miTrabajo = misTrabajosMap[empresa.id];
+    if (miTrabajo?.ultimo_trabajo) {
+      const intervalo = jugador?.trabajo_intervalo || 10;
+      const mins = (new Date() - new Date(miTrabajo.ultimo_trabajo)) / 60000;
+      if (mins < intervalo) {
+        const resta = Math.ceil(intervalo - mins);
+        showNotif(`⏳ Puedes trabajar aquí en ${resta} min`, "error");
+        return;
+      }
+    }
 
     setTrabajandoEn(empresa.id);
     try {
@@ -742,30 +786,10 @@ export default function App() {
     showNotif("👋 Sesión cerrada","info");
   };
 
-
-  const validarEnServidor = async (accion, extra={}) => {
-    try {
-      const uid = jugador?.id || tg?.initDataUnsafe?.user?.id;
-      const res = await fetch("https://wdbupgqymgqfpobcbfze.supabase.co/functions/v1/validar-accion", {
-        method: "POST",
-        headers: {"Content-Type":"application/json","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkYnVwZ3F5bWdxZnBvYmNiZnplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NjM0NjAsImV4cCI6MjA4OTUzOTQ2MH0.Psq7trqKDSNltKK8bqaLdXgg56FSjK6sfM4EH4TRnBo"},
-        body: JSON.stringify({accion, jugador_id: uid, ...extra})
-      });
-      const data = await res.json();
-      return data;
-    } catch {
-      return {permitido: true}; // Si falla el servidor, permite (fallback)
-    }
-  };
-
-
-  
   const issueDecree = async (decree) => {
     if(decreeUsed.includes(decree.id)) return;
+    if(decreeUsed.length>=3){showNotif("⛔ Ya usaste tus 3 decretos de hoy","error");return;}
     if(jugador?.rol!=="presidente"){showNotif("⛔ Solo los presidentes pueden emitir decretos","error");return;}
-    // Validar en servidor
-    const v = await validarEnServidor("decreto", {});
-    if(!v.permitido){showNotif(`⛔ ${v.razon}`,"error");return;}
     tg?.HapticFeedback?.impactOccurred("medium");
     setSelectedDecree(decree); setDecreeLoading(true); setDecreeResponse("");
     const newStats={...stats};
@@ -889,9 +913,14 @@ export default function App() {
   const acumularPoder = async () => {
     if(jugador?.rol!=="ciudadano"){showNotif("⚠️ Solo los ciudadanos acumulan poder político","error");return;}
     if(!jugador?.partido){showNotif("⚠️ Crea un partido político primero","error");return;}
-    // Validar en servidor (inmune a cambio de hora)
-    const vp = await validarEnServidor("poder", {});
-    if(!vp.permitido){showNotif(`⏳ ${vp.razon}`,"error");return;}
+    if(jugador?.ultimo_acumulo) {
+      const horas = (new Date() - new Date(jugador.ultimo_acumulo)) / 3600000;
+      if(horas < 24) {
+        const restantes = Math.ceil(24 - horas);
+        showNotif(`⏳ Puedes acumular poder en ${restantes}h`, "error");
+        return;
+      }
+    }
     const nuevo = Math.min(100,(jugador.poder_politico||0)+3);
     await db.from("jugadores").update({
       poder_politico: nuevo,
@@ -1173,9 +1202,17 @@ export default function App() {
               </div>
             </div>
           </div>
-          <div style={{textAlign:"right"}}>
-            <div style={{fontSize:9,color:"#555",letterSpacing:1,textTransform:"uppercase"}}>TICK GLOBAL</div>
-            <div style={{fontSize:14,color:countdown<300?"#e53935":"#c9a84c",fontFamily:"monospace",fontWeight:"bold"}}>{formatTime(countdown)}</div>
+          <div style={{textAlign:"right",cursor:"default"}}>
+            {countdown === 0 ? (
+              <div style={{fontSize:10,color:"#e53935",fontWeight:"bold"}}>⚠️ FECHA INVÁLIDA</div>
+            ) : (
+              <>
+                <div style={{fontSize:14,color:"#c9a84c",fontFamily:"monospace",fontWeight:"bold"}}>
+                  {iconoHora(fechaJuego.hora)} {fechaJuego.hora}:{fechaJuego.min}
+                </div>
+                <div style={{fontSize:10,color:"#666",letterSpacing:0.5}}>{fechaJuego.dia} {fechaJuego.mes} {fechaJuego.anio}</div>
+              </>
+            )}
           </div>
         </div>
         <div style={{padding:"8px 12px",display:"flex",gap:8,overflowX:"auto"}}>
