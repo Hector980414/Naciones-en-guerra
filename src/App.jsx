@@ -18,7 +18,7 @@ const IDEOLOGIES = {
   capitalismo:  { icon: "💲", label: "Capitalismo",  color: "#00bcd4", bonus: "+PIB +Industria -Igualdad" },
 };
 
-const COUNTRIES = ["Cuba","México","Venezuela","Argentina","Brasil","Colombia","Chile","Perú","Ecuador","Bolivia","España","Francia","Alemania","Rusia","China","USA","India","Japón","Corea del Sur","Nigeria","Egipto","Turquía","Irán","Arabia Saudita","Sudáfrica","Indonesia","Pakistán","Bangladesh","Etiopía","Rep. Dominicana","Ucrania","Polonia","Canadá","Australia","Suecia","Noruega","Suiza","Israel","Grecia","Portugal"];
+const COUNTRIES = ["Afganistán","Albania","Alemania","Andorra","Angola","Antigua y Barbuda","Arabia Saudita","Argelia","Argentina","Armenia","Australia","Austria","Azerbaiyán","Bahamas","Bangladés","Barbados","Baréin","Bélgica","Belice","Benín","Bielorrusia","Bolivia","Bosnia y Herzegovina","Botsuana","Brasil","Brunéi","Bulgaria","Burkina Faso","Burundi","Bután","Cabo Verde","Camboya","Camerún","Canadá","Catar","Chad","Chile","China","Chipre","Colombia","Comoras","Congo","Corea del Norte","Corea del Sur","Costa de Marfil","Costa Rica","Croacia","Cuba","Dinamarca","Dominica","Ecuador","Egipto","El Salvador","Emiratos Árabes Unidos","Eritrea","Eslovaquia","Eslovenia","España","Estados Unidos","Estonia","Etiopía","Filipinas","Finlandia","Fiyi","Francia","Gabón","Gambia","Georgia","Ghana","Granada","Grecia","Guatemala","Guinea","Guinea-Bisáu","Guinea Ecuatorial","Guyana","Haití","Honduras","Hungría","India","Indonesia","Irak","Irán","Irlanda","Islandia","Islas Marshall","Islas Salomón","Israel","Italia","Jamaica","Japón","Jordania","Kazajistán","Kenia","Kirguistán","Kiribati","Kuwait","Laos","Lesoto","Letonia","Líbano","Liberia","Libia","Liechtenstein","Lituania","Luxemburgo","Madagascar","Malasia","Malaui","Maldivas","Malí","Malta","Marruecos","Mauricio","Mauritania","México","Micronesia","Moldavia","Mónaco","Mongolia","Montenegro","Mozambique","Namibia","Nauru","Nepal","Nicaragua","Níger","Nigeria","Noruega","Nueva Zelanda","Omán","Países Bajos","Pakistán","Palaos","Panamá","Papúa Nueva Guinea","Paraguay","Perú","Polonia","Portugal","Reino Unido","República Centroafricana","República Checa","República del Congo","República Dominicana","República Sudafricana","Ruanda","Rumania","Rusia","Samoa","San Cristóbal y Nieves","San Marino","San Vicente y las Granadinas","Santa Lucía","Santo Tomé y Príncipe","Senegal","Serbia","Seychelles","Sierra Leona","Singapur","Siria","Somalia","Sri Lanka","Suazilandia","Sudán","Sudán del Sur","Suecia","Suiza","Surinam","Tailandia","Tanzania","Tayikistán","Timor Oriental","Togo","Tonga","Trinidad y Tobago","Túnez","Turkmenistán","Turquía","Tuvalu","Ucrania","Uganda","Uruguay","Uzbekistán","Vanuatu","Venezuela","Vietnam","Yemen","Yibuti","Zambia","Zimbabue","USA"];
 
 const DECREES = [
   { id:1, name:"Reforma Fiscal",     icon:"💰", desc:"Aumentar impuestos corporativos",  effect:"+PIB 3%, -Apr 5%",   statChanges:{pib:3,aprobacion:-5} },
@@ -81,6 +81,8 @@ function getConsequence(decretoId, ideologia, stats, historialIds) {
   if(!Array.isArray(opts)) return "La presión internacional aumenta. Tu equipo trabaja toda la noche.";
   return opts[used%opts.length];
 }
+
+function formatDinero(n){if(!n&&n!==0)return "$0";return "$"+Math.floor(n).toLocaleString("es-ES");}
 
 const clamp=(v,mn=0,mx=100)=>Math.min(mx,Math.max(mn,Math.round(v)));
 
@@ -416,6 +418,11 @@ export default function App() {
         setSelectedCountry(existing.pais);
         setSelectedIdeology(existing.ideologia);
         setPartyName(existing.partido||"");
+        const xpVal = existing.xp || 0;
+        setXp(xpVal);
+        setNivel(nivelDesdeXP(xpVal));
+        setDinero(existing.dinero ?? 1000);
+        setEnergia(existing.energia ?? 100);
         const { data: nation } = await db.from("naciones").select("*").eq("jugador_id",tgId).single();
         if(nation) { setStats({pib:nation.pib,militar:nation.militar,aprobacion:nation.aprobacion,petroleo:nation.petroleo,comida:nation.comida,energia:nation.energia,educacion:nation.educacion,salud:nation.salud,rebeldia:nation.rebeldia,intel:nation.intel,industria:nation.industria}); setDecreeUsed(nation.decretos_usados||[]); }
         setScreen("game");
@@ -1412,7 +1419,7 @@ export default function App() {
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <button onClick={()=>{setNuevoNombre(leaderName);setShowPerfilModal(true);}} style={{width:34,height:34,borderRadius:"50%",background:`linear-gradient(135deg,${ideo.color},${ideo.color}88)`,border:`2px solid ${ideo.color}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,cursor:"pointer",flexShrink:0}}>{ideo.icon}</button>
             <div>
-              <div style={{fontSize:12,color:"#e8e8e8",fontWeight:"bold"}}>{leaderName}</div>
+              <div style={{fontSize:12,color:"#e8e8e8",fontWeight:"bold",display:"flex",alignItems:"center",gap:8}}>{leaderName}<span style={{fontSize:12,color:"#c9a84c",fontFamily:"monospace"}}>{formatDinero(dinero)}</span></div>
               <div style={{fontSize:10,display:"flex",alignItems:"center",gap:6}}>
                 <span style={{color:ideo.color}}>{selectedCountry}</span>
                 <span style={{background:esPresidente?"rgba(201,168,76,0.2)":"rgba(76,175,80,0.2)",color:esPresidente?"#c9a84c":"#4caf50",padding:"1px 6px",borderRadius:10,fontSize:9,letterSpacing:0.5}}>
@@ -1492,7 +1499,7 @@ export default function App() {
                     <span style={{fontSize:11,color:"#888",fontFamily:"monospace"}}>{xp} / {Math.round(100*(nivel+1)*(nivel+1))} XP</span>
                   </div>
                   <div style={{height:6,background:"rgba(255,255,255,0.06)",borderRadius:3,overflow:"hidden"}}>
-                    <div style={{height:"100%",width:`${Math.min(100,((xp - Math.round(100*nivel*nivel)) / (Math.round(100*(nivel+1)*(nivel+1)) - Math.round(100*nivel*nivel)))*100)}%`,background:`linear-gradient(90deg,${colorNivel(nivel)},${colorNivel(nivel)}88)`,borderRadius:3,transition:"width 0.8s ease"}} />
+                    <div style={{height:"100%",width:`${Math.min(100, Math.max(0, ((xp - xpParaNivel(nivel)) / (xpParaNivel(nivel+1) - xpParaNivel(nivel))) * 100))}%`,background:`linear-gradient(90deg,${colorNivel(nivel)},${colorNivel(nivel)}88)`,borderRadius:3,transition:"width 0.8s ease"}} />
                   </div>
                   <div style={{fontSize:11,color:"#555",marginTop:4}}>💰 Dinero: ${dinero?.toLocaleString()}</div>
                 </div>
@@ -1511,7 +1518,7 @@ export default function App() {
                   <div>
                     <div style={{fontSize:12,color:colorNivel(nivel),fontWeight:"bold"}}>Nv.{nivel} — {tituloNivel(nivel)}</div>
                     <div style={{height:4,width:120,background:"rgba(255,255,255,0.06)",borderRadius:2,overflow:"hidden",marginTop:4}}>
-                      <div style={{height:"100%",width:`${Math.min(100,((xp - Math.round(100*nivel*nivel)) / (Math.round(100*(nivel+1)*(nivel+1)) - Math.round(100*nivel*nivel)))*100)}%`,background:colorNivel(nivel),borderRadius:2}} />
+                      <div style={{height:"100%",width:`${Math.min(100, Math.max(0, ((xp - xpParaNivel(nivel)) / (xpParaNivel(nivel+1) - xpParaNivel(nivel))) * 100))}%`,background:colorNivel(nivel),borderRadius:2}} />
                     </div>
                   </div>
                   <div style={{textAlign:"right"}}>
@@ -2045,11 +2052,41 @@ export default function App() {
                     </button>
                   </div>
 
-                  {/* Info visa si está en otros países */}
+                  {/* Vista Otros Países — lista de países con botón de visa */}
                   {vistaOtroPais && (
-                    <div style={{background:"rgba(255,152,0,0.08)",border:"1px solid rgba(255,152,0,0.3)",borderRadius:8,padding:12,marginBottom:12,fontSize:12,color:"#ff9800"}}>
-                      🛂 Para trabajar en otro país necesitas una <strong>visa de trabajo</strong>.<br/>
-                      <span style={{color:"#888",fontSize:11}}>Toca el botón "Obtener visa" en la fábrica deseada.</span>
+                    <div style={{marginBottom:12}}>
+                      <div style={{background:"rgba(255,152,0,0.08)",border:"1px solid rgba(255,152,0,0.3)",borderRadius:8,padding:12,marginBottom:12,fontSize:12,color:"#ff9800"}}>
+                        🛂 Selecciona un país para solicitar visa de trabajo. Los países donde ya tienes visa aparecen primero.
+                      </div>
+                      {(() => {
+                        const paisesConVisa = misVisas.map(v=>v.pais_destino);
+                        const todosPaises = COUNTRIES.filter(p=>p!==selectedCountry);
+                        const ordenados = [
+                          ...todosPaises.filter(p=>paisesConVisa.includes(p)),
+                          ...todosPaises.filter(p=>!paisesConVisa.includes(p))
+                        ];
+                        return (
+                          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                            {ordenados.map((pais,i)=>{
+                              const tieneVisa = paisesConVisa.includes(pais);
+                              const fabsEnPais = fabricas.filter(f=>f.pais===pais).length;
+                              return (
+                                <button key={i} onClick={()=>{setVisaTarget(pais);setShowVisaModal(true);}}
+                                  style={{background:tieneVisa?"rgba(76,175,80,0.08)":"rgba(255,255,255,0.02)",border:`1px solid ${tieneVisa?"rgba(76,175,80,0.3)":"rgba(255,255,255,0.07)"}`,borderRadius:8,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                                    <span style={{fontSize:13,color:tieneVisa?"#4caf50":"#e8e8e8"}}>{pais}</span>
+                                    {tieneVisa&&<span style={{fontSize:9,color:"#4caf50",background:"rgba(76,175,80,0.15)",padding:"1px 6px",borderRadius:10}}>✓ VISA</span>}
+                                  </div>
+                                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                                    {fabsEnPais>0&&<span style={{fontSize:11,color:"#666"}}>🏭 {fabsEnPais}</span>}
+                                    <span style={{fontSize:11,color:tieneVisa?"#4caf50":"#ff9800"}}>{tieneVisa?"Ver fábricas":"Solicitar visa →"}</span>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
 
