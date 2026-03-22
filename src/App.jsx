@@ -407,6 +407,32 @@ export default function App() {
     return () => { clearInterval(si); clearInterval(tickRef.current); };
   }, [syncTick]);
 
+  // Realtime jugador — dinero, energía, visas en tiempo real
+  useEffect(() => {
+    if (!jugador?.id) return;
+    const ch = db.channel(`jugador-${jugador.id}`)
+      .on("postgres_changes", {event:"UPDATE", schema:"public", table:"jugadores", filter:`id=eq.${jugador.id}`},
+        (payload) => {
+          const j = payload.new;
+          if (j.dinero !== undefined) setDinero(j.dinero);
+          if (j.energia !== undefined) setEnergia(j.energia);
+          if (j.xp !== undefined) { setXp(j.xp); setNivel(nivelDesdeXP(j.xp)); }
+          setJugador(prev => ({...prev, ...j}));
+        })
+      .on("postgres_changes", {event:"UPDATE", schema:"public", table:"visas", filter:`solicitante_id=eq.${jugador.id}`},
+        (payload) => {
+          if (payload.new.estado === "aprobada") {
+            setMisVisas(prev => {
+              const existe = prev.find(v => v.id === payload.new.id);
+              return existe ? prev.map(v => v.id===payload.new.id?payload.new:v) : [...prev, payload.new];
+            });
+            showNotif("🎉 ¡Visa aprobada! Ya puedes trabajar en ese país.", "info");
+          }
+        })
+      .subscribe();
+    return () => { db.removeChannel(ch); };
+  }, [jugador?.id]);
+
   const initPlayer = async () => {
     const tgUser = tg?.initDataUnsafe?.user;
     const tgId = tgUser?.id || 99999999;

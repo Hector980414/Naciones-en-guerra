@@ -11,20 +11,16 @@ TOKEN = "8759601075:AAHuztMAKGLO9b-nkmQzANsgjkNEQDcJvnU"
 WEBAPP_URL = "https://Hector980414.github.io/Naciones-en-guerra/"
 SUPABASE_URL = "https://wdbupgqymgqfpobcbfze.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkYnVwZ3F5bWdxZnBvYmNiZnplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NjM0NjAsImV4cCI6MjA4OTUzOTQ2MH0.Psq7trqKDSNltKK8bqaLdXgg56FSjK6sfM4EH4TRnBo"
-NOWPAYMENTS_KEY = os.getenv("NOWPAYMENTS_KEY", "")
-EDGE_URL = "https://wdbupgqymgqfpobcbfze.supabase.co/functions/v1/Pago"
-HOST_ID = 8127548189  # Solo Hector
+HOST_ID = 8127548189
 
 HEADERS_SB = {
     "apikey": SUPABASE_KEY,
     "Authorization": f"Bearer {SUPABASE_KEY}",
-    "Content-Type": "application/json",
-    "Prefer": "return=representation"
+    "Content-Type": "application/json"
 }
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 log = logging.getLogger(__name__)
 
-# ── Supabase helpers ──────────────────────────────────────
 async def sb_get(table, params=""):
     async with httpx.AsyncClient(timeout=15) as c:
         r = await c.get(f"{SUPABASE_URL}/rest/v1/{table}?{params}", headers=HEADERS_SB)
@@ -35,59 +31,47 @@ async def sb_patch(table, data, match):
         r = await c.patch(f"{SUPABASE_URL}/rest/v1/{table}?{match}", headers=HEADERS_SB, json=data)
         return r.status_code in [200, 204]
 
-async def sb_post(table, data):
-    async with httpx.AsyncClient(timeout=15) as c:
-        r = await c.post(f"{SUPABASE_URL}/rest/v1/{table}", headers=HEADERS_SB, json=data)
-        return r.status_code in [200, 201]
-
-# ── Verificar si es host ──────────────────────────────────
-def es_host(update: Update) -> bool:
+def es_host(update):
     return update.effective_user.id == HOST_ID
 
-# ── Panel de control del host ─────────────────────────────
 def menu_admin():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("📊 Ver todos los jugadores", callback_data="admin_jugadores")],
-        [InlineKeyboardButton("💰 Darme dinero gratis", callback_data="admin_dinero_host"),
-         InlineKeyboardButton("⚡ Rellenar mi energía", callback_data="admin_energia_host")],
-        [InlineKeyboardButton("🌍 Ver estadísticas", callback_data="admin_stats")],
-        [InlineKeyboardButton("⚔️ Ver guerras activas", callback_data="admin_guerras")],
-        [InlineKeyboardButton("🏭 Ver todas las fábricas", callback_data="admin_fabricas")],
-        [InlineKeyboardButton("💎 Activar premium a jugador", callback_data="admin_premium")],
+        [InlineKeyboardButton("📊 Ver jugadores", callback_data="admin_jugadores")],
+        [InlineKeyboardButton("💰 Darme dinero", callback_data="admin_dinero_host"),
+         InlineKeyboardButton("⚡ Recargar mi energía", callback_data="admin_energia_host")],
+        [InlineKeyboardButton("💸 Dar dinero a jugador", callback_data="admin_dinero_jugador"),
+         InlineKeyboardButton("⚡ Energía a jugador", callback_data="admin_energia_jugador")],
+        [InlineKeyboardButton("🌍 Estadísticas", callback_data="admin_stats")],
+        [InlineKeyboardButton("⚔️ Ver guerras", callback_data="admin_guerras")],
+        [InlineKeyboardButton("🏭 Ver fábricas", callback_data="admin_fabricas")],
+        [InlineKeyboardButton("💎 Activar premium", callback_data="admin_premium")],
         [InlineKeyboardButton("🚫 Banear jugador", callback_data="admin_banear")],
-        [InlineKeyboardButton("🔄 Resetear tick global", callback_data="admin_tick")],
-        [InlineKeyboardButton("💣 Dar dinero a todos", callback_data="admin_dinero_todos")],
-        [InlineKeyboardButton("📢 Mensaje a todos", callback_data="admin_broadcast")],
+        [InlineKeyboardButton("🔄 Resetear tick", callback_data="admin_tick")],
+        [InlineKeyboardButton("💣 Dinero a todos", callback_data="admin_dinero_todos")],
+        [InlineKeyboardButton("📢 Broadcast", callback_data="admin_broadcast")],
     ])
 
-async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not es_host(update):
-        await update.message.reply_text("⛔ No tienes acceso a este comando.")
-        return
-    await update.message.reply_text(
-        "🎮 *Panel de Control — Naciones en Guerra*\n\n"
-        f"👤 Host: Hector\n"
-        f"🕐 {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
-        "Selecciona una acción:",
-        parse_mode="Markdown",
-        reply_markup=menu_admin()
-    )
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [
-        [InlineKeyboardButton("🌍 JUGAR AHORA", web_app=WebAppInfo(url=WEBAPP_URL))],
-    ]
+async def start(update, context):
+    keyboard = [[InlineKeyboardButton("🌍 JUGAR AHORA", web_app=WebAppInfo(url=WEBAPP_URL))]]
     if es_host(update):
         keyboard.append([InlineKeyboardButton("⚙️ Panel Admin", callback_data="admin_menu")])
     await update.message.reply_text(
-        "🌍 *Naciones en Guerra*\n\n"
-        "195 naciones compiten por el poder global\\.\n"
-        "Toma el control, emite decretos y lidera tu partido\\.",
+        "🌍 *Naciones en Guerra*\n\n195 naciones compiten por el poder global\\.\nToma el control, emite decretos y lidera tu partido\\.",
         parse_mode="MarkdownV2",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
-async def estado(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def admin(update, context):
+    if not es_host(update):
+        await update.message.reply_text("⛔ Sin acceso.")
+        return
+    await update.message.reply_text(
+        "🎮 *Panel de Control*\nSelecciona una acción:",
+        parse_mode="Markdown",
+        reply_markup=menu_admin()
+    )
+
+async def estado(update, context):
     uid = update.effective_user.id
     jugador = await sb_get("jugadores", f"select=nombre,pais,rol,xp,nivel,dinero,energia,premium,premium_plan&id=eq.{uid}")
     if jugador:
@@ -95,164 +79,108 @@ async def estado(update: Update, context: ContextTypes.DEFAULT_TYPE):
         nacion = await sb_get("naciones", f"select=pib,militar,aprobacion&jugador_id=eq.{uid}")
         n = nacion[0] if nacion else {}
         premium_text = f"💎 {j.get('premium_plan')}" if j.get('premium') else "Sin premium"
-        keyboard = [[InlineKeyboardButton("📊 Ver panel completo", web_app=WebAppInfo(url=WEBAPP_URL))]]
+        keyboard = [[InlineKeyboardButton("📊 Ver panel", web_app=WebAppInfo(url=WEBAPP_URL))]]
         await update.message.reply_text(
-            f"🏴 *{j['nombre']}* — {j['pais']}\n"
-            f"{j.get('rol','ciudadano').upper()}\n\n"
-            f"💰 PIB: {n.get('pib',67)}%\n"
-            f"⚔️ Militar: {n.get('militar',45)}%\n"
-            f"👥 Aprobación: {n.get('aprobacion',58)}%\n"
+            f"🏴 *{j['nombre']}* — {j['pais']}\n{j.get('rol','ciudadano').upper()}\n\n"
+            f"💰 PIB: {n.get('pib',67)}%\n⚔️ Militar: {n.get('militar',45)}%\n"
             f"⭐ Nivel: {j.get('nivel',1)} · XP: {j.get('xp',0)}\n"
-            f"💵 Dinero: ${j.get('dinero',1000):,}\n"
-            f"⚡ Energía: {j.get('energia',100)}/100\n"
-            f"🎖️ {premium_text}",
+            f"💵 ${j.get('dinero',1000):,}\n⚡ {j.get('energia',100)}/100\n🎖️ {premium_text}",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
     else:
-        await update.message.reply_text("No tienes una nación registrada.")
+        await update.message.reply_text("No tienes nación registrada.")
 
-async def ayuda(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = (
-        "🎮 *Comandos*\n\n"
-        "/start — Abrir el juego\n"
-        "/estado — Ver tu nación\n"
-        "/ayuda — Esta ayuda\n\n"
-        "🛒 La tienda está dentro del juego\n"
-        "⏰ Tick cada 1h · Decretos se renuevan cada 24h"
-    )
+async def ayuda(update, context):
+    text = "🎮 *Comandos*\n\n/start — Jugar\n/estado — Ver nación\n/ayuda — Ayuda"
     if es_host(update):
-        text += "\n\n⚙️ /admin — Panel de control"
+        text += "\n\n⚙️ *Admin:*\n/admin — Panel\n/dinero ID CANTIDAD\n/energia ID\n/premium ID\n/ban ID\n/broadcast MENSAJE"
     await update.message.reply_text(text, parse_mode="Markdown")
 
-# ── Callback handler ──────────────────────────────────────
-async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_handler(update, context):
     query = update.callback_query
     await query.answer()
     uid = query.from_user.id
     data = query.data
+    volver = InlineKeyboardMarkup([[InlineKeyboardButton("← Volver", callback_data="admin_menu")]])
 
-    # Panel admin solo para host
     if data.startswith("admin_") and uid != HOST_ID:
-        await query.edit_message_text("⛔ No tienes acceso.")
+        await query.edit_message_text("⛔ Sin acceso.")
         return
 
     if data == "admin_menu":
-        await query.edit_message_text(
-            "🎮 *Panel de Control*\nSelecciona una acción:",
-            parse_mode="Markdown",
-            reply_markup=menu_admin()
-        )
+        await query.edit_message_text("🎮 *Panel de Control*", parse_mode="Markdown", reply_markup=menu_admin())
 
     elif data == "admin_jugadores":
         jugadores = await sb_get("jugadores", "select=nombre,pais,rol,nivel,dinero,energia&order=nivel.desc&limit=20")
-        if not jugadores:
-            await query.edit_message_text("No hay jugadores.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("← Volver", callback_data="admin_menu")]]))
-            return
-        texto = "👥 *Jugadores registrados:*\n\n"
+        texto = "👥 *Jugadores:*\n\n"
         for j in jugadores:
             rol_icon = "👑" if j.get('rol') == 'presidente' else "🏴"
-            texto += f"{rol_icon} *{j['nombre']}* — {j['pais']}\n"
-            texto += f"   Nv.{j.get('nivel',1)} · ${j.get('dinero',1000):,} · ⚡{j.get('energia',100)}\n\n"
-        await query.edit_message_text(
-            texto, parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("← Volver", callback_data="admin_menu")]])
-        )
+            texto += f"{rol_icon} *{j['nombre']}* — {j['pais']} Nv.{j.get('nivel',1)} ${j.get('dinero',0):,} ⚡{j.get('energia',100)}\n"
+        await query.edit_message_text(texto, parse_mode="Markdown", reply_markup=volver)
 
     elif data == "admin_dinero_host":
-        ok = await sb_patch("jugadores", {"dinero": 9999999}, f"id=eq.{HOST_ID}")
-        if ok:
-            await query.edit_message_text(
-                "💰 *¡Dinero activado!*\n\nTu saldo fue actualizado a $9,999,999\nRecarga el juego para verlo.",
-                parse_mode="Markdown",
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("← Volver", callback_data="admin_menu")]])
-            )
-        else:
-            await query.edit_message_text("❌ Error al actualizar.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("← Volver", callback_data="admin_menu")]]))
+        await sb_patch("jugadores", {"dinero": 9999999}, f"id=eq.{HOST_ID}")
+        await query.edit_message_text("💰 *¡Saldo actualizado a $9,999,999!*\nRecarga el juego.", parse_mode="Markdown", reply_markup=volver)
 
     elif data == "admin_energia_host":
-        ok = await sb_patch("jugadores", {"energia": 100, "ultima_energia": datetime.utcnow().isoformat()}, f"id=eq.{HOST_ID}")
-        if ok:
-            await query.edit_message_text(
-                "⚡ *¡Energía recargada!*\n\nTu energía fue rellenada a 100/100\nRecarga el juego para verlo.",
-                parse_mode="Markdown",
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("← Volver", callback_data="admin_menu")]])
-            )
-        else:
-            await query.edit_message_text("❌ Error.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("← Volver", callback_data="admin_menu")]]))
+        await sb_patch("jugadores", {"energia": 100, "ultima_energia": datetime.utcnow().isoformat()}, f"id=eq.{HOST_ID}")
+        await query.edit_message_text("⚡ *¡Energía recargada a 100/100!*\nRecarga el juego.", parse_mode="Markdown", reply_markup=volver)
+
+    elif data == "admin_dinero_jugador":
+        await query.edit_message_text(
+            "💸 *Dar dinero a jugador*\n\nUsa: `/dinero ID CANTIDAD`\nEjemplo: `/dinero 123456789 50000`",
+            parse_mode="Markdown", reply_markup=volver)
+
+    elif data == "admin_energia_jugador":
+        await query.edit_message_text(
+            "⚡ *Recargar energía*\n\nUsa: `/energia ID`\nEjemplo: `/energia 123456789`",
+            parse_mode="Markdown", reply_markup=volver)
 
     elif data == "admin_stats":
-        jugadores = await sb_get("jugadores", "select=id,rol&limit=100")
+        jugadores = await sb_get("jugadores", "select=id,rol&limit=200")
         presidentes = len([j for j in jugadores if j.get('rol') == 'presidente'])
-        ciudadanos = len([j for j in jugadores if j.get('rol') == 'ciudadano'])
-        fabricas = await sb_get("fabricas", "select=id&eq.activa=true&limit=100")
+        fabricas = await sb_get("fabricas", "select=id&activa=eq.true&limit=200")
+        visas = await sb_get("visas", "select=id&estado=eq.pendiente&limit=50")
         await query.edit_message_text(
-            f"📊 *Estadísticas del juego*\n\n"
-            f"👥 Total jugadores: {len(jugadores)}\n"
-            f"👑 Presidentes: {presidentes}\n"
-            f"🏴 Ciudadanos: {ciudadanos}\n"
-            f"🏭 Fábricas activas: {len(fabricas)}\n"
-            f"🕐 {datetime.now().strftime('%d/%m/%Y %H:%M')}",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("← Volver", callback_data="admin_menu")]])
-        )
+            f"📊 *Estadísticas*\n\n👥 Jugadores: {len(jugadores)}\n👑 Presidentes: {presidentes}\n"
+            f"🏭 Fábricas: {len(fabricas)}\n🛂 Visas pendientes: {len(visas)}",
+            parse_mode="Markdown", reply_markup=volver)
 
     elif data == "admin_tick":
-        proximo = (datetime.utcnow() + timedelta(hours=1)).isoformat()
-        ok = await sb_patch("tick_global", {
+        await sb_patch("tick_global", {
             "ultimo_tick": datetime.utcnow().isoformat(),
-            "proximo_tick": proximo
+            "proximo_tick": (datetime.utcnow() + timedelta(hours=1)).isoformat()
         }, "id=eq.1")
-        if ok:
-            await query.edit_message_text(
-                "🔄 *Tick global reseteado*\n\nEl próximo tick es en 1 hora.",
-                parse_mode="Markdown",
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("← Volver", callback_data="admin_menu")]])
-            )
+        await query.edit_message_text("🔄 *Tick reseteado — próximo en 1 hora.*", parse_mode="Markdown", reply_markup=volver)
 
     elif data == "admin_guerras":
-        guerras = await sb_get("guerras", "select=tipo,pais_atacante,pais_defensor,resultado,created_at&order=created_at.desc&limit=10")
-        if not guerras:
-            await query.edit_message_text("No hay guerras.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("← Volver", callback_data="admin_menu")]]))
-            return
+        guerras = await sb_get("guerras", "select=tipo,pais_atacante,pais_defensor,resultado&order=created_at.desc&limit=10")
         texto = "⚔️ *Últimas guerras:*\n\n"
         for g in guerras:
-            res = g.get('resultado', 'activa')
-            texto += f"• {g['tipo']}: {g['pais_atacante']} vs {g['pais_defensor']} — {res}\n"
-        await query.edit_message_text(texto, parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("← Volver", callback_data="admin_menu")]]))
+            texto += f"• {g['tipo']}: {g['pais_atacante']} vs {g['pais_defensor']} — {g.get('resultado','?')}\n"
+        await query.edit_message_text(texto or "Sin guerras.", parse_mode="Markdown", reply_markup=volver)
 
     elif data == "admin_fabricas":
-        fabricas = await sb_get("fabricas", "select=nombre,pais,tipo_recurso,nivel,trabajadores_actuales&eq.activa=true&limit=20")
-        if not fabricas:
-            await query.edit_message_text("No hay fábricas.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("← Volver", callback_data="admin_menu")]]))
-            return
-        texto = "🏭 *Fábricas activas:*\n\n"
+        fabricas = await sb_get("fabricas", "select=nombre,pais,tipo_recurso,nivel,trabajadores_actuales&activa=eq.true&limit=20")
+        texto = "🏭 *Fábricas:*\n\n"
         for f in fabricas:
-            texto += f"• {f['nombre']} ({f['pais']}) — Nv.{f['nivel']} · {f['tipo_recurso']} · 👥{f['trabajadores_actuales']}\n"
-        await query.edit_message_text(texto, parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("← Volver", callback_data="admin_menu")]]))
+            texto += f"• {f['nombre']} ({f['pais']}) Nv.{f['nivel']} {f['tipo_recurso']} 👥{f.get('trabajadores_actuales',0)}\n"
+        await query.edit_message_text(texto or "Sin fábricas.", parse_mode="Markdown", reply_markup=volver)
 
     elif data == "admin_premium":
-        await query.edit_message_text(
-            "💎 Para activar premium a un jugador usa:\n\n`/premium ID_TELEGRAM`\n\nEjemplo: `/premium 123456789`",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("← Volver", callback_data="admin_menu")]]))
+        await query.edit_message_text("💎 Usa: `/premium ID`", parse_mode="Markdown", reply_markup=volver)
 
     elif data == "admin_banear":
-        await query.edit_message_text(
-            "🚫 Para banear un jugador usa:\n\n`/ban ID_TELEGRAM`\n\nEjemplo: `/ban 123456789`",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("← Volver", callback_data="admin_menu")]]))
+        await query.edit_message_text("🚫 Usa: `/ban ID`", parse_mode="Markdown", reply_markup=volver)
 
     elif data == "admin_dinero_todos":
         await query.edit_message_text(
-            "💣 ¿Dar $5,000 a TODOS los jugadores?\n\nEsto afectará la economía del juego.",
+            "💣 ¿Dar $5,000 a TODOS?",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("✅ SÍ, dar dinero a todos", callback_data="admin_dinero_todos_confirm")],
+                [InlineKeyboardButton("✅ Confirmar", callback_data="admin_dinero_todos_confirm")],
                 [InlineKeyboardButton("← Cancelar", callback_data="admin_menu")]
-            ])
-        )
+            ]))
 
     elif data == "admin_dinero_todos_confirm":
         jugadores = await sb_get("jugadores", "select=id,dinero&limit=200")
@@ -261,75 +189,163 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             nuevo = (j.get('dinero') or 1000) + 5000
             ok = await sb_patch("jugadores", {"dinero": nuevo}, f"id=eq.{j['id']}")
             if ok: count += 1
-        await query.edit_message_text(
-            f"✅ *$5,000 enviados a {count} jugadores*",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("← Volver", callback_data="admin_menu")]]))
+        await query.edit_message_text(f"✅ *$5,000 enviados a {count} jugadores*", parse_mode="Markdown", reply_markup=volver)
 
     elif data == "admin_broadcast":
-        await query.edit_message_text(
-            "📢 Para enviar mensaje a todos usa:\n\n`/broadcast Tu mensaje aquí`",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("← Volver", callback_data="admin_menu")]]))
+        await query.edit_message_text("📢 Usa: `/broadcast MENSAJE`", parse_mode="Markdown", reply_markup=volver)
 
-# ── Comandos admin por texto ──────────────────────────────
-async def cmd_premium(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # ── Visas ──────────────────────────────────────────────
+    elif data.startswith("visa_aprobar_"):
+        parts = data.split("_")
+        visa_id, sol_id, precio = int(parts[2]), int(parts[3]), int(parts[4])
+        await sb_patch("visas", {"estado": "aprobada"}, f"id=eq.{visa_id}")
+        ganancia = int(precio * 0.3)
+        jugador_data = await sb_get("jugadores", f"select=dinero&id=eq.{uid}")
+        if jugador_data:
+            nuevo = (jugador_data[0].get("dinero") or 1000) + ganancia
+            await sb_patch("jugadores", {"dinero": nuevo}, f"id=eq.{uid}")
+        await query.edit_message_text(
+            f"✅ *Visa aprobada*\n\n💰 Ganaste *${ganancia:,}* (30%)",
+            parse_mode="Markdown"
+        )
+        try:
+            await context.bot.send_message(
+                chat_id=sol_id,
+                text="🎉 *Tu visa fue aprobada*\n\nYa puedes trabajar en ese país. Recarga el juego.",
+                parse_mode="Markdown"
+            )
+        except Exception as e:
+            log.error(f"Error visa aprobada: {e}")
+
+    elif data.startswith("visa_rechazar_"):
+        parts = data.split("_")
+        visa_id, sol_id, precio = int(parts[2]), int(parts[3]), int(parts[4])
+        await sb_patch("visas", {"estado": "rechazada"}, f"id=eq.{visa_id}")
+        sol_data = await sb_get("jugadores", f"select=dinero&id=eq.{sol_id}")
+        if sol_data:
+            devolver = (sol_data[0].get("dinero") or 0) + precio
+            await sb_patch("jugadores", {"dinero": devolver}, f"id=eq.{sol_id}")
+        await query.edit_message_text("❌ *Visa rechazada* — dinero devuelto.", parse_mode="Markdown")
+        try:
+            await context.bot.send_message(
+                chat_id=sol_id,
+                text="❌ *Tu visa fue rechazada*\n\nSe te devolvió el dinero.",
+                parse_mode="Markdown"
+            )
+        except Exception as e:
+            log.error(f"Error visa rechazada: {e}")
+
+async def cmd_dinero(update, context):
+    if not es_host(update): return
+    if len(context.args) < 2:
+        await update.message.reply_text("Uso: /dinero ID CANTIDAD")
+        return
+    target_id, cantidad = context.args[0], int(context.args[1])
+    jugador = await sb_get("jugadores", f"select=nombre,dinero&id=eq.{target_id}")
+    if not jugador:
+        await update.message.reply_text("❌ Jugador no encontrado")
+        return
+    nuevo = (jugador[0].get("dinero") or 0) + cantidad
+    await sb_patch("jugadores", {"dinero": nuevo}, f"id=eq.{target_id}")
+    nombre = jugador[0].get("nombre", "?")
+    await update.message.reply_text(f"✅ *${cantidad:,}* enviados a *{nombre}*\nSaldo: *${nuevo:,}*", parse_mode="Markdown")
+    try:
+        await context.bot.send_message(chat_id=int(target_id),
+            text=f"💰 *El admin te envió ${cantidad:,}*\nSaldo: ${nuevo:,}", parse_mode="Markdown")
+    except: pass
+
+async def cmd_energia(update, context):
     if not es_host(update): return
     if not context.args:
-        await update.message.reply_text("Uso: /premium ID_TELEGRAM")
+        await update.message.reply_text("Uso: /energia ID")
+        return
+    target_id = context.args[0]
+    jugador = await sb_get("jugadores", f"select=nombre&id=eq.{target_id}")
+    if not jugador:
+        await update.message.reply_text("❌ No encontrado")
+        return
+    await sb_patch("jugadores", {"energia": 100, "ultima_energia": datetime.utcnow().isoformat()}, f"id=eq.{target_id}")
+    await update.message.reply_text(f"⚡ Energía recargada a *{jugador[0]['nombre']}*", parse_mode="Markdown")
+    try:
+        await context.bot.send_message(chat_id=int(target_id),
+            text="⚡ *El admin recargó tu energía a 100/100*", parse_mode="Markdown")
+    except: pass
+
+async def cmd_premium(update, context):
+    if not es_host(update): return
+    if not context.args:
+        await update.message.reply_text("Uso: /premium ID")
         return
     target_id = context.args[0]
     expira = (datetime.utcnow() + timedelta(days=30)).isoformat()
-    ok = await sb_patch("jugadores", {
+    await sb_patch("jugadores", {
         "premium": True, "premium_hasta": expira,
         "premium_plan": "Pase Presidencial (Admin)",
         "trabajo_intervalo": 3, "bonus_xp": 200, "bonus_salario": 200
     }, f"id=eq.{target_id}")
-    if ok:
-        await update.message.reply_text(f"✅ Premium activado para {target_id} por 30 días.")
-        try:
-            await context.bot.send_message(chat_id=int(target_id),
-                text="🎉 *¡El administrador te activó Premium Presidencial por 30 días!*\n\n👑 Disfruta todos los beneficios.",
-                parse_mode="Markdown")
-        except: pass
-    else:
-        await update.message.reply_text("❌ Error. Verifica el ID.")
+    await update.message.reply_text(f"✅ Premium activado para {target_id}")
+    try:
+        await context.bot.send_message(chat_id=int(target_id),
+            text="🎉 *El admin te activó Premium Presidencial por 30 días*", parse_mode="Markdown")
+    except: pass
 
-async def cmd_ban(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def cmd_ban(update, context):
     if not es_host(update): return
     if not context.args:
-        await update.message.reply_text("Uso: /ban ID_TELEGRAM")
+        await update.message.reply_text("Uso: /ban ID")
         return
     target_id = context.args[0]
-    ok = await sb_patch("jugadores", {"exiliado": True, "exilio_hasta": "2099-01-01T00:00:00Z"}, f"id=eq.{target_id}")
-    if ok:
-        await update.message.reply_text(f"🚫 Jugador {target_id} baneado permanentemente.")
-    else:
-        await update.message.reply_text("❌ Error.")
+    await sb_patch("jugadores", {"exiliado": True, "exilio_hasta": "2099-01-01T00:00:00Z"}, f"id=eq.{target_id}")
+    await update.message.reply_text(f"🚫 Jugador {target_id} baneado.")
 
-async def cmd_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def cmd_broadcast(update, context):
     if not es_host(update): return
     if not context.args:
-        await update.message.reply_text("Uso: /broadcast Tu mensaje")
+        await update.message.reply_text("Uso: /broadcast MENSAJE")
         return
     mensaje = " ".join(context.args)
     jugadores = await sb_get("jugadores", "select=id&limit=200")
     enviados = 0
     for j in jugadores:
         try:
-            await context.bot.send_message(
-                chat_id=j["id"],
-                text=f"📢 *Mensaje del administrador:*\n\n{mensaje}",
-                parse_mode="Markdown"
-            )
+            await context.bot.send_message(chat_id=j["id"],
+                text=f"📢 *Mensaje del admin:*\n\n{mensaje}", parse_mode="Markdown")
             enviados += 1
             await asyncio.sleep(0.05)
         except: pass
-    await update.message.reply_text(f"✅ Mensaje enviado a {enviados} jugadores.")
+    await update.message.reply_text(f"✅ Enviado a {enviados} jugadores.")
 
-# ── Scheduler ─────────────────────────────────────────────
+async def check_visas_pendientes(app):
+    try:
+        visas = await sb_get("visas", "select=*&estado=eq.pendiente&limit=20")
+        for v in visas:
+            pres_id = v.get("presidente_id")
+            sol_id = v.get("solicitante_id")
+            if not pres_id: continue
+            sol = await sb_get("jugadores", f"select=nombre,pais&id=eq.{sol_id}")
+            sol_nombre = sol[0]["nombre"] if sol else "?"
+            sol_pais = sol[0]["pais"] if sol else "?"
+            visa_tipo = v.get("tipo","?").replace("_"," ")
+            precio = v.get("precio", 0)
+            visa_id = v.get("id")
+            keyboard = InlineKeyboardMarkup([[
+                InlineKeyboardButton("✅ APROBAR", callback_data=f"visa_aprobar_{visa_id}_{sol_id}_{precio}"),
+                InlineKeyboardButton("❌ RECHAZAR", callback_data=f"visa_rechazar_{visa_id}_{sol_id}_{precio}")
+            ]])
+            try:
+                await app.bot.send_message(
+                    chat_id=pres_id,
+                    text=f"🛂 *Solicitud de Visa*\n\n👤 {sol_nombre} ({sol_pais})\n📋 {visa_tipo}\n💰 ${precio:,}\n🏛️ Tu ganancia: ${int(precio*0.3):,}",
+                    parse_mode="Markdown",
+                    reply_markup=keyboard
+                )
+                await sb_patch("visas", {"estado": "notificada"}, f"id=eq.{visa_id}")
+            except Exception as e:
+                log.error(f"Error notificando visa: {e}")
+    except Exception as e:
+        log.error(f"Error check_visas: {e}")
+
 async def run_minor_tick(app):
-    log.info("🔄 Tick menor...")
     try:
         await sb_patch("tick_global", {
             "ultimo_tick": datetime.utcnow().isoformat(),
@@ -339,45 +355,43 @@ async def run_minor_tick(app):
         log.error(f"Tick error: {e}")
 
 async def run_major_tick(app):
-    log.info("🌅 Tick mayor...")
     try:
-        await sb_patch("naciones", {
-            "decretos_usados": [],
-            "updated_at": datetime.utcnow().isoformat()
-        }, "jugador_id=gt.0")
+        await sb_patch("naciones", {"decretos_usados": [], "updated_at": datetime.utcnow().isoformat()}, "jugador_id=gt.0")
         jugadores = await sb_get("jugadores", "select=id")
         for j in jugadores:
             try:
-                keyboard = [[InlineKeyboardButton("📜 Emitir decretos", web_app=WebAppInfo(url=WEBAPP_URL))]]
                 await app.bot.send_message(
                     chat_id=j["id"],
-                    text="🌅 *¡Nuevo día\\!* Tienes 3 decretos frescos para gobernar\\.",
+                    text="🌅 *Nuevo día* — Tienes 3 decretos frescos\\.",
                     parse_mode="MarkdownV2",
-                    reply_markup=InlineKeyboardMarkup(keyboard)
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("📜 Gobernar", web_app=WebAppInfo(url=WEBAPP_URL))]])
                 )
             except: pass
     except Exception as e:
         log.error(f"Tick mayor error: {e}")
 
 async def scheduler(app):
-    minor = major = alive = 0
+    minor = major = alive = visa_check = 0
     log.info("⏰ Scheduler iniciado")
     while True:
         await asyncio.sleep(60)
-        minor += 60; major += 60; alive += 60
+        minor += 60; major += 60; alive += 60; visa_check += 60
         if minor >= 3600: await run_minor_tick(app); minor = 0
         if major >= 86400: await run_major_tick(app); major = 0
+        if visa_check >= 120: await check_visas_pendientes(app); visa_check = 0
         if alive >= 259200:
             await sb_get("jugadores", "select=id&limit=1"); alive = 0
 
 async def main():
-    log.info(f"🚀 Bot iniciando... HOST_ID: {HOST_ID}")
+    log.info(f"🚀 Bot iniciando... HOST: {HOST_ID}")
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("estado", estado))
     app.add_handler(CommandHandler("ayuda", ayuda))
     app.add_handler(CommandHandler("help", ayuda))
     app.add_handler(CommandHandler("admin", admin))
+    app.add_handler(CommandHandler("dinero", cmd_dinero))
+    app.add_handler(CommandHandler("energia", cmd_energia))
     app.add_handler(CommandHandler("premium", cmd_premium))
     app.add_handler(CommandHandler("ban", cmd_ban))
     app.add_handler(CommandHandler("broadcast", cmd_broadcast))
@@ -385,7 +399,7 @@ async def main():
     async with app:
         await app.start()
         await app.updater.start_polling(allowed_updates=Update.ALL_TYPES)
-        log.info("✅ Bot corriendo con panel admin")
+        log.info("✅ Bot corriendo con panel admin y visas")
         await scheduler(app)
 
 if __name__ == "__main__":
