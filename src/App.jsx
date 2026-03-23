@@ -291,6 +291,97 @@ function calcularPuntuacion(stats, jugador) {
   );
 }
 
+// ── SVG Icons militares personalizados ───────────────────
+const Icon = ({ type, size=22, color="#c9a84c", glow=false }) => {
+  const s = { width:size, height:size, flexShrink:0, filter:glow?`drop-shadow(0 0 6px ${color})`:"none", display:"block" };
+  const icons = {
+    coin:    <svg style={s} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill={`${color}22`} stroke={color} strokeWidth="1.5"/><ellipse cx="12" cy="10" rx="6" ry="2.5" fill={`${color}44`}/><text x="12" y="15" textAnchor="middle" fill={color} fontSize="7" fontWeight="bold" fontFamily="Orbitron">$</text></svg>,
+    sword:   <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M4 20L20 4M20 4H14M20 4V10" stroke={color} strokeWidth="2" strokeLinecap="round"/><path d="M7 13L5 15L6 17L8 18L10 16L8 14Z" fill={`${color}66`} stroke={color} strokeWidth="1"/></svg>,
+    shield:  <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M12 3L4 7V13C4 17 8 20.5 12 21C16 20.5 20 17 20 13V7L12 3Z" fill={`${color}22`} stroke={color} strokeWidth="1.5"/><path d="M9 12L11 14L15 10" stroke={color} strokeWidth="2" strokeLinecap="round"/></svg>,
+    flag:    <svg style={s} viewBox="0 0 24 24" fill="none"><line x1="5" y1="3" x2="5" y2="21" stroke={color} strokeWidth="2" strokeLinecap="round"/><path d="M5 5H18L14 9L18 13H5" fill={`${color}44`} stroke={color} strokeWidth="1.5"/></svg>,
+    oil:     <svg style={s} viewBox="0 0 24 24" fill="none"><rect x="8" y="10" width="8" height="10" rx="2" fill={`${color}33`} stroke={color} strokeWidth="1.5"/><path d="M8 12H16M10 8V10M14 8V10M10 7C10 5.5 12 4 12 4C12 4 14 5.5 14 7" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></svg>,
+    wheat:   <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M12 20V8" stroke={color} strokeWidth="1.5" strokeLinecap="round"/><circle cx="12" cy="7" r="2.5" fill={`${color}44`} stroke={color} strokeWidth="1.2"/><circle cx="8" cy="10" r="2" fill={`${color}33`} stroke={color} strokeWidth="1.2"/><circle cx="16" cy="10" r="2" fill={`${color}33`} stroke={color} strokeWidth="1.2"/><circle cx="9" cy="14" r="1.8" fill={`${color}22`} stroke={color} strokeWidth="1"/><circle cx="15" cy="14" r="1.8" fill={`${color}22`} stroke={color} strokeWidth="1"/></svg>,
+    bolt:    <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M13 3L5 14H12L11 21L19 10H12L13 3Z" fill={`${color}44`} stroke={color} strokeWidth="1.5" strokeLinejoin="round"/></svg>,
+    factory: <svg style={s} viewBox="0 0 24 24" fill="none"><rect x="2" y="14" width="20" height="7" rx="1" fill={`${color}22`} stroke={color} strokeWidth="1.3"/><path d="M2 14L8 10V14M8 14L14 10V14M14 14L20 10V14" stroke={color} strokeWidth="1.3"/><rect x="6" y="7" width="4" height="7" fill={`${color}33`} stroke={color} strokeWidth="1"/><rect x="14" y="7" width="4" height="7" fill={`${color}33`} stroke={color} strokeWidth="1"/><line x1="8" y1="4" x2="8" y2="7" stroke={color} strokeWidth="1.5"/><line x1="16" y1="4" x2="16" y2="7" stroke={color} strokeWidth="1.5"/></svg>,
+    users:   <svg style={s} viewBox="0 0 24 24" fill="none"><circle cx="9" cy="7" r="3" fill={`${color}33`} stroke={color} strokeWidth="1.3"/><path d="M3 20C3 16.686 5.686 14 9 14C12.314 14 15 16.686 15 20" stroke={color} strokeWidth="1.3" strokeLinecap="round"/><circle cx="17" cy="8" r="2.5" fill={`${color}22`} stroke={color} strokeWidth="1"/><path d="M19 20C19 17.5 17.5 15.5 15.5 15" stroke={color} strokeWidth="1.3" strokeLinecap="round"/></svg>,
+    grad:    <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M12 4L2 9L12 14L22 9L12 4Z" fill={`${color}33`} stroke={color} strokeWidth="1.3"/><path d="M6 11.5V16C6 16 8 18 12 18C16 18 18 16 18 16V11.5" stroke={color} strokeWidth="1.3" strokeLinecap="round"/><line x1="22" y1="9" x2="22" y2="14" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></svg>,
+    heart:   <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M12 20S4 14 4 8.5C4 6 6 4 8.5 4C10 4 11.5 4.8 12 6C12.5 4.8 14 4 15.5 4C18 4 20 6 20 8.5C20 14 12 20 12 20Z" fill={`${color}33`} stroke={color} strokeWidth="1.5"/></svg>,
+    fire:    <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M12 21C8 21 5 18 5 14C5 11 7 9 8 8C8 10 9 11 10 11C10 9 11 6 12 4C13 7 15 8 15 11C16 10 16 8 15 7C18 9 19 12 19 14C19 18 16 21 12 21Z" fill={`${color}44`} stroke={color} strokeWidth="1.5" strokeLinejoin="round"/><path d="M12 17C10.5 17 9.5 16 9.5 14.5C9.5 13 10.5 12 12 11C13.5 12 14.5 13 14.5 14.5C14.5 16 13.5 17 12 17Z" fill={`${color}88`} stroke={color} strokeWidth="1"/></svg>,
+    spy:     <svg style={s} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill={`${color}33`} stroke={color} strokeWidth="1.3"/><path d="M4 21C4 17 7.6 14 12 14C16.4 14 20 17 20 21" stroke={color} strokeWidth="1.3" strokeLinecap="round"/><path d="M3 10C3 10 5 8 8 10M16 10C16 10 19 8 21 10" stroke={color} strokeWidth="1.3" strokeLinecap="round"/></svg>,
+    panel:   <svg style={s} viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="2" fill={`${color}33`} stroke={color} strokeWidth="1.3"/><rect x="13" y="3" width="8" height="8" rx="2" fill={`${color}22`} stroke={color} strokeWidth="1.3"/><rect x="3" y="13" width="8" height="8" rx="2" fill={`${color}22`} stroke={color} strokeWidth="1.3"/><rect x="13" y="13" width="8" height="8" rx="2" fill={`${color}33`} stroke={color} strokeWidth="1.3"/></svg>,
+    scroll:  <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M6 3H18C19.1 3 20 3.9 20 5V19C20 20.1 19.1 21 18 21H6C4.9 21 4 20.1 4 19V5C4 3.9 4.9 3 6 3Z" fill={`${color}22`} stroke={color} strokeWidth="1.3"/><line x1="8" y1="9" x2="16" y2="9" stroke={color} strokeWidth="1" strokeLinecap="round" opacity="0.7"/><line x1="8" y1="12" x2="16" y2="12" stroke={color} strokeWidth="1" strokeLinecap="round" opacity="0.7"/><line x1="8" y1="15" x2="13" y2="15" stroke={color} strokeWidth="1" strokeLinecap="round" opacity="0.7"/></svg>,
+    war:     <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M3 20L21 4M21 4H15M21 4V10" stroke={color} strokeWidth="2" strokeLinecap="round"/><circle cx="7" cy="16" r="3" fill={`${color}33`} stroke={color} strokeWidth="1.3"/><path d="M4 19L10 13" stroke={color} strokeWidth="1" opacity="0.5" strokeLinecap="round"/></svg>,
+    work:    <svg style={s} viewBox="0 0 24 24" fill="none"><rect x="2" y="8" width="20" height="12" rx="2" fill={`${color}22`} stroke={color} strokeWidth="1.3"/><path d="M8 8V6C8 4.9 8.9 4 10 4H14C15.1 4 16 4.9 16 6V8" stroke={color} strokeWidth="1.3"/><rect x="10" y="11" width="4" height="4" rx="1" fill={`${color}55`} stroke={color} strokeWidth="1"/></svg>,
+    shop:    <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M3 9H21L19 19H5L3 9Z" fill={`${color}22`} stroke={color} strokeWidth="1.3"/><path d="M3 9L5 4H19L21 9" stroke={color} strokeWidth="1.3"/><circle cx="9" cy="21" r="1.5" fill={color}/><circle cx="17" cy="21" r="1.5" fill={color}/></svg>,
+    target:  <svg style={s} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.3" fill="none"/><circle cx="12" cy="12" r="5" stroke={color} strokeWidth="1.3" fill={`${color}22`}/><circle cx="12" cy="12" r="2" fill={color}/><line x1="12" y1="3" x2="12" y2="7" stroke={color} strokeWidth="1.3"/><line x1="12" y1="17" x2="12" y2="21" stroke={color} strokeWidth="1.3"/><line x1="3" y1="12" x2="7" y2="12" stroke={color} strokeWidth="1.3"/><line x1="17" y1="12" x2="21" y2="12" stroke={color} strokeWidth="1.3"/></svg>,
+    crown:   <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M3 17L5 9L9 13L12 7L15 13L19 9L21 17H3Z" fill={`${color}44`} stroke={color} strokeWidth="1.5" strokeLinejoin="round"/><rect x="3" y="17" width="18" height="2.5" rx="1" fill={`${color}66`} stroke={color} strokeWidth="1"/><circle cx="12" cy="7" r="1.5" fill={color}/><circle cx="5" cy="9" r="1.2" fill={color}/><circle cx="19" cy="9" r="1.2" fill={color}/></svg>,
+    citizen: <svg style={s} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="7" r="4" fill={`${color}33`} stroke={color} strokeWidth="1.3"/><path d="M4 21C4 17 7.6 14 12 14C16.4 14 20 17 20 21" stroke={color} strokeWidth="1.3" strokeLinecap="round"/></svg>,
+    star:    <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M12 2L14.5 9H22L16 13.5L18.5 20.5L12 16L5.5 20.5L8 13.5L2 9H9.5L12 2Z" fill={`${color}44`} stroke={color} strokeWidth="1.3" strokeLinejoin="round"/></svg>,
+    bomb:    <svg style={s} viewBox="0 0 24 24" fill="none"><circle cx="11" cy="14" r="7" fill={`${color}33`} stroke={color} strokeWidth="1.5"/><path d="M16 8L18 6M18 6L20 4M18 6L20 8M18 6L16 4" stroke={color} strokeWidth="1.5" strokeLinecap="round"/><circle cx="9" cy="12" r="1.5" fill={color} opacity="0.6"/></svg>,
+    radar:   <svg style={s} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1" fill="none" opacity="0.5"/><circle cx="12" cy="12" r="5.5" stroke={color} strokeWidth="1" fill="none" opacity="0.5"/><circle cx="12" cy="12" r="2" stroke={color} strokeWidth="1" fill="none" opacity="0.5"/><path d="M12 12L12 3" stroke={color} strokeWidth="1.5" strokeLinecap="round" style={{transformOrigin:"12px 12px",animationName:"spin",animationDuration:"3s",animationTimingFunction:"linear",animationIterationCount:"infinite"}}/><circle cx="7" cy="8" r="1.2" fill={color} opacity="0.8"><animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite"/></circle></svg>,
+  };
+  return icons[type] || icons.star;
+};
+
+// ── RADAR Background animado ──────────────────────────────
+const RadarBG = () => (
+  <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
+    {/* Fondo base — verde muy oscuro tipo pantalla táctica */}
+    <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 130% 130% at 50% 60%,#010f07 0%,#030508 55%,#020305 100%)"}}/>
+    {/* SVG Radar */}
+    <svg style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%) translateY(10%)",width:"min(120vw,120vh)",height:"min(120vw,120vh)",opacity:0.22}} viewBox="0 0 500 500">
+      <defs>
+        <radialGradient id="sweepGrad" cx="250" cy="250" r="240" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#00ff88" stopOpacity="0"/>
+          <stop offset="60%" stopColor="#00ff88" stopOpacity="0.1"/>
+          <stop offset="100%" stopColor="#00ff88" stopOpacity="0.3"/>
+        </radialGradient>
+        <filter id="greenGlow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      {/* Círculos concéntricos */}
+      {[50,100,150,200,240].map((r,i)=>(
+        <circle key={i} cx="250" cy="250" r={r} fill="none" stroke="#00ff88" strokeWidth={i===0?1.2:0.7} strokeDasharray={i%2===0?"":"5 5"} opacity={0.55-i*0.08}/>
+      ))}
+      {/* Cruz */}
+      <line x1="250" y1="8" x2="250" y2="492" stroke="#00ff88" strokeWidth="0.6" opacity="0.35"/>
+      <line x1="8" y1="250" x2="492" y2="250" stroke="#00ff88" strokeWidth="0.6" opacity="0.35"/>
+      <line x1="80" y1="80" x2="420" y2="420" stroke="#00ff88" strokeWidth="0.35" opacity="0.18"/>
+      <line x1="420" y1="80" x2="80" y2="420" stroke="#00ff88" strokeWidth="0.35" opacity="0.18"/>
+      {/* Marcas en el borde */}
+      {Array.from({length:36},(_,i)=>{
+        const a=(i/36)*Math.PI*2; const r1=238; const r2=i%3===0?228:232;
+        return <line key={i} x1={250+r1*Math.sin(a)} y1={250-r1*Math.cos(a)} x2={250+r2*Math.sin(a)} y2={250-r2*Math.cos(a)} stroke="#00ff88" strokeWidth={i%3===0?"1.5":"0.7"} opacity="0.5"/>;
+      })}
+      {/* Sweep arm animado */}
+      <g style={{transformOrigin:"250px 250px",animationName:"radar-sweep",animationDuration:"4s",animationTimingFunction:"linear",animationIterationCount:"infinite"}}>
+        <path d="M250 250 L250 10 A240 240 0 0 1 490 250 Z" fill="url(#sweepGrad)" opacity="0.9"/>
+        <line x1="250" y1="250" x2="250" y2="10" stroke="#00ff88" strokeWidth="1.8" opacity="1" filter="url(#greenGlow)"/>
+      </g>
+      {/* Blips animados */}
+      {[[160,130,1.8],[330,175,1.3],[195,310,2.0],[370,345,1.5],[125,220,1.2],[405,145,1.7],[275,75,1.1],[88,330,1.9],[420,270,1.4],[230,390,1.6]].map(([bx,by,spd],i)=>(
+        <g key={i}>
+          <circle cx={bx} cy={by} r="3.5" fill="#00ff88" filter="url(#greenGlow)">
+            <animate attributeName="opacity" values="0.1;1;0.1" dur={`${spd+0.5}s`} begin={`${i*0.5}s`} repeatCount="indefinite"/>
+          </circle>
+          <circle cx={bx} cy={by} r="8" fill="none" stroke="#00ff88" strokeWidth="0.8">
+            <animate attributeName="r" values="4;16;4" dur={`${spd+1}s`} begin={`${i*0.5}s`} repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.6;0;0.6" dur={`${spd+1}s`} begin={`${i*0.5}s`} repeatCount="indefinite"/>
+          </circle>
+        </g>
+      ))}
+      {/* Centro */}
+      <circle cx="250" cy="250" r="5" fill="#00ff88" opacity="0.9" filter="url(#greenGlow)"/>
+      <circle cx="250" cy="250" r="2" fill="#fff" opacity="0.9"/>
+    </svg>
+    {/* Scanlines horizontales tenues */}
+    <div style={{position:"absolute",inset:0,backgroundImage:"repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,15,8,0.12) 4px)"}}/>
+    {/* Viñeta oscura en los bordes */}
+    <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 75% 75% at 50% 50%,transparent 35%,rgba(2,4,8,0.88) 100%)"}}/>
+    {/* Tinte verde muy sutil en el centro */}
+    <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 90% 50% at 50% 55%,rgba(0,80,30,0.05) 0%,transparent 60%)"}}/>
+  </div>
+);
+
 // ── Partículas flotantes ──────────────────────────────────
 const Particles = ({ count=14, color="#c9a84c", size=3 }) => {
   const pts = Array.from({length:count},(_,i)=>({
@@ -354,26 +445,19 @@ const GlowBtn = ({ onClick, disabled, color="#c9a84c", darkColor="#0a0810", chil
 
 // ── Barra de recurso animada ──────────────────────────────
 const ResourceBar = ({ icon, label, value, color }) => (
-  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:9,
-    padding:"8px 12px",background:"rgba(0,0,0,0.3)",borderRadius:8,
-    border:`1px solid ${color}18`}}>
-    <div style={{width:34,height:34,background:`linear-gradient(135deg,${color}33,${color}11)`,
-      border:`1px solid ${color}55`,borderRadius:8,display:"flex",alignItems:"center",
-      justifyContent:"center",fontSize:17,flexShrink:0,boxShadow:`0 0 10px ${color}22`}}>{icon}</div>
+  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:9,padding:"8px 12px",background:"rgba(0,0,0,0.3)",borderRadius:8,border:`1px solid ${color}18`}}>
+    <div style={{width:34,height:34,background:`linear-gradient(135deg,${color}33,${color}11)`,border:`1px solid ${color}55`,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:`0 0 10px ${color}22`,position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.1)",borderRadius:"8px 8px 0 0"}}/>
+      {typeof icon === "string" ? <span style={{fontSize:17,position:"relative"}}>{icon}</span> : icon}
+    </div>
     <div style={{flex:1}}>
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
         <span style={{fontSize:12,color:"#8090a8",fontFamily:"'Rajdhani',sans-serif",fontWeight:600,letterSpacing:"0.06em",textTransform:"uppercase"}}>{label}</span>
-        <span style={{fontSize:13,fontFamily:"'Orbitron',monospace",fontWeight:700,
-          color:value>60?"#66bb6a":value>35?"#f0c040":"#ff5252",
-          textShadow:"0 0 8px currentColor"}}>{value}<span style={{fontSize:9,opacity:.6}}>%</span></span>
+        <span style={{fontSize:13,fontFamily:"'Orbitron',monospace",fontWeight:700,color:value>60?"#66bb6a":value>35?"#f0c040":"#ff5252",textShadow:"0 0 8px currentColor"}}>{value}<span style={{fontSize:9,opacity:.6}}>%</span></span>
       </div>
       <div style={{height:8,background:"rgba(255,255,255,0.05)",borderRadius:4,overflow:"hidden",position:"relative"}}>
-        <div style={{height:"100%",width:`${value}%`,borderRadius:4,
-          background:`linear-gradient(90deg,${color}99,${color})`,
-          transition:"width 1.3s cubic-bezier(0.4,0,0.2,1)",
-          boxShadow:`0 0 8px ${color}88`,position:"relative"}}>
-          <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",
-            background:"rgba(255,255,255,0.18)",borderRadius:"4px 4px 0 0"}}/>
+        <div style={{height:"100%",width:`${value}%`,borderRadius:4,background:`linear-gradient(90deg,${color}99,${color})`,transition:"width 1.3s cubic-bezier(0.4,0,0.2,1)",boxShadow:`0 0 8px ${color}88`,position:"relative"}}>
+          <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.18)",borderRadius:"4px 4px 0 0"}}/>
         </div>
       </div>
     </div>
@@ -1423,18 +1507,8 @@ export default function App() {
 // ── GAME ────────────────────────────────────────────────
   return (
     <div style={{minHeight:"100vh",background:"#030508",fontFamily:"'Rajdhani',sans-serif",color:"#f0ece0",position:"relative"}}>
-      {/* Fondo épico */}
-      <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,background:"radial-gradient(ellipse 150% 50% at 50% -10%,rgba(201,168,76,0.06) 0%,transparent 55%)"}}/>
-      <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,backgroundImage:"linear-gradient(rgba(201,168,76,0.016) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.011) 1px,transparent 1px)",backgroundSize:"50px 50px"}}/>
-      {/* Partículas ambiente */}
-      <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
-        {[12,28,46,64,80,93].map((l,i)=>(
-          <div key={i} style={{position:"absolute",bottom:"3%",left:`${l}%`,width:2,height:2,borderRadius:"50%",
-            background:"rgba(201,168,76,0.55)",animationName:"particle-up",animationDuration:`${5+i*1.1}s`,
-            animationDelay:`${i*1.4}s`,animationTimingFunction:"ease-out",animationIterationCount:"infinite",
-            "--dx":`${(i%2?1:-1)*18}px`}}/>
-        ))}
-      </div>
+      {/* RADAR BACKGROUND ÉPICO */}
+      <RadarBG/>
 
       {/* XP Popup épico */}
       {showXpModal&&(
@@ -1684,11 +1758,11 @@ export default function App() {
         {/* Row 2 — Stats */}
         <div style={{padding:"0 10px 9px",display:"flex",gap:6,overflowX:"auto"}}>
           {esPresidente
-            ?[{icon:"💰",val:stats.pib,color:"#c9a84c"},{icon:"⚔️",val:stats.militar,color:"#e53935"},{icon:"👥",val:stats.aprobacion,color:"#e91e63"},{icon:"🛢️",val:stats.petroleo,color:"#ff8f00"},{icon:"🌾",val:stats.comida,color:"#4caf50"},{icon:"⚡",val:stats.energia,color:"#03a9f4"}].map((s,i)=>(
+            ?[{ico:"coin",val:stats.pib,color:"#c9a84c"},{ico:"sword",val:stats.militar,color:"#e53935"},{ico:"users",val:stats.aprobacion,color:"#e91e63"},{ico:"oil",val:stats.petroleo,color:"#ff8f00"},{ico:"wheat",val:stats.comida,color:"#4caf50"},{ico:"bolt",val:stats.energia,color:"#03a9f4"}].map((s,i)=>(
               <div key={i} style={{display:"flex",flexDirection:"column",alignItems:"center",background:`linear-gradient(135deg,${s.color}18,rgba(0,0,0,0.45))`,border:`1px solid ${s.color}33`,borderRadius:9,padding:"6px 10px",minWidth:50,position:"relative",overflow:"hidden",flexShrink:0,animationName:"border-glow",animationDuration:`${3+i*0.4}s`,animationTimingFunction:"ease-in-out",animationIterationCount:"infinite"}}>
                 <div style={{position:"absolute",bottom:0,left:0,right:0,height:`${s.val}%`,background:`${s.color}09`,transition:"height 1.5s ease"}}/>
-                <span style={{fontSize:16,position:"relative"}}>{s.icon}</span>
-                <span style={{fontSize:12,color:s.val>60?"#66bb6a":s.val>35?"#f0c040":"#ff5252",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:"0 0 8px currentColor",position:"relative"}}>{s.val}<span style={{fontSize:8,opacity:.6}}>%</span></span>
+                <Icon type={s.ico} size={16} color={s.color} glow/>
+                <span style={{fontSize:12,color:s.val>60?"#66bb6a":s.val>35?"#f0c040":"#ff5252",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:"0 0 8px currentColor",position:"relative",marginTop:2}}>{s.val}<span style={{fontSize:8,opacity:.6}}>%</span></span>
               </div>
             ))
             :<div style={{display:"flex",gap:7,alignItems:"center",width:"100%"}}>
@@ -1835,17 +1909,17 @@ export default function App() {
             <div style={{background:"linear-gradient(135deg,rgba(255,255,255,0.02),rgba(0,0,0,0.3))",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:14,position:"relative",overflow:"hidden"}}>
               <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,rgba(201,168,76,0.5),transparent)"}}/>
               <div style={{fontSize:10,color:"#4a5878",letterSpacing:"0.15em",marginBottom:14,textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>📊 Indicadores Nacionales</div>
-              <ResourceBar icon="💰" label="PIB Nacional" value={stats.pib} color="#c9a84c" />
-              <ResourceBar icon="🛢️" label="Petróleo" value={stats.petroleo} color="#ff8f00" />
-              <ResourceBar icon="🌾" label="Comida" value={stats.comida} color="#4caf50" />
-              <ResourceBar icon="⚡" label="Energía" value={stats.energia} color="#03a9f4" />
-              <ResourceBar icon="🏭" label="Industria" value={stats.industria} color="#9c27b0" />
-              <ResourceBar icon="👥" label="Aprobación" value={stats.aprobacion} color="#e91e63" />
-              <ResourceBar icon="🎓" label="Educación" value={stats.educacion} color="#3f51b5" />
-              <ResourceBar icon="🏥" label="Salud" value={stats.salud} color="#00bcd4" />
-              <ResourceBar icon="😤" label="Rebeldía" value={stats.rebeldia} color="#e53935" />
-              <ResourceBar icon="⚔️" label="Ejército" value={stats.militar} color="#f44336" />
-              <ResourceBar icon="🕵️" label="Inteligencia" value={stats.intel} color="#795548" />
+              <ResourceBar icon={<Icon type="coin" size={18} color="#c9a84c" glow/>} label="PIB Nacional" value={stats.pib} color="#c9a84c" />
+              <ResourceBar icon={<Icon type="oil" size={18} color="#ff8f00" glow/>} label="Petróleo" value={stats.petroleo} color="#ff8f00" />
+              <ResourceBar icon={<Icon type="wheat" size={18} color="#4caf50" glow/>} label="Comida" value={stats.comida} color="#4caf50" />
+              <ResourceBar icon={<Icon type="bolt" size={18} color="#03a9f4" glow/>} label="Energía" value={stats.energia} color="#03a9f4" />
+              <ResourceBar icon={<Icon type="factory" size={18} color="#9c27b0" glow/>} label="Industria" value={stats.industria} color="#9c27b0" />
+              <ResourceBar icon={<Icon type="users" size={18} color="#e91e63" glow/>} label="Aprobación" value={stats.aprobacion} color="#e91e63" />
+              <ResourceBar icon={<Icon type="grad" size={18} color="#3f51b5" glow/>} label="Educación" value={stats.educacion} color="#3f51b5" />
+              <ResourceBar icon={<Icon type="heart" size={18} color="#00bcd4" glow/>} label="Salud" value={stats.salud} color="#00bcd4" />
+              <ResourceBar icon={<Icon type="fire" size={18} color="#e53935" glow/>} label="Rebeldía" value={stats.rebeldia} color="#e53935" />
+              <ResourceBar icon={<Icon type="sword" size={18} color="#f44336" glow/>} label="Ejército" value={stats.militar} color="#f44336" />
+              <ResourceBar icon={<Icon type="spy" size={18} color="#795548" glow/>} label="Inteligencia" value={stats.intel} color="#795548" />
             </div>
           </div>
         )}
@@ -2569,38 +2643,30 @@ export default function App() {
         )}
       </div>
 
-      {/* ═══ BOTTOM NAV — Epic Game Style ═══ */}
+      {/* ═══ BOTTOM NAV — Epic 3D ═══ */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:200,paddingBottom:"calc(env(safe-area-inset-bottom) + 2px)"}}>
-        {/* Gradient fade from transparent to dark */}
-        <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,transparent 0%,rgba(3,5,10,0.97) 20%)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)"}}/>
-        {/* Animated gold top line */}
-        <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,rgba(201,168,76,0.3) 15%,rgba(240,192,64,0.9) 50%,rgba(201,168,76,0.3) 85%,transparent)",animationName:"pulse-glow",animationDuration:"2.5s",animationTimingFunction:"ease-in-out",animationIterationCount:"infinite",zIndex:1}}/>
+        <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,transparent 0%,rgba(2,4,8,0.97) 18%)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)"}}/>
+        <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,rgba(0,255,100,0.15) 15%,rgba(201,168,76,0.9) 50%,rgba(0,255,100,0.15) 85%,transparent)",animationName:"pulse-glow",animationDuration:"2.5s",animationTimingFunction:"ease-in-out",animationIterationCount:"infinite",zIndex:1}}/>
         <div style={{display:"flex",position:"relative",zIndex:1,paddingTop:6}}>
-          {[["panel","📊","Panel"],["decretos","📜","Gobernar"],["guerra","⚔️","Guerra"],["empresas","🏭","Trabajo"],["tienda","🛒","Tienda"]].map(([id,icon,label])=>{
+          {[
+            {id:"panel",ico:"panel",label:"Panel"},
+            {id:"decretos",ico:"scroll",label:"Gobernar"},
+            {id:"guerra",ico:"war",label:"Guerra"},
+            {id:"empresas",ico:"work",label:"Trabajo"},
+            {id:"tienda",ico:"shop",label:"Tienda"},
+          ].map(({id,ico,label})=>{
             const active=tab===id;
             return (
               <button key={id}
                 onClick={()=>{tg?.HapticFeedback?.selectionChanged();setTab(id);if(id==="empresas"){loadFabricas();loadVisas();}}}
-                style={{flex:1,background:"transparent",border:"none",padding:"6px 2px 10px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,position:"relative"}}>
-                {/* Glow background when active */}
-                {active&&<div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 50% 10%,rgba(201,168,76,0.15),transparent 65%)",borderRadius:8,animationName:"pulse-glow",animationDuration:"2s",animationTimingFunction:"ease-in-out",animationIterationCount:"infinite"}}/>}
-                {/* Gold top indicator */}
+                style={{flex:1,background:"transparent",border:"none",padding:"6px 2px 10px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,position:"relative",transition:"all 0.2s"}}>
+                {active&&<div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 50% 10%,rgba(201,168,76,0.14),transparent 65%)",borderRadius:8,animationName:"pulse-glow",animationDuration:"2s",animationTimingFunction:"ease-in-out",animationIterationCount:"infinite"}}/>}
                 {active&&<div style={{position:"absolute",top:0,left:"18%",right:"18%",height:2,background:"linear-gradient(90deg,transparent,#f0c040,rgba(255,240,100,0.9),#f0c040,transparent)",borderRadius:1,boxShadow:"0 0 10px rgba(240,192,64,0.9),0 0 20px rgba(240,192,64,0.4)"}}/>}
-                <span style={{
-                  fontSize:22,
-                  display:"block",
-                  position:"relative",
-                  transition:"all 0.25s cubic-bezier(0.34,1.5,0.64,1)",
-                  transform:active?"scale(1.2) translateY(-2px)":"scale(1)",
-                  filter:active?"drop-shadow(0 0 8px rgba(201,168,76,0.9)) drop-shadow(0 2px 4px rgba(0,0,0,0.5))":"drop-shadow(0 1px 2px rgba(0,0,0,0.5))"
-                }}>{icon}</span>
-                <span style={{
-                  fontSize:9,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,
-                  letterSpacing:"0.08em",textTransform:"uppercase",
-                  color:active?"#f0c040":"#2a3448",
-                  textShadow:active?"0 0 10px rgba(240,192,64,0.7)":"none",
-                  transition:"all 0.2s"
-                }}>{label}</span>
+                <div style={{width:38,height:38,borderRadius:10,background:active?"linear-gradient(145deg,rgba(201,168,76,0.2),rgba(0,0,0,0.5))":"linear-gradient(145deg,rgba(255,255,255,0.04),rgba(0,0,0,0.4))",border:`1px solid ${active?"rgba(201,168,76,0.5)":"rgba(255,255,255,0.06)"}`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:active?"0 4px 0 rgba(0,0,0,0.6),0 0 14px rgba(201,168,76,0.35),inset 0 1px 0 rgba(255,255,255,0.12)":"0 2px 0 rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.04)",transition:"all 0.2s cubic-bezier(0.34,1.5,0.64,1)",transform:active?"scale(1.12) translateY(-2px)":"scale(1)",position:"relative",overflow:"hidden"}}>
+                  {active&&<div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.08)",borderRadius:"10px 10px 0 0"}}/>}
+                  <Icon type={ico} size={20} color={active?"#f0c040":"#3a4860"} glow={active}/>
+                </div>
+                <span style={{fontSize:9,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",color:active?"#f0c040":"#2a3448",textShadow:active?"0 0 10px rgba(240,192,64,0.7)":"none",transition:"all 0.2s"}}>{label}</span>
               </button>
             );
           })}
@@ -2608,4 +2674,4 @@ export default function App() {
       </div>
     </div>
   );
-                                 }
+                   }
