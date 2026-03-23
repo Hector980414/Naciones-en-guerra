@@ -579,7 +579,7 @@ export default function App() {
   const tickRef = useRef(null);
 
   useEffect(() => {
-    if(tg){tg.ready();tg.expand();tg.setBackgroundColor("#1a1008");tg.setHeaderColor("#1a1008");if(tg.requestFullscreen)tg.requestFullscreen();}
+    try{if(tg){tg.ready();tg.expand();if(tg.setBackgroundColor)tg.setBackgroundColor("#1a1008");if(tg.setHeaderColor)tg.setHeaderColor("#1a1008");if(tg.requestFullscreen)tg.requestFullscreen();}}catch(e){console.log("tg init error",e)}
     initPlayer();
     // Recargar visas cuando la app recibe foco
     const onFocus = () => loadVisas();
