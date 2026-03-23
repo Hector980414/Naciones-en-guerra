@@ -539,6 +539,8 @@ export default function App() {
   const [participantesGuerra, setParticipantesGuerra] = useState([]);
   const [yaParticipo, setYaParticipo] = useState(false);
   const [guerrasHistorial, setGuerrasHistorial] = useState([]);
+  const [misionesGuerra, setMisionesGuerra] = useState([]);
+  const [miPartMisiones, setMiPartMisiones] = useState(0);
   const [nivel, setNivel] = useState(1);
   const [dinero, setDinero] = useState(1000);
   const [showXpModal, setShowXpModal] = useState(false);
@@ -579,7 +581,7 @@ export default function App() {
   const tickRef = useRef(null);
 
   useEffect(() => {
-    try{if(tg){tg.ready();tg.expand();if(tg.setBackgroundColor)tg.setBackgroundColor("#1a1008");if(tg.setHeaderColor)tg.setHeaderColor("#1a1008");if(tg.requestFullscreen)tg.requestFullscreen();}}catch(e){console.log("tg init error",e)}
+    if(tg){tg.ready();tg.expand();tg.setBackgroundColor("#1a1008");tg.setHeaderColor("#1a1008");if(tg.requestFullscreen)tg.requestFullscreen();}
     initPlayer();
     // Recargar visas cuando la app recibe foco
     const onFocus = () => loadVisas();
@@ -778,25 +780,82 @@ export default function App() {
         .limit(1);
       if (guerras && guerras.length > 0) {
         setGuerraActiva(guerras[0]);
-        // Cargar participantes
         const { data: parts } = await db.from("guerra_participantes")
           .select("*").eq("guerra_id", guerras[0].id);
         if (parts) {
           setParticipantesGuerra(parts);
-          setYaParticipo(parts.some(p => p.jugador_id === jugador?.id));
+          const miPart = parts.find(p => p.jugador_id === jugador?.id);
+          setYaParticipo(!!miPart);
+          if (miPart) {
+            setMiPartMisiones(miPart.misiones_completadas||0);
+            // Cargar misiones
+            const { data: ms } = await db.rpc("obtener_misiones_guerra", {
+              p_guerra_id: guerras[0].id, p_jugador_id: jugador?.id
+            });
+            if (ms?.misiones) setMisionesGuerra(ms.misiones);
+          }
         }
       } else {
-        setGuerraActiva(null);
-        setParticipantesGuerra([]);
-        setYaParticipo(false);
+        setGuerraActiva(null); setParticipantesGuerra([]); setYaParticipo(false); setMisionesGuerra([]);
       }
-      // Historial
       const { data: hist } = await db.from("guerras_activas")
         .select("*").eq("fase","resuelta")
         .or(`atacante_pais.eq.${selectedCountry},defensor_pais.eq.${selectedCountry}`)
         .order("created_at", { ascending: false }).limit(5);
       if (hist) setGuerrasHistorial(hist);
     } catch(e) { console.error(e); }
+  };
+
+  // ── Atacar en guerra ──
+  const atacarEnGuerra = async () => {
+    if (!guerraActiva || !jugador) return;
+    if (energia < 10) return showNotif("⚡ Necesitas al menos 10 de energía","error");
+    tg?.HapticFeedback?.impactOccurred("heavy");
+    const { data, error } = await db.rpc("atacar_en_guerra", {
+      p_guerra_id: guerraActiva.id, p_jugador_id: jugador.id
+    });
+    if (error || data?.error) return showNotif(data?.error || "Error al atacar","error");
+    setEnergia(data.energia_restante);
+    showNotif(`⚔️ +${Math.round(data.fuerza_ganada)} fuerza · +${data.xp_ganado} XP`,"info");
+    // Recargar misiones y participantes
+    const { data: ms } = await db.rpc("obtener_misiones_guerra", {
+      p_guerra_id: guerraActiva.id, p_jugador_id: jugador.id
+    });
+    if (ms?.misiones) setMisionesGuerra(ms.misiones);
+    loadGuerraActiva();
+  };
+
+  // ── Enviar recursos ──
+  const enviarRecursosGuerra = async (oro) => {
+    if (!guerraActiva || !jugador) return;
+    if (dinero < oro) return showNotif("No tienes suficiente dinero","error");
+    tg?.HapticFeedback?.impactOccurred("medium");
+    const { data, error } = await db.rpc("enviar_recursos_guerra", {
+      p_guerra_id: guerraActiva.id, p_jugador_id: jugador.id, p_oro: oro
+    });
+    if (error || data?.error) return showNotif(data?.error || "Error al enviar recursos","error");
+    setDinero(d => d - oro);
+    showNotif(`💰 $${oro.toLocaleString()} → +${Math.round(data.fuerza_ganada)} fuerza`,"info");
+    loadGuerraActiva();
+  };
+
+  // ── Reclamar misión ──
+  const reclamarMision = async (mision) => {
+    if (!guerraActiva || !jugador) return;
+    tg?.HapticFeedback?.notificationOccurred("success");
+    const { data, error } = await db.rpc("reclamar_mision_guerra", {
+      p_guerra_id: guerraActiva.id,
+      p_jugador_id: jugador.id,
+      p_mision_id: mision.id,
+      p_mision_tipo: mision.tipo,
+      p_mision_meta: mision.meta,
+      p_mision_recompensa: mision.recompensa
+    });
+    if (error || data?.error) return showNotif(data?.error || "Error al reclamar","error");
+    showNotif(`🎯 ${mision.titulo} completada! +${mision.recompensa} XP · +${Math.round(mision.recompensa*0.5)} fuerza`,"info");
+    setXp(x => x + mision.recompensa);
+    setMiPartMisiones(prev => prev|(mision.id==="m1"?1:mision.id==="m2"?2:4));
+    loadGuerraActiva();
   };
 
   // ── Declarar guerra ──
@@ -822,13 +881,11 @@ export default function App() {
     if (!jugador) return;
     tg?.HapticFeedback?.impactOccurred("heavy");
     const { data, error } = await db.rpc("participar_guerra", {
-      p_guerra_id: guerraId,
-      p_jugador_id: jugador.id,
-      p_bando: bando,
-      p_es_traidor: esTraidor
+      p_guerra_id: guerraId, p_jugador_id: jugador.id,
+      p_bando: bando, p_es_traidor: esTraidor
     });
     if (error || data?.error) return showNotif(data?.error || "Error al unirte","error");
-    showNotif(esTraidor ? "🕵️ Te has infiltrado como quinta columna" : `✅ Te uniste al bando ${bando} con fuerza ${Math.round(data.fuerza_aportada)}`,"info");
+    showNotif(esTraidor?"🕵️ Te has infiltrado como quinta columna":`✅ Te uniste con fuerza ${Math.round(data.fuerza_aportada)}`,"info");
     setYaParticipo(true);
     loadGuerraActiva();
   };
@@ -2386,6 +2443,8 @@ export default function App() {
             {guerraActiva && (
               <div style={{background:"linear-gradient(135deg,#200808,#140404)",border:"2px solid rgba(255,60,60,0.5)",borderRadius:14,padding:16,marginBottom:16,position:"relative",overflow:"hidden",boxShadow:"0 0 30px rgba(255,0,0,0.15),inset 0 1px 0 rgba(255,255,255,0.08)"}}>
                 <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,#ff4444,#ff0000,#ff4444,transparent)",animationName:"pulse-glow",animationDuration:"1s",animationTimingFunction:"ease-in-out",animationIterationCount:"infinite"}}/>
+
+                {/* Título y fase */}
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
                   <div style={{fontSize:13,color:"#ff4444",fontWeight:700,fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.08em",textShadow:"0 0 10px rgba(255,0,0,0.5)"}}>
                     ⚔️ {guerraActiva.atacante_pais} vs {guerraActiva.defensor_pais}
@@ -2397,83 +2456,165 @@ export default function App() {
 
                 {/* Countdown */}
                 {guerraActiva.fase==="movilizacion" && (
-                  <div style={{textAlign:"center",marginBottom:14}}>
-                    <div style={{fontSize:11,color:"#6a3020",fontFamily:"'Rajdhani',sans-serif",marginBottom:4}}>BATALLA COMIENZA EN</div>
-                    <div style={{fontSize:22,color:"#ff6644",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:"0 0 14px rgba(255,100,68,0.7)"}}>
+                  <div style={{textAlign:"center",marginBottom:14,padding:"10px",background:"rgba(0,0,0,0.3)",borderRadius:8,border:"1px solid rgba(255,60,60,0.15)"}}>
+                    <div style={{fontSize:10,color:"#6a3020",fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.12em",marginBottom:4}}>BATALLA COMIENZA EN</div>
+                    <div style={{fontSize:26,color:"#ff6644",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:"0 0 14px rgba(255,100,68,0.7)"}}>
                       {Math.max(0,Math.floor((new Date(guerraActiva.fin_movilizacion_at)-Date.now())/3600000))}h {Math.max(0,Math.floor(((new Date(guerraActiva.fin_movilizacion_at)-Date.now())%3600000)/60000))}m
                     </div>
+                    <div style={{fontSize:10,color:"#4a2010",fontFamily:"'Rajdhani',sans-serif",marginTop:4}}>Moviliza tropas y recursos antes de que empiece</div>
                   </div>
                 )}
 
                 {/* Barras de fuerza */}
                 <div style={{marginBottom:14}}>
-                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-                    <span style={{fontSize:11,color:"#ff4444",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>⚔️ {guerraActiva.atacante_pais}</span>
-                    <span style={{fontSize:11,color:"#4488ff",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>{guerraActiva.defensor_pais} 🛡️</span>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:6,alignItems:"center"}}>
+                    <span style={{fontSize:12,color:"#ff5555",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>⚔️ {guerraActiva.atacante_pais} <span style={{fontFamily:"'Orbitron',monospace",fontSize:13}}>{Math.round(guerraActiva.fuerza_atacante||0)}</span></span>
+                    <span style={{fontSize:10,color:"#6a3020",fontFamily:"'Rajdhani',sans-serif"}}>FUERZA</span>
+                    <span style={{fontSize:12,color:"#4488ff",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}><span style={{fontFamily:"'Orbitron',monospace",fontSize:13}}>{Math.round(guerraActiva.fuerza_defensor||0)}</span> {guerraActiva.defensor_pais} 🛡️</span>
                   </div>
-                  <div style={{height:18,background:"rgba(0,0,0,0.6)",borderRadius:9,overflow:"hidden",border:"1px solid rgba(255,255,255,0.08)",position:"relative",display:"flex"}}>
-                    {(() => {
-                      const total = (guerraActiva.fuerza_atacante||0) + (guerraActiva.fuerza_defensor||0) || 1;
-                      const pctA = Math.round((guerraActiva.fuerza_atacante||0)/total*100);
-                      const pctD = 100-pctA;
-                      return (<>
-                        <div style={{width:`${pctA}%`,background:"linear-gradient(90deg,#cc2222,#ff4444)",transition:"width 1s ease",position:"relative"}}>
-                          <div style={{position:"absolute",inset:0,top:0,height:"50%",background:"rgba(255,255,255,0.2)"}}/>
-                          {pctA>15&&<span style={{position:"absolute",right:6,top:"50%",transform:"translateY(-50%)",fontSize:10,color:"#fff",fontFamily:"'Orbitron',monospace",fontWeight:700}}>{Math.round(guerraActiva.fuerza_atacante||0)}</span>}
+                  <div style={{height:22,background:"rgba(0,0,0,0.7)",borderRadius:11,overflow:"hidden",border:"1px solid rgba(255,255,255,0.08)",position:"relative",display:"flex",boxShadow:"inset 0 2px 4px rgba(0,0,0,0.5)"}}>
+                    {(()=>{
+                      const total=(guerraActiva.fuerza_atacante||0)+(guerraActiva.fuerza_defensor||0)||1;
+                      const pctA=Math.round((guerraActiva.fuerza_atacante||0)/total*100);
+                      const pctD=100-pctA;
+                      return(<>
+                        <div style={{width:`${pctA}%`,background:"linear-gradient(90deg,#881111,#ff4444,#ff6644)",transition:"width 0.8s ease",position:"relative",minWidth:pctA>0?20:0}}>
+                          <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.18)",borderRadius:"11px 0 0 0"}}/>
+                          {pctA>12&&<span style={{position:"absolute",right:6,top:"50%",transform:"translateY(-50%)",fontSize:10,color:"#fff",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:"0 0 4px rgba(0,0,0,0.8)"}}>{pctA}%</span>}
                         </div>
-                        <div style={{width:`${pctD}%`,background:"linear-gradient(90deg,#2244cc,#4488ff)",transition:"width 1s ease",position:"relative"}}>
-                          <div style={{position:"absolute",inset:0,top:0,height:"50%",background:"rgba(255,255,255,0.15)"}}/>
-                          {pctD>15&&<span style={{position:"absolute",left:6,top:"50%",transform:"translateY(-50%)",fontSize:10,color:"#fff",fontFamily:"'Orbitron',monospace",fontWeight:700}}>{Math.round(guerraActiva.fuerza_defensor||0)}</span>}
+                        <div style={{width:`${pctD}%`,background:"linear-gradient(90deg,#4488ff,#2244cc,#112288)",transition:"width 0.8s ease",position:"relative",minWidth:pctD>0?20:0}}>
+                          <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.12)"}}/>
+                          {pctD>12&&<span style={{position:"absolute",left:6,top:"50%",transform:"translateY(-50%)",fontSize:10,color:"#fff",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:"0 0 4px rgba(0,0,0,0.8)"}}>{pctD}%</span>}
                         </div>
                       </>);
                     })()}
                   </div>
                 </div>
 
-                {/* Botones de acción */}
+                {/* ── UNIRSE si no participa ── */}
                 {guerraActiva.fase==="movilizacion" && !yaParticipo && (
-                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                    {/* Atacar */}
-                    {(guerraActiva.atacante_pais===selectedCountry || guerraActiva.defensor_pais!==selectedCountry) && (
+                  <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
+                    <div style={{fontSize:10,color:"#6a3020",letterSpacing:"0.12em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,marginBottom:4}}>Elige tu bando</div>
+                    {(guerraActiva.atacante_pais===selectedCountry||guerraActiva.defensor_pais!==selectedCountry)&&(
                       <GlowBtn onClick={()=>unirseGuerra(guerraActiva.id,"atacante",false)} color="#ff4444"
-                        style={{padding:"12px",borderRadius:8,fontSize:13,fontWeight:700,letterSpacing:"0.06em",background:"linear-gradient(180deg,#2a0808,#1a0404)",color:"#ff6644",border:"1px solid rgba(255,80,80,0.5)",boxShadow:"0 0 14px rgba(255,60,60,0.25),0 3px 0 rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.08)"}}>
-                        ⚔️ LUCHAR — BANDO ATACANTE
+                        style={{padding:"13px",borderRadius:8,fontSize:13,fontWeight:700,letterSpacing:"0.06em",background:"linear-gradient(180deg,#2a0808,#1a0404)",color:"#ff6644",border:"1px solid rgba(255,80,80,0.5)",boxShadow:"0 0 14px rgba(255,60,60,0.25),0 3px 0 rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.08)"}}>
+                        ⚔️ ATACAR — UNIRME AL BANDO ATACANTE
                       </GlowBtn>
                     )}
-                    {/* Defender */}
-                    {guerraActiva.defensor_pais===selectedCountry && (
+                    {guerraActiva.defensor_pais===selectedCountry&&(
                       <GlowBtn onClick={()=>unirseGuerra(guerraActiva.id,"defensor",false)} color="#4488ff"
-                        style={{padding:"12px",borderRadius:8,fontSize:13,fontWeight:700,letterSpacing:"0.06em",background:"linear-gradient(180deg,#081828,#041018)",color:"#4488ff",border:"1px solid rgba(68,136,255,0.5)",boxShadow:"0 0 14px rgba(68,136,255,0.25),0 3px 0 rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.08)"}}>
-                        🛡️ DEFENDER — MI PAÍS
+                        style={{padding:"13px",borderRadius:8,fontSize:13,fontWeight:700,letterSpacing:"0.06em",background:"linear-gradient(180deg,#081828,#041018)",color:"#4488ff",border:"1px solid rgba(68,136,255,0.5)",boxShadow:"0 0 14px rgba(68,136,255,0.25),0 3px 0 rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.08)"}}>
+                        🛡️ DEFENDER — PROTEGER MI PAÍS
                       </GlowBtn>
                     )}
-                    {/* Sabotear (quinta columna) */}
-                    {guerraActiva.defensor_pais===selectedCountry && (
+                    {guerraActiva.defensor_pais===selectedCountry&&(
                       <GlowBtn onClick={()=>unirseGuerra(guerraActiva.id,"defensor",true)} color="#aa44ff"
-                        style={{padding:"10px",borderRadius:8,fontSize:12,fontWeight:700,letterSpacing:"0.06em",background:"linear-gradient(180deg,#180828,#100418)",color:"#aa44ff",border:"1px solid rgba(170,68,255,0.4)",boxShadow:"0 0 10px rgba(170,68,255,0.2),0 3px 0 rgba(0,0,0,0.6)"}}>
-                        🕵️ SABOTEAR (QUINTA COLUMNA)
+                        style={{padding:"10px",borderRadius:8,fontSize:11,fontWeight:700,letterSpacing:"0.06em",background:"linear-gradient(180deg,#180828,#100418)",color:"#aa44ff",border:"1px solid rgba(170,68,255,0.35)",boxShadow:"0 0 10px rgba(170,68,255,0.15),0 3px 0 rgba(0,0,0,0.6)"}}>
+                        🕵️ INFILTRARME — QUINTA COLUMNA (secreto)
                       </GlowBtn>
                     )}
                   </div>
                 )}
-                {yaParticipo && (
-                  <div style={{textAlign:"center",padding:"10px",background:"rgba(68,204,102,0.08)",borderRadius:8,border:"1px solid rgba(68,204,102,0.3)",color:"#44cc66",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,fontSize:13}}>
-                    ✅ YA ESTÁS PARTICIPANDO EN ESTA GUERRA
+
+                {/* ── PANEL DE COMBATE ACTIVO (ya participa) ── */}
+                {yaParticipo && guerraActiva.fase!=="resuelta" && (
+                  <div style={{marginBottom:14}}>
+                    {/* Mi fuerza actual */}
+                    {(()=>{
+                      const miPart=participantesGuerra.find(p=>p.jugador_id===jugador?.id);
+                      return miPart?(
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 12px",background:"rgba(0,0,0,0.4)",borderRadius:8,border:`1px solid ${miPart.bando==="atacante"?"rgba(255,60,60,0.25)":"rgba(68,136,255,0.25)"}`,marginBottom:12}}>
+                          <div>
+                            <div style={{fontSize:10,color:"#6a4020",fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.1em"}}>MI CONTRIBUCIÓN</div>
+                            <div style={{fontSize:11,color:"#a08050",fontFamily:"'Rajdhani',sans-serif",marginTop:2}}>
+                              {miPart.total_ataques||0} ataques · Bando: <span style={{color:miPart.bando==="atacante"?"#ff6644":"#4488ff",fontWeight:700}}>{miPart.bando==="atacante"?"ATACANTE":miPart.es_traidor?"INFILTRADO":"DEFENSOR"}</span>
+                            </div>
+                          </div>
+                          <div style={{textAlign:"right"}}>
+                            <div style={{fontSize:20,color:miPart.bando==="atacante"?"#ff6644":"#4488ff",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:`0 0 12px ${miPart.bando==="atacante"?"rgba(255,100,68,0.7)":"rgba(68,136,255,0.7)"}`}}>{Math.round(miPart.fuerza_aportada||0)}</div>
+                            <div style={{fontSize:9,color:"#5a3820",fontFamily:"'Rajdhani',sans-serif"}}>FUERZA TOTAL</div>
+                          </div>
+                        </div>
+                      ):null;
+                    })()}
+
+                    {/* BOTÓN ATACAR PRINCIPAL */}
+                    <GlowBtn onClick={atacarEnGuerra} color="#ff4444"
+                      style={{padding:"16px",borderRadius:10,fontSize:15,fontWeight:700,letterSpacing:"0.08em",background:"linear-gradient(180deg,#3a0808,#220404)",color:"#ff6644",border:"2px solid rgba(255,80,80,0.6)",boxShadow:"0 0 20px rgba(255,60,60,0.3),0 4px 0 rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.1)",marginBottom:8,display:"block",textAlign:"center"}}>
+                      ⚔️ ATACAR  <span style={{fontSize:11,opacity:0.7}}>(-10 ⚡ · +fuerza)</span>
+                    </GlowBtn>
+                    <div style={{fontSize:10,color:"#4a2810",textAlign:"center",fontFamily:"'Rajdhani',sans-serif",marginBottom:14}}>Energía disponible: <span style={{color:energia>=10?"#44cc66":"#ff4444",fontFamily:"'Orbitron',monospace",fontWeight:700}}>{energia}/100</span></div>
+
+                    {/* Enviar recursos */}
+                    <div style={{background:"rgba(0,0,0,0.35)",borderRadius:10,padding:12,marginBottom:12,border:"1px solid rgba(240,192,64,0.15)"}}>
+                      <div style={{fontSize:10,color:"#8a6020",letterSpacing:"0.12em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,marginBottom:10}}>💰 Enviar Recursos (oro → fuerza)</div>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                        {[{label:"$1,000",oro:1000,fuerza:10},{label:"$5,000",oro:5000,fuerza:55},{label:"$10,000",oro:10000,fuerza:125},{label:"$50,000",oro:50000,fuerza:700}].map((op,i)=>(
+                          <GlowBtn key={i} onClick={()=>enviarRecursosGuerra(op.oro)} color="#f0c040"
+                            disabled={dinero<op.oro}
+                            style={{padding:"9px 6px",borderRadius:7,fontSize:11,fontWeight:700,background:dinero>=op.oro?"linear-gradient(180deg,#281e04,#181202)":"rgba(0,0,0,0.4)",color:dinero>=op.oro?"#f0c040":"#4a3820",border:`1px solid ${dinero>=op.oro?"rgba(240,192,64,0.4)":"rgba(255,255,255,0.05)"}`,boxShadow:dinero>=op.oro?"0 0 8px rgba(240,192,64,0.15),0 2px 0 rgba(0,0,0,0.5)":"none",textAlign:"center"}}>
+                            {op.label}<br/><span style={{fontSize:9,opacity:0.7}}>+{op.fuerza} fuerza</span>
+                          </GlowBtn>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Misiones */}
+                    <div style={{background:"rgba(0,0,0,0.35)",borderRadius:10,padding:12,border:"1px solid rgba(170,68,255,0.15)"}}>
+                      <div style={{fontSize:10,color:"#7a40aa",letterSpacing:"0.12em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,marginBottom:10}}>🎯 Misiones de Guerra</div>
+                      {misionesGuerra.length===0?(
+                        <div style={{textAlign:"center",color:"#4a3060",fontSize:12,fontFamily:"'Rajdhani',sans-serif",padding:"10px 0"}}>Cargando misiones...</div>
+                      ):misionesGuerra.map((m,i)=>{
+                        const pct=Math.min(100,Math.round((m.progreso||0)/m.meta*100));
+                        const reclamada=!!(miPartMisiones&(m.id==="m1"?1:m.id==="m2"?2:4));
+                        return(
+                          <div key={i} style={{background:m.completada?"rgba(68,204,102,0.06)":"rgba(0,0,0,0.3)",borderRadius:8,padding:"10px 12px",marginBottom:8,border:`1px solid ${m.completada?"rgba(68,204,102,0.25)":"rgba(170,68,255,0.15)"}`}}>
+                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+                              <div style={{flex:1}}>
+                                <div style={{fontSize:13,color:m.completada?"#44cc66":"#d0b080",fontWeight:700,fontFamily:"'Rajdhani',sans-serif"}}>{m.icono} {m.titulo}</div>
+                                <div style={{fontSize:11,color:"#5a4030",fontFamily:"'Rajdhani',sans-serif",marginTop:2}}>{m.desc}</div>
+                              </div>
+                              <div style={{textAlign:"right",flexShrink:0,marginLeft:8}}>
+                                <div style={{fontSize:12,color:"#aa44ff",fontFamily:"'Orbitron',monospace",fontWeight:700}}>+{m.recompensa} XP</div>
+                                <div style={{fontSize:9,color:"#5a3060",fontFamily:"'Rajdhani',sans-serif"}}>+{Math.round(m.recompensa*0.5)} fuerza</div>
+                              </div>
+                            </div>
+                            <div style={{height:6,background:"rgba(0,0,0,0.5)",borderRadius:3,overflow:"hidden",marginBottom:6,border:"1px solid rgba(255,255,255,0.05)"}}>
+                              <div style={{height:"100%",width:`${pct}%`,background:m.completada?"linear-gradient(90deg,#44aa44,#44ff44)":"linear-gradient(90deg,#6622aa,#aa44ff)",borderRadius:3,transition:"width 0.5s ease",boxShadow:m.completada?"0 0 8px #44ff44":"0 0 8px #aa44ff"}}/>
+                            </div>
+                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                              <span style={{fontSize:10,color:"#6a4830",fontFamily:"'Rajdhani',sans-serif"}}>{m.progreso||0}/{m.meta}</span>
+                              {m.completada&&!reclamada&&(
+                                <GlowBtn onClick={()=>reclamarMision(m)} color="#44cc66"
+                                  style={{padding:"5px 12px",borderRadius:6,fontSize:11,fontWeight:700,background:"linear-gradient(180deg,#0c2010,#081408)",color:"#44cc66",border:"1px solid rgba(68,204,102,0.4)",boxShadow:"0 0 10px rgba(68,204,102,0.2),0 2px 0 rgba(0,0,0,0.5)"}}>
+                                  ✅ RECLAMAR
+                                </GlowBtn>
+                              )}
+                              {reclamada&&<span style={{fontSize:10,color:"#44cc66",fontFamily:"'Rajdhani',sans-serif"}}>✓ Reclamado</span>}
+                              {!m.completada&&<span style={{fontSize:10,color:"#4a3060",fontFamily:"'Rajdhani',sans-serif"}}>{pct}%</span>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 
                 {/* Participantes */}
-                {participantesGuerra.length>0 && (
-                  <div style={{marginTop:14}}>
-                    <div style={{fontSize:10,color:"#6a3020",letterSpacing:"0.12em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",marginBottom:8}}>Combatientes</div>
+                {participantesGuerra.length>0&&(
+                  <div style={{marginTop:12}}>
+                    <div style={{fontSize:10,color:"#6a3020",letterSpacing:"0.12em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",marginBottom:8}}>Combatientes ({participantesGuerra.length})</div>
                     <div style={{display:"flex",flexDirection:"column",gap:5}}>
                       {participantesGuerra.map((p,i)=>(
-                        <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 10px",background:p.bando==="atacante"?"rgba(255,60,60,0.08)":"rgba(68,136,255,0.08)",borderRadius:6,border:`1px solid ${p.bando==="atacante"?"rgba(255,60,60,0.2)":"rgba(68,136,255,0.2)"}`}}>
+                        <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 12px",background:p.bando==="atacante"?"rgba(255,60,60,0.08)":"rgba(68,136,255,0.08)",borderRadius:7,border:`1px solid ${p.bando==="atacante"?"rgba(255,60,60,0.2)":"rgba(68,136,255,0.2)"}`,boxShadow:"inset 0 1px 0 rgba(255,255,255,0.04)"}}>
                           <div style={{display:"flex",alignItems:"center",gap:8}}>
-                            <span style={{fontSize:14}}>{p.es_traidor?"🕵️":p.bando==="atacante"?"⚔️":"🛡️"}</span>
-                            <span style={{fontSize:12,color:"#d0c090",fontFamily:"'Rajdhani',sans-serif",fontWeight:600}}>{p.jugador_nombre}{p.es_traidor&&" (Traidor)"}</span>
+                            <span style={{fontSize:16}}>{p.es_traidor?"🕵️":p.bando==="atacante"?"⚔️":"🛡️"}</span>
+                            <div>
+                              <div style={{fontSize:12,color:"#d0c090",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>{p.jugador_nombre}{p.es_traidor&&<span style={{color:"#aa44ff",fontSize:10}}> (Infiltrado)</span>}</div>
+                              <div style={{fontSize:10,color:"#5a4020",fontFamily:"'Rajdhani',sans-serif"}}>{p.total_ataques||0} ataques</div>
+                            </div>
                           </div>
-                          <span style={{fontSize:11,color:p.bando==="atacante"?"#ff6644":"#4488ff",fontFamily:"'Orbitron',monospace",fontWeight:700}}>{Math.round(p.fuerza_aportada)}</span>
+                          <span style={{fontSize:13,color:p.bando==="atacante"?"#ff6644":"#4488ff",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:`0 0 8px ${p.bando==="atacante"?"rgba(255,100,68,0.5)":"rgba(68,136,255,0.5)"}`}}>{Math.round(p.fuerza_aportada)}</span>
                         </div>
                       ))}
                     </div>
@@ -2481,12 +2622,13 @@ export default function App() {
                 )}
 
                 {/* Resultado */}
-                {guerraActiva.fase==="resuelta" && (
-                  <div style={{textAlign:"center",marginTop:14,padding:14,background:guerraActiva.resultado==="atacante"?"rgba(255,60,60,0.1)":"rgba(68,136,255,0.1)",borderRadius:10,border:`2px solid ${guerraActiva.resultado==="atacante"?"rgba(255,60,60,0.4)":"rgba(68,136,255,0.4)"}`}}>
-                    <div style={{fontSize:28,marginBottom:6}}>{guerraActiva.resultado==="atacante"?"⚔️":"🛡️"}</div>
-                    <div style={{fontSize:16,fontWeight:700,color:guerraActiva.resultado==="atacante"?"#ff6644":"#4488ff",fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.08em"}}>
+                {guerraActiva.fase==="resuelta"&&(
+                  <div style={{textAlign:"center",marginTop:14,padding:16,background:guerraActiva.resultado==="atacante"?"rgba(255,60,60,0.1)":"rgba(68,136,255,0.1)",borderRadius:10,border:`2px solid ${guerraActiva.resultado==="atacante"?"rgba(255,60,60,0.4)":"rgba(68,136,255,0.4)"}`}}>
+                    <div style={{fontSize:32,marginBottom:8}}>{guerraActiva.resultado==="atacante"?"⚔️🏆":"🛡️🏆"}</div>
+                    <div style={{fontSize:18,fontWeight:700,color:guerraActiva.resultado==="atacante"?"#ff6644":"#4488ff",fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.08em",textShadow:`0 0 14px ${guerraActiva.resultado==="atacante"?"rgba(255,100,68,0.6)":"rgba(68,136,255,0.6)"}`}}>
                       VICTORIA: {guerraActiva.resultado==="atacante"?guerraActiva.atacante_pais:guerraActiva.defensor_pais}
                     </div>
+                    <div style={{fontSize:12,color:"#6a5030",marginTop:6,fontFamily:"'Rajdhani',sans-serif"}}>+50 XP para los ganadores</div>
                   </div>
                 )}
               </div>
