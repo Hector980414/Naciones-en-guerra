@@ -327,11 +327,11 @@ const Icon = ({ type, size=22, color="#c9a84c", glow=false }) => {
 const RadarBG = () => (
   <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
     {/* ── Base: madera oscura táctica ── */}
-    <div style={{position:"absolute",inset:0,background:"linear-gradient(160deg,#1a0f06 0%,#120a04 30%,#0e0d06 60%,#080c0a 100%)"}}/>
+    <div style={{position:"absolute",inset:0,background:"linear-gradient(160deg,#241808 0%,#1c1408 30%,#181610 60%,#121008 100%)"}}/>
     {/* Veta de madera */}
     <div style={{position:"absolute",inset:0,backgroundImage:`repeating-linear-gradient(8deg,transparent 0px,transparent 18px,rgba(80,40,10,0.07) 19px,rgba(80,40,10,0.07) 20px),repeating-linear-gradient(-5deg,transparent 0px,transparent 32px,rgba(60,30,5,0.05) 33px,rgba(60,30,5,0.05) 34px)`}}/>
     {/* ── Mapa de fondo sutil ── */}
-    <svg style={{position:"absolute",inset:0,width:"100%",height:"100%",opacity:0.08}} viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
+    <svg style={{position:"absolute",inset:0,width:"100%",height:"100%",opacity:0.05}} viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
       {/* Continentes simplificados */}
       <path d="M60 200 Q80 180 120 190 Q160 180 180 200 Q200 220 190 250 Q180 270 160 280 Q130 290 100 280 Q70 270 60 250 Z" fill="#4a7a3a" stroke="#6a9a4a" strokeWidth="1"/>
       <path d="M200 150 Q240 130 280 140 Q320 145 340 170 Q360 200 350 230 Q335 260 300 270 Q260 280 230 265 Q200 250 195 220 Q190 190 200 150 Z" fill="#4a7a3a" stroke="#6a9a4a" strokeWidth="1"/>
@@ -345,7 +345,7 @@ const RadarBG = () => (
       {["A1","B2","C3","D1","A4","C5"].map((t,i)=><text key={i} x={30+i%3*130} y={120+Math.floor(i/3)*350} fill="#7a9a5a" fontSize="10" opacity="0.35" fontFamily="monospace">{t}</text>)}
     </svg>
     {/* ── Radar SVG animado (overlay táctico) ── */}
-    <svg style={{position:"absolute",top:"42%",left:"50%",transform:"translate(-50%,-50%)",width:"min(110vw,85vh)",height:"min(110vw,85vh)",opacity:0.28}} viewBox="0 0 500 500">
+    <svg style={{position:"absolute",top:"42%",left:"50%",transform:"translate(-50%,-50%)",width:"min(110vw,85vh)",height:"min(110vw,85vh)",opacity:0.08}} viewBox="0 0 500 500">
       <defs>
         <radialGradient id="sweepGrad" cx="250" cy="250" r="240" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#00ff88" stopOpacity="0"/>
@@ -1554,7 +1554,7 @@ export default function App() {
 
 // ── GAME ────────────────────────────────────────────────
   return (
-    <div style={{minHeight:"100vh",background:"#030508",fontFamily:"'Rajdhani',sans-serif",color:"#f0ece0",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:"#1a1208",fontFamily:"'Rajdhani',sans-serif",color:"#f0ece0",position:"relative"}}>
       {/* RADAR BACKGROUND ÉPICO */}
       <RadarBG/>
 
@@ -1953,89 +1953,89 @@ export default function App() {
 
         {/* DECRETOS */}
         {tab==="decretos" && (
-          <div style={{animation:"slideInUp 0.3s ease"}}>
-            {/* Header row */}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-              <div style={{fontSize:10,color:"#b09060",letterSpacing:"0.15em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>📜 Decretos Presidenciales</div>
+          <div style={{animationName:"slideInUp",animationDuration:"0.35s",animationTimingFunction:"cubic-bezier(0.34,1.2,0.64,1)",animationFillMode:"both"}}>
+            {/* ── Header ── */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,padding:"10px 14px",background:"linear-gradient(135deg,#1e1408,#120e04)",border:"1px solid rgba(201,168,76,0.3)",borderRadius:10,boxShadow:"inset 0 1px 0 rgba(255,255,255,0.08),0 3px 0 rgba(0,0,0,0.5)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <Icon type="scroll" size={18} color="#c9a84c" glow/>
+                <span style={{fontSize:11,color:"#c9a84c",letterSpacing:"0.18em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,textShadow:"0 0 8px rgba(201,168,76,0.5)"}}>Decretos Presidenciales</span>
+              </div>
               {esPresidente && (
-                <div style={{background:decreeUsed.length>=3?"linear-gradient(135deg,rgba(229,57,53,0.2),rgba(0,0,0,0.3))":"linear-gradient(135deg,rgba(201,168,76,0.15),rgba(0,0,0,0.3))",border:`1px solid ${decreeUsed.length>=3?"rgba(229,57,53,0.5)":"rgba(201,168,76,0.5)"}`,color:decreeUsed.length>=3?"#ff5252":"#f0c040",padding:"4px 14px",borderRadius:20,fontSize:12,fontFamily:"'Orbitron',monospace",fontWeight:700,boxShadow:decreeUsed.length>=3?"0 0 8px rgba(229,57,53,0.3)":"0 0 8px rgba(201,168,76,0.3)"}}>
-                  {3-decreeUsed.length}/3 hoy
+                <div style={{background:decreeUsed.length>=3?"linear-gradient(135deg,#3a0808,#200404)":"linear-gradient(135deg,#2a1e04,#1a1202)",border:`1px solid ${decreeUsed.length>=3?"rgba(255,80,80,0.6)":"rgba(240,192,64,0.6)"}`,color:decreeUsed.length>=3?"#ff5555":"#f0c040",padding:"5px 14px",borderRadius:20,fontSize:13,fontFamily:"'Orbitron',monospace",fontWeight:700,boxShadow:decreeUsed.length>=3?"0 0 12px rgba(255,80,80,0.4)":"0 0 12px rgba(240,192,64,0.4)"}}>
+                  {3-decreeUsed.length}/3 HOY
                 </div>
               )}
             </div>
 
-            {/* Ciudadano locked */}
             {esCiudadano && (
-              <div style={{background:"linear-gradient(135deg,rgba(76,175,80,0.07),rgba(0,0,0,0.4))",border:"1px solid rgba(76,175,80,0.3)",borderRadius:12,padding:20,marginBottom:14,textAlign:"center",position:"relative",overflow:"hidden"}}>
-                <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,#66bb6a,transparent)"}}/>
-                <div style={{fontSize:30,marginBottom:10}}>🔒</div>
-                <div style={{fontSize:15,color:"#66bb6a",fontWeight:700,marginBottom:8,fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.05em"}}>SOLO PRESIDENTES</div>
-                <div style={{fontSize:13,color:"#5a7060",lineHeight:1.8,marginBottom:16,fontFamily:"'Rajdhani',sans-serif"}}>Para emitir decretos necesitas convertirte en presidente. Consigue el poder político y haz un golpe de estado.</div>
-                <button onClick={()=>setTab("diplomacia")} style={{background:"linear-gradient(135deg,rgba(201,168,76,0.2),rgba(160,120,48,0.1))",border:"1px solid rgba(201,168,76,0.4)",color:"#f0c040",padding:"12px 20px",borderRadius:8,cursor:"pointer",fontFamily:"'Rajdhani',sans-serif",fontSize:13,fontWeight:700,letterSpacing:"0.05em",boxShadow:"0 0 12px rgba(201,168,76,0.15)"}}>
-                  ⚔️ VER PRESIDENTES
-                </button>
+              <div style={{background:"linear-gradient(135deg,#141e10,#0c1008)",border:"1px solid rgba(68,200,100,0.3)",borderRadius:12,padding:20,marginBottom:14,textAlign:"center",position:"relative",overflow:"hidden",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.06),0 4px 0 rgba(0,0,0,0.5)"}}>
+                <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,#44cc66,transparent)"}}/>
+                <Icon type="shield" size={40} color="#44cc66"/>
+                <div style={{fontSize:15,color:"#44cc66",fontWeight:700,margin:"12px 0 8px",fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.08em"}}>SOLO PRESIDENTES</div>
+                <div style={{fontSize:13,color:"#4a6040",lineHeight:1.8,marginBottom:16,fontFamily:"'Rajdhani',sans-serif"}}>Para emitir decretos necesitas convertirte en presidente.</div>
+                <GlowBtn onClick={()=>setTab("guerra")} style={{padding:"12px 20px",borderRadius:8,fontSize:13,fontWeight:700,letterSpacing:"0.06em",background:"linear-gradient(180deg,#2a1e04,#1a1202)",color:"#f0c040",border:"1px solid rgba(201,168,76,0.5)",boxShadow:"0 0 14px rgba(201,168,76,0.2),0 3px 0 rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.08)"}}>
+                  <Icon type="war" size={14} color="#f0c040"/> VER PRESIDENTES
+                </GlowBtn>
               </div>
             )}
 
-            {esPresidente && (
-              <>
-                {/* Consequence panel */}
-                {selectedDecree && (
-                  <div style={{background:"linear-gradient(135deg,rgba(201,168,76,0.08),rgba(0,0,0,0.5))",border:"1px solid rgba(201,168,76,0.35)",borderRadius:12,padding:16,marginBottom:14,position:"relative",overflow:"hidden"}}>
-                    <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,rgba(201,168,76,0.8),transparent)"}}/>
-                    <div style={{fontSize:12,color:"#f0c040",marginBottom:10,fontWeight:700,display:"flex",alignItems:"center",gap:8,fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.05em"}}>
-                      <span style={{fontSize:22}}>{selectedDecree.icon}</span>
-                      {selectedDecree.name.toUpperCase()} — CONSECUENCIAS
-                    </div>
-                    {decreeLoading
-                      ? <div style={{color:"#4a5878",fontSize:13,display:"flex",alignItems:"center",gap:10,fontFamily:"'Rajdhani',sans-serif"}}>
-                          <div style={{width:16,height:16,border:"2px solid rgba(201,168,76,0.3)",borderTop:"2px solid #c9a84c",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>
-                          Evaluando impacto internacional...
-                        </div>
-                      : <div style={{color:"#c0b090",fontSize:13,lineHeight:2,fontFamily:"'Rajdhani',sans-serif",fontWeight:500}}>{decreeResponse}</div>
-                    }
+            {esPresidente && (<>
+              {/* Consecuencias panel */}
+              {selectedDecree && (
+                <div style={{background:"linear-gradient(135deg,#201a06,#140e04)",border:"1px solid rgba(201,168,76,0.4)",borderRadius:12,padding:16,marginBottom:14,position:"relative",overflow:"hidden",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.08),0 4px 0 rgba(0,0,0,0.5)"}}>
+                  <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(201,168,76,0.9),rgba(255,220,100,1),rgba(201,168,76,0.9),transparent)"}}/>
+                  <div style={{fontSize:12,color:"#f0c040",marginBottom:10,fontWeight:700,display:"flex",alignItems:"center",gap:8,fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.08em",textShadow:"0 0 8px rgba(240,192,64,0.5)"}}>
+                    <span style={{fontSize:22}}>{selectedDecree.icon}</span>
+                    {selectedDecree.name.toUpperCase()} — CONSECUENCIAS
                   </div>
-                )}
-
-                {/* Decree cards */}
-                <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                  {DECREES.map(d=>{
-                    const used=decreeUsed.includes(d.id);
-                    const exhausted=decreeUsed.length>=3&&!used;
-                    const active=selectedDecree?.id===d.id;
-                    return (
-                      <button key={d.id} onClick={()=>issueDecree(d)} disabled={used||exhausted}
-                        style={{background:used?"rgba(255,255,255,0.015)":active?"linear-gradient(135deg,rgba(201,168,76,0.1),rgba(0,0,0,0.4))":"linear-gradient(135deg,rgba(255,255,255,0.03),rgba(0,0,0,0.3))",
-                          border:`1px solid ${used?"rgba(255,255,255,0.04)":active?"rgba(201,168,76,0.5)":"rgba(201,168,76,0.15)"}`,
-                          borderRadius:12,padding:"14px 16px",textAlign:"left",
-                          cursor:used||exhausted?"not-allowed":"pointer",
-                          opacity:used||exhausted?0.3:1,
-                          transition:"all 0.2s",fontFamily:"'Rajdhani',sans-serif",
-                          boxShadow:active?"0 0 16px rgba(201,168,76,0.15)":"none",
-                          position:"relative",overflow:"hidden"}}>
-                        {/* Top line on active */}
-                        {active && <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,rgba(201,168,76,0.8),transparent)"}}/>}
-                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-                          <div style={{display:"flex",gap:14}}>
-                            <span style={{fontSize:26,filter:used?"grayscale(1)":active?"drop-shadow(0 0 8px rgba(201,168,76,0.6))":"none",transition:"filter 0.2s"}}>{d.icon}</span>
-                            <div>
-                              <div style={{fontSize:15,color:used?"#3a3a3a":"#e8e0d0",marginBottom:3,fontWeight:700,letterSpacing:"0.03em"}}>{d.name}</div>
-                              <div style={{fontSize:12,color:"#4a5060",marginBottom:6,fontWeight:500}}>{d.desc}</div>
-                              <div style={{fontSize:11,color:"#c9a84c",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:used?"none":"0 0 6px rgba(201,168,76,0.3)"}}>{d.effect}</div>
-                            </div>
-                          </div>
-                          {used && (
-                            <span style={{fontSize:9,color:"#66bb6a",border:"1px solid rgba(102,187,106,0.3)",padding:"4px 10px",borderRadius:6,flexShrink:0,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,letterSpacing:"0.08em",background:"rgba(102,187,106,0.08)"}}>
-                              ✓ EMITIDO
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
+                  {decreeLoading
+                    ? <div style={{color:"#7a6030",fontSize:13,display:"flex",alignItems:"center",gap:10,fontFamily:"'Rajdhani',sans-serif"}}>
+                        <div style={{width:16,height:16,border:"2px solid rgba(201,168,76,0.3)",borderTop:"2px solid #c9a84c",borderRadius:"50%",animationName:"spin",animationDuration:"0.9s",animationTimingFunction:"linear",animationIterationCount:"infinite"}}/>
+                        Evaluando impacto internacional...
+                      </div>
+                    : <div style={{color:"#d0c090",fontSize:13,lineHeight:2,fontFamily:"'Rajdhani',sans-serif",fontWeight:500}}>{decreeResponse}</div>
+                  }
                 </div>
-              </>
-            )}
+              )}
+              {/* Decreto cards */}
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                {DECREES.map(d=>{
+                  const used=decreeUsed.includes(d.id);
+                  const exhausted=decreeUsed.length>=3&&!used;
+                  const active=selectedDecree?.id===d.id;
+                  return (
+                    <button key={d.id} onClick={()=>issueDecree(d)} disabled={used||exhausted}
+                      style={{background:used?"linear-gradient(135deg,#100c04,#0a0802)":active?"linear-gradient(135deg,#281e06,#1a1404)":"linear-gradient(135deg,#1e1608,#140e04)",
+                        border:`2px solid ${used?"rgba(255,255,255,0.06)":active?"rgba(240,192,64,0.7)":"rgba(201,168,76,0.25)"}`,
+                        borderLeft:`4px solid ${used?"rgba(255,255,255,0.06)":active?"#f0c040":"rgba(201,168,76,0.4)"}`,
+                        borderRadius:12,padding:"14px 16px",textAlign:"left",
+                        cursor:used||exhausted?"not-allowed":"pointer",
+                        opacity:used||exhausted?0.45:1,
+                        boxShadow:active?"0 0 20px rgba(201,168,76,0.2),inset 0 1px 0 rgba(255,255,255,0.08),0 4px 0 rgba(0,0,0,0.5)":"inset 0 1px 0 rgba(255,255,255,0.05),0 3px 0 rgba(0,0,0,0.4)",
+                        position:"relative",overflow:"hidden",fontFamily:"'Rajdhani',sans-serif"}}>
+                      {active&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,#f0c040,transparent)"}}/>}
+                      {/* Top sheen */}
+                      <div style={{position:"absolute",top:0,left:0,right:0,height:"40%",background:"linear-gradient(to bottom,rgba(255,255,255,0.05),transparent)",pointerEvents:"none"}}/>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",position:"relative"}}>
+                        <div style={{display:"flex",gap:14,flex:1}}>
+                          {/* Icon 3D box */}
+                          <div style={{width:48,height:48,flexShrink:0,background:active?"linear-gradient(145deg,rgba(201,168,76,0.35),rgba(201,168,76,0.15))":"linear-gradient(145deg,rgba(255,255,255,0.08),rgba(0,0,0,0.3))",border:`1px solid ${active?"rgba(201,168,76,0.6)":"rgba(255,255,255,0.1)"}`,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,boxShadow:"inset 0 1px 0 rgba(255,255,255,0.15),0 3px 0 rgba(0,0,0,0.5)",position:"relative",overflow:"hidden"}}>
+                            <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.08)",borderRadius:"10px 10px 0 0"}}/>
+                            <span style={{position:"relative"}}>{d.icon}</span>
+                          </div>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:15,color:used?"#4a4030":"#f0e8c8",marginBottom:3,fontWeight:700,letterSpacing:"0.04em",fontFamily:"'Rajdhani',sans-serif"}}>{d.name}</div>
+                            <div style={{fontSize:12,color:"#6a5830",marginBottom:6,fontFamily:"'Rajdhani',sans-serif"}}>{d.desc}</div>
+                            <div style={{fontSize:11,color:active?"#f0c040":"#c9a84c",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:active?"0 0 8px rgba(240,192,64,0.6)":"none"}}>{d.effect}</div>
+                          </div>
+                        </div>
+                        {used&&<span style={{fontSize:9,color:"#44cc66",border:"1px solid rgba(68,204,102,0.4)",padding:"4px 10px",borderRadius:6,flexShrink:0,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,letterSpacing:"0.08em",background:"rgba(68,204,102,0.1)",boxShadow:"0 0 8px rgba(68,204,102,0.2)"}}>✓ EMITIDO</span>}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </>)}
           </div>
         )}
 
@@ -2155,32 +2155,36 @@ export default function App() {
 
         {/* RANKING */}
         {tab==="ranking" && (
-          <div style={{animation:"slideInUp 0.3s ease"}}>
-            <div style={{fontSize:10,color:"#b09060",letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:14,fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>🏆 Ranking Mundial</div>
-            {rankingData.length===0 ? (
-              <div style={{textAlign:"center",color:"#3a4050",padding:40,fontFamily:"'Rajdhani',sans-serif",fontSize:14}}>Cargando ranking...</div>
-            ) : rankingData.map((j,i)=>{
+          <div style={{animationName:"slideInUp",animationDuration:"0.35s",animationTimingFunction:"cubic-bezier(0.34,1.2,0.64,1)",animationFillMode:"both"}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,padding:"10px 14px",background:"linear-gradient(135deg,#201a06,#140e04)",border:"1px solid rgba(240,192,64,0.35)",borderRadius:10,boxShadow:"inset 0 1px 0 rgba(255,255,255,0.08),0 3px 0 rgba(0,0,0,0.5)"}}>
+              <Icon type="star" size={18} color="#f0c040" glow/>
+              <span style={{fontSize:11,color:"#f0c040",letterSpacing:"0.18em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,textShadow:"0 0 8px rgba(240,192,64,0.5)"}}>Ranking Mundial</span>
+            </div>
+            {rankingData.length===0?(
+              <div style={{textAlign:"center",padding:40,fontFamily:"'Rajdhani',sans-serif",fontSize:14,color:"#4a3820"}}>Cargando ranking...</div>
+            ):rankingData.map((j,i)=>{
               const jideo=IDEOLOGIES[j.ideologia]||IDEOLOGIES.democracia;
-              const medalColor=i===0?"#FFD700":i===1?"#C0C0C0":i===2?"#CD7F32":"#3a4050";
+              const medalColor=i===0?"#FFD700":i===1?"#C0C0C0":i===2?"#CD7F32":"#5a4020";
               const tuPosicion=j.id===jugador?.id;
               return (
-                <div key={i} style={{background:tuPosicion?"linear-gradient(135deg,rgba(201,168,76,0.1),rgba(0,0,0,0.4))":"linear-gradient(135deg,rgba(255,255,255,0.02),rgba(0,0,0,0.3))",border:`1px solid ${tuPosicion?"rgba(201,168,76,0.35)":"rgba(255,255,255,0.05)"}`,borderRadius:10,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:12,position:"relative",overflow:"hidden"}}>
-                  {tuPosicion && <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,rgba(201,168,76,0.7),transparent)"}}/>}
-                  {/* Position badge */}
-                  <div style={{width:36,height:36,borderRadius:8,background:i<3?`${medalColor}22`:"rgba(255,255,255,0.04)",border:`2px solid ${medalColor}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:i<3?20:12,fontFamily:"'Orbitron',monospace",fontWeight:700,color:medalColor,flexShrink:0,boxShadow:i<3?`0 0 10px ${medalColor}44`:"none"}}>
-                    {i===0?"🥇":i===1?"🥈":i===2?"🥉":<span style={{fontSize:10}}>#{i+1}</span>}
+                <div key={i} style={{background:tuPosicion?"linear-gradient(135deg,#281e06,#1a1404)":"linear-gradient(135deg,#1a1408,#100c04)",border:`1px solid ${tuPosicion?"rgba(240,192,64,0.5)":"rgba(201,168,76,0.15)"}`,borderLeft:`3px solid ${i===0?"#FFD700":i===1?"#C0C0C0":i===2?"#CD7F32":"rgba(201,168,76,0.2)"}`,borderRadius:10,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:12,position:"relative",overflow:"hidden",boxShadow:tuPosicion?"inset 0 1px 0 rgba(255,255,255,0.1),0 4px 0 rgba(0,0,0,0.5),0 0 20px rgba(240,192,64,0.1)":"inset 0 1px 0 rgba(255,255,255,0.05),0 3px 0 rgba(0,0,0,0.4)"}}>
+                  {tuPosicion&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(240,192,64,0.9),transparent)"}}/>}
+                  <div style={{position:"absolute",top:0,left:0,right:0,height:"40%",background:"linear-gradient(to bottom,rgba(255,255,255,0.04),transparent)",pointerEvents:"none"}}/>
+                  <div style={{width:40,height:40,borderRadius:9,background:`linear-gradient(145deg,${medalColor}33,${medalColor}11)`,border:`2px solid ${medalColor}55`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:i<3?22:13,fontFamily:"'Orbitron',monospace",fontWeight:700,color:medalColor,flexShrink:0,boxShadow:i<3?`0 0 14px ${medalColor}55,0 3px 0 rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.15)`:"0 2px 0 rgba(0,0,0,0.4)",position:"relative",overflow:"hidden"}}>
+                    <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.1)",borderRadius:"9px 9px 0 0"}}/>
+                    <span style={{position:"relative"}}>{i===0?"🥇":i===1?"🥈":i===2?"🥉":`#${i+1}`}</span>
                   </div>
                   <div style={{flex:1}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                       <div style={{display:"flex",alignItems:"center",gap:6}}>
-                        <span style={{fontSize:14,color:tuPosicion?"#f0c040":"#d0c8b8",fontWeight:700,fontFamily:"'Rajdhani',sans-serif"}}>{j.nombre}</span>
-                        {tuPosicion && <span style={{fontSize:9,color:"#f0c040",background:"rgba(240,192,64,0.15)",padding:"2px 7px",borderRadius:4,fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>TÚ</span>}
+                        <span style={{fontSize:15,color:tuPosicion?"#f0c040":"#d0b880",fontWeight:700,fontFamily:"'Rajdhani',sans-serif",textShadow:tuPosicion?"0 0 8px rgba(240,192,64,0.4)":"none"}}>{j.nombre}</span>
+                        {tuPosicion&&<span style={{fontSize:9,color:"#f0c040",background:"linear-gradient(135deg,rgba(240,192,64,0.2),rgba(160,120,0,0.2))",padding:"2px 7px",borderRadius:4,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,border:"1px solid rgba(240,192,64,0.4)",boxShadow:"0 0 6px rgba(240,192,64,0.3)"}}>TÚ</span>}
                       </div>
-                      <span style={{fontSize:14,color:"#f0c040",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:"0 0 8px rgba(240,192,64,0.4)"}}>{j.puntuacion}</span>
+                      <span style={{fontSize:15,color:"#f0c040",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:"0 0 10px rgba(240,192,64,0.6)"}}>{j.puntuacion}</span>
                     </div>
                     <div style={{fontSize:11,display:"flex",gap:8,marginTop:4,alignItems:"center",fontFamily:"'Rajdhani',sans-serif"}}>
                       <span style={{color:jideo.color,fontWeight:600}}>{jideo.icon} {j.pais}</span>
-                      <span style={{background:j.rol==="presidente"?"rgba(201,168,76,0.12)":"rgba(76,175,80,0.12)",color:j.rol==="presidente"?"#f0c040":"#66bb6a",padding:"2px 7px",borderRadius:4,fontSize:9,fontWeight:700,letterSpacing:"0.08em",border:`1px solid ${j.rol==="presidente"?"rgba(201,168,76,0.3)":"rgba(76,175,80,0.3)"}`}}>{j.rol==="presidente"?"PRES":"CIU"}</span>
+                      <span style={{background:j.rol==="presidente"?"linear-gradient(135deg,rgba(240,192,64,0.12),rgba(160,120,0,0.1))":"linear-gradient(135deg,rgba(68,204,102,0.1),rgba(0,80,30,0.1))",color:j.rol==="presidente"?"#f0c040":"#44cc66",padding:"2px 8px",borderRadius:4,fontSize:9,fontWeight:700,letterSpacing:"0.08em",border:`1px solid ${j.rol==="presidente"?"rgba(240,192,64,0.3)":"rgba(68,204,102,0.3)"}`}}>{j.rol==="presidente"?"👑 PRES":"⚡ CIU"}</span>
                     </div>
                   </div>
                 </div>
@@ -2193,63 +2197,81 @@ export default function App() {
 
         {/* GUERRA */}
         {tab==="guerra" && (
-          <div style={{animation:"slideInUp 0.3s ease"}}>
-            <div style={{fontSize:10,color:"#b06060",letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:14,fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>⚔️ Centro de Guerra</div>
-
-            {/* Estado militar card */}
-            <div style={{background:"linear-gradient(135deg,rgba(229,57,53,0.08),rgba(0,0,0,0.5))",border:"1px solid rgba(229,57,53,0.3)",borderRadius:12,padding:14,marginBottom:14,position:"relative",overflow:"hidden"}}>
-              <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,rgba(229,57,53,0.7),transparent)"}}/>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                <div style={{fontSize:10,color:"#ff5252",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Rajdhani',sans-serif"}}>Estado Militar</div>
-                <div style={{fontSize:9,color:esPresidente?"#f0c040":"#66bb6a",background:esPresidente?"rgba(201,168,76,0.12)":"rgba(76,175,80,0.12)",padding:"3px 10px",borderRadius:4,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,border:`1px solid ${esPresidente?"rgba(201,168,76,0.3)":"rgba(76,175,80,0.3)"}`}}>{esPresidente?"👑 PRESIDENTE":"🏴 CIUDADANO"}</div>
-              </div>
-              <div style={{display:"flex",gap:12,fontSize:13,fontFamily:"'Rajdhani',sans-serif",flexWrap:"wrap"}}>
-                <span style={{color:"#8a9aaa"}}>⚔️ Ejército: <strong style={{color:"#ff5252",fontFamily:"'Orbitron',monospace"}}>{stats.militar}%</strong></span>
-                <span style={{color:"#8a9aaa"}}>⚡ Poder: <strong style={{color:"#f0c040",fontFamily:"'Orbitron',monospace"}}>{jugador?.poder_politico||0}</strong></span>
-                <span style={{color:"#8a9aaa"}}>😤 Rebeldía: <strong style={{color:stats.rebeldia>50?"#ff5252":"#5a6070",fontFamily:"'Orbitron',monospace"}}>{stats.rebeldia}%</strong></span>
-              </div>
-              {jugador?.colonizado_por && <div style={{marginTop:8,fontSize:12,color:"#ff5252",fontFamily:"'Rajdhani',sans-serif",fontWeight:600}}>⚠️ Tu país está colonizado. Puedes declarar Guerra de Liberación.</div>}
-              {jugador?.territorios_conquistados?.length>0 && <div style={{marginTop:8,fontSize:12,color:"#f0c040",fontFamily:"'Rajdhani',sans-serif",fontWeight:600}}>🏴 Conquistas: {jugador.territorios_conquistados.join(", ")}</div>}
+          <div style={{animationName:"slideInUp",animationDuration:"0.35s",animationTimingFunction:"cubic-bezier(0.34,1.2,0.64,1)",animationFillMode:"both"}}>
+            {/* Header */}
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,padding:"10px 14px",background:"linear-gradient(135deg,#1e0c08,#140804)",border:"1px solid rgba(255,80,80,0.35)",borderRadius:10,boxShadow:"inset 0 1px 0 rgba(255,255,255,0.08),0 3px 0 rgba(0,0,0,0.5)"}}>
+              <Icon type="war" size={18} color="#ff5555" glow/>
+              <span style={{fontSize:11,color:"#ff7777",letterSpacing:"0.18em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,textShadow:"0 0 8px rgba(255,80,80,0.5)"}}>Centro de Guerra</span>
             </div>
 
-            {/* Tipos de guerra disponibles */}
-            <div style={{fontSize:11,color:"#6a6a8a",letterSpacing:1,marginBottom:10,textTransform:"uppercase"}}>Tipos de Conflicto</div>
-            {Object.entries(TIPOS_GUERRA).map(([key, tipo]) => {
-              const req = tipo.requiere;
-              let disponible = true;
-              let razon = "";
-              if (req.rol === "presidente" && !esPresidente) { disponible = false; razon = "Solo presidentes"; }
-              if (req.rol === "ciudadano" && esPresidente) { disponible = false; razon = "Solo ciudadanos"; }
-              if (req.poder_politico && (jugador?.poder_politico||0) < req.poder_politico) { disponible = false; razon = `Necesitas ${req.poder_politico} poder político`; }
-              if (req.militar && stats.militar < req.militar) { disponible = false; razon = `Necesitas ${req.militar}% militar`; }
-              if (req.rebeldia_pais && stats.rebeldia < req.rebeldia_pais) { disponible = false; razon = `Necesitas ${req.rebeldia_pais}% rebeldía en el país`; }
-              if (req.colonizado && !jugador?.colonizado_por) { disponible = false; razon = "Solo si estás colonizado"; }
-              if (req.pib && stats.pib < req.pib) { disponible = false; razon = `Necesitas ${req.pib}% PIB`; }
+            {/* Estado militar — card metálica */}
+            <div style={{background:"linear-gradient(135deg,#1e0c08,#140804)",border:"1px solid rgba(255,80,80,0.35)",borderLeft:"3px solid #ff4444",borderRadius:12,padding:14,marginBottom:14,position:"relative",overflow:"hidden",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.07),0 4px 0 rgba(0,0,0,0.5)"}}>
+              <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(255,80,80,0.8),transparent)"}}/>
+              <div style={{position:"absolute",top:0,left:0,right:0,height:"35%",background:"linear-gradient(to bottom,rgba(255,255,255,0.04),transparent)",pointerEvents:"none"}}/>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                <div style={{display:"flex",alignItems:"center",gap:7}}>
+                  <Icon type="shield" size={16} color="#ff5555" glow/>
+                  <span style={{fontSize:11,color:"#ff7777",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"'Rajdhani',sans-serif",textShadow:"0 0 8px rgba(255,80,80,0.4)"}}>Estado Militar</span>
+                </div>
+                <div style={{fontSize:9,color:esPresidente?"#f0c040":"#44cc66",background:esPresidente?"linear-gradient(135deg,#2a1e04,#1a1202)":"linear-gradient(135deg,#14200c,#0c1408)",padding:"3px 10px",borderRadius:4,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,border:`1px solid ${esPresidente?"rgba(240,192,64,0.4)":"rgba(68,204,102,0.4)"}`,boxShadow:esPresidente?"0 0 8px rgba(240,192,64,0.2)":"0 0 8px rgba(68,204,102,0.2)"}}>
+                  {esPresidente?"👑 PRESIDENTE":"⚡ CIUDADANO"}
+                </div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                {[{ico:"sword",label:"Ejército",val:`${stats.militar}%`,c:"#ff5555"},{ico:"bolt",label:"Poder",val:`${jugador?.poder_politico||0}`,c:"#f0c040"},{ico:"fire",label:"Rebeldía",val:`${stats.rebeldia}%`,c:stats.rebeldia>50?"#ff4444":"#888888"}].map((s,i)=>(
+                  <div key={i} style={{background:"rgba(0,0,0,0.4)",borderRadius:8,padding:"8px 10px",textAlign:"center",border:`1px solid ${s.c}22`,boxShadow:`inset 0 1px 0 rgba(255,255,255,0.05)`}}>
+                    <Icon type={s.ico} size={16} color={s.c} glow/>
+                    <div style={{fontSize:14,color:s.c,fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:`0 0 10px ${s.c}`,marginTop:4}}>{s.val}</div>
+                    <div style={{fontSize:9,color:"#5a4830",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:"'Rajdhani',sans-serif"}}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+              {jugador?.colonizado_por&&<div style={{marginTop:10,fontSize:12,color:"#ff5555",fontFamily:"'Rajdhani',sans-serif",fontWeight:600,padding:"6px 10px",background:"rgba(255,0,0,0.08)",borderRadius:6,border:"1px solid rgba(255,80,80,0.2)"}}>⚠️ Tu país está colonizado. Puedes declarar Guerra de Liberación.</div>}
+              {jugador?.territorios_conquistados?.length>0&&<div style={{marginTop:10,fontSize:12,color:"#f0c040",fontFamily:"'Rajdhani',sans-serif",fontWeight:600,padding:"6px 10px",background:"rgba(240,192,64,0.06)",borderRadius:6,border:"1px solid rgba(240,192,64,0.2)"}}>🏴 Conquistas: {jugador.territorios_conquistados.join(", ")}</div>}
+            </div>
 
+            {/* Tipos de conflicto */}
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10,marginTop:16}}>
+              <Icon type="target" size={14} color="#c9a84c"/>
+              <span style={{fontSize:10,color:"#a08040",letterSpacing:"0.15em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>Tipos de Conflicto</span>
+            </div>
+            {Object.entries(TIPOS_GUERRA).map(([key,tipo])=>{
+              const req=tipo.requiere;
+              let disponible=true,razon="";
+              if(req.rol==="presidente"&&!esPresidente){disponible=false;razon="Solo presidentes";}
+              if(req.rol==="ciudadano"&&esPresidente){disponible=false;razon="Solo ciudadanos";}
+              if(req.poder_politico&&(jugador?.poder_politico||0)<req.poder_politico){disponible=false;razon=`Necesitas ${req.poder_politico} poder`;}
+              if(req.militar&&stats.militar<req.militar){disponible=false;razon=`Necesitas ${req.militar}% militar`;}
+              if(req.rebeldia_pais&&stats.rebeldia<req.rebeldia_pais){disponible=false;razon=`Necesitas ${req.rebeldia_pais}% rebeldía`;}
+              if(req.colonizado&&!jugador?.colonizado_por){disponible=false;razon="Solo si estás colonizado";}
+              if(req.pib&&stats.pib<req.pib){disponible=false;razon=`Necesitas ${req.pib}% PIB`;}
               return (
-                <div key={key} style={{background:disponible?`${tipo.color}10`:"rgba(255,255,255,0.02)",border:`1px solid ${disponible?tipo.color+"44":"rgba(255,255,255,0.06)"}`,borderRadius:8,padding:14,marginBottom:10,opacity:disponible?1:0.5}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
-                    <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                      <span style={{fontSize:22}}>{tipo.icon}</span>
+                <div key={key} style={{background:disponible?`linear-gradient(135deg,${tipo.color}18,#0e0a04)`:"linear-gradient(135deg,#120e06,#0a0804)",border:`1px solid ${disponible?tipo.color+"55":"rgba(255,255,255,0.06)"}`,borderLeft:`3px solid ${disponible?tipo.color:"rgba(255,255,255,0.06)"}`,borderRadius:10,padding:"12px 14px",marginBottom:8,opacity:disponible?1:0.45,position:"relative",overflow:"hidden",boxShadow:disponible?`inset 0 1px 0 rgba(255,255,255,0.06),0 3px 0 rgba(0,0,0,0.5),0 0 16px ${tipo.color}11`:"inset 0 1px 0 rgba(255,255,255,0.03),0 2px 0 rgba(0,0,0,0.4)"}}>
+                  {disponible&&<div style={{position:"absolute",top:0,left:0,right:0,height:1,background:`linear-gradient(90deg,transparent,${tipo.color}88,transparent)`}}/>}
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                      <div style={{width:40,height:40,background:`linear-gradient(145deg,${tipo.color}33,${tipo.color}11)`,border:`1px solid ${tipo.color}44`,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,boxShadow:`inset 0 1px 0 rgba(255,255,255,0.12),0 2px 0 rgba(0,0,0,0.4)`}}>
+                        <div style={{position:"absolute",width:40,height:"50%",top:0,background:"rgba(255,255,255,0.06)",borderRadius:"8px 8px 0 0"}}/>
+                        {tipo.icon}
+                      </div>
                       <div>
-                        <div style={{fontSize:14,color:disponible?tipo.color:"#666",fontWeight:"bold"}}>{tipo.label}</div>
-                        <div style={{fontSize:11,color:"#666",marginTop:2}}>{tipo.desc}</div>
+                        <div style={{fontSize:14,color:disponible?tipo.color:"#4a4030",fontWeight:700,fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.04em"}}>{tipo.label}</div>
+                        <div style={{fontSize:11,color:"#5a4828",fontFamily:"'Rajdhani',sans-serif"}}>{tipo.desc}</div>
                       </div>
                     </div>
-                    <span style={{fontSize:10,color:tipo.color,background:`${tipo.color}15`,padding:"3px 8px",borderRadius:10,flexShrink:0}}>{tipo.dificultad}</span>
+                    <span style={{fontSize:9,color:tipo.color,background:`${tipo.color}18`,padding:"4px 10px",borderRadius:6,flexShrink:0,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,border:`1px solid ${tipo.color}33`}}>{tipo.dificultad}</span>
                   </div>
-                  {!disponible && <div style={{fontSize:11,color:"#e53935",marginBottom:8}}>⛔ {razon}</div>}
-                  {disponible && (
-                    <div style={{fontSize:11,color:"#888",marginBottom:10}}>
-                      Selecciona un objetivo de la lista de jugadores abajo
-                    </div>
-                  )}
+                  {!disponible&&<div style={{fontSize:11,color:"#aa4444",marginTop:6,fontFamily:"'Rajdhani',sans-serif"}}>⛔ {razon}</div>}
+                  {disponible&&<div style={{fontSize:11,color:"#6a5830",marginTop:6,fontFamily:"'Rajdhani',sans-serif"}}>Selecciona objetivo abajo ↓</div>}
                 </div>
               );
             })}
 
-            {/* Lista de objetivos */}
-            <div style={{fontSize:11,color:"#6a6a8a",letterSpacing:1,marginBottom:10,marginTop:16,textTransform:"uppercase"}}>🎯 Jugadores — Selecciona Objetivo</div>
+            {/* Lista objetivos */}
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10,marginTop:16}}>
+              <Icon type="target" size={14} color="#ff5555" glow/>
+              <span style={{fontSize:10,color:"#aa4444",letterSpacing:"0.15em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>Objetivos Disponibles</span>
+            </div>
             {otrosJugadores.filter(j=>j.id!==jugador?.id).map((j,i) => {
               const jideo = IDEOLOGIES[j.ideologia]||IDEOLOGIES.democracia;
               return (
