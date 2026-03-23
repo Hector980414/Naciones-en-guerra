@@ -327,11 +327,11 @@ const Icon = ({ type, size=22, color="#c9a84c", glow=false }) => {
 const RadarBG = () => (
   <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
     {/* ── Base: madera oscura táctica ── */}
-    <div style={{position:"absolute",inset:0,background:"linear-gradient(160deg,#241808 0%,#1c1408 30%,#181610 60%,#121008 100%)"}}/>
+    <div style={{position:"absolute",inset:0,background:"linear-gradient(160deg,#2a1c08 0%,#221408 30%,#1c1408 60%,#161008 100%)"}}/>
     {/* Veta de madera */}
     <div style={{position:"absolute",inset:0,backgroundImage:`repeating-linear-gradient(8deg,transparent 0px,transparent 18px,rgba(80,40,10,0.07) 19px,rgba(80,40,10,0.07) 20px),repeating-linear-gradient(-5deg,transparent 0px,transparent 32px,rgba(60,30,5,0.05) 33px,rgba(60,30,5,0.05) 34px)`}}/>
     {/* ── Mapa de fondo sutil ── */}
-    <svg style={{position:"absolute",inset:0,width:"100%",height:"100%",opacity:0.05}} viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
+    <svg style={{position:"absolute",inset:0,width:"100%",height:"100%",opacity:0.12}} viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
       {/* Continentes simplificados */}
       <path d="M60 200 Q80 180 120 190 Q160 180 180 200 Q200 220 190 250 Q180 270 160 280 Q130 290 100 280 Q70 270 60 250 Z" fill="#4a7a3a" stroke="#6a9a4a" strokeWidth="1"/>
       <path d="M200 150 Q240 130 280 140 Q320 145 340 170 Q360 200 350 230 Q335 260 300 270 Q260 280 230 265 Q200 250 195 220 Q190 190 200 150 Z" fill="#4a7a3a" stroke="#6a9a4a" strokeWidth="1"/>
@@ -345,38 +345,38 @@ const RadarBG = () => (
       {["A1","B2","C3","D1","A4","C5"].map((t,i)=><text key={i} x={30+i%3*130} y={120+Math.floor(i/3)*350} fill="#7a9a5a" fontSize="10" opacity="0.35" fontFamily="monospace">{t}</text>)}
     </svg>
     {/* ── Radar SVG animado (overlay táctico) ── */}
-    <svg style={{position:"absolute",top:"42%",left:"50%",transform:"translate(-50%,-50%)",width:"min(110vw,85vh)",height:"min(110vw,85vh)",opacity:0.08}} viewBox="0 0 500 500">
+    <svg style={{position:"absolute",top:"42%",left:"50%",transform:"translate(-50%,-50%)",width:"min(110vw,85vh)",height:"min(110vw,85vh)",opacity:0.22}} viewBox="0 0 500 500">
       <defs>
         <radialGradient id="sweepGrad" cx="250" cy="250" r="240" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#00ff88" stopOpacity="0"/>
-          <stop offset="55%" stopColor="#00ff88" stopOpacity="0.08"/>
-          <stop offset="100%" stopColor="#00ff88" stopOpacity="0.28"/>
+          <stop offset="0%" stopColor="#c8a020" stopOpacity="0"/>
+          <stop offset="55%" stopColor="#c8a020" stopOpacity="0.12"/>
+          <stop offset="100%" stopColor="#c8a020" stopOpacity="0.35"/>
         </radialGradient>
         <filter id="greenGlow"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
         <filter id="softGlow"><feGaussianBlur stdDeviation="1.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
       {[50,100,150,200,240].map((r,i)=>(
-        <circle key={i} cx="250" cy="250" r={r} fill="none" stroke="#00ff88" strokeWidth={i===0?1.4:0.8} strokeDasharray={i%2===0?"":"6 4"} opacity={0.6-i*0.09}/>
+        <circle key={i} cx="250" cy="250" r={r} fill="none" stroke="#c8a020" strokeWidth={i===0?1.4:0.8} strokeDasharray={i%2===0?"":"6 4"} opacity={0.6-i*0.09}/>
       ))}
-      <line x1="250" y1="10" x2="250" y2="490" stroke="#00ff88" strokeWidth="0.7" opacity="0.4"/>
-      <line x1="10" y1="250" x2="490" y2="250" stroke="#00ff88" strokeWidth="0.7" opacity="0.4"/>
-      <line x1="80" y1="80" x2="420" y2="420" stroke="#00ff88" strokeWidth="0.4" opacity="0.2"/>
-      <line x1="420" y1="80" x2="80" y2="420" stroke="#00ff88" strokeWidth="0.4" opacity="0.2"/>
+      <line x1="250" y1="10" x2="250" y2="490" stroke="#c8a020" strokeWidth="0.7" opacity="0.4"/>
+      <line x1="10" y1="250" x2="490" y2="250" stroke="#c8a020" strokeWidth="0.7" opacity="0.4"/>
+      <line x1="80" y1="80" x2="420" y2="420" stroke="#c8a020" strokeWidth="0.4" opacity="0.2"/>
+      <line x1="420" y1="80" x2="80" y2="420" stroke="#c8a020" strokeWidth="0.4" opacity="0.2"/>
       {Array.from({length:36},(_,i)=>{
         const a=(i/36)*Math.PI*2;
-        return <line key={i} x1={250+238*Math.sin(a)} y1={250-238*Math.cos(a)} x2={250+(i%3===0?226:232)*Math.sin(a)} y2={250-(i%3===0?226:232)*Math.cos(a)} stroke="#00ff88" strokeWidth={i%3===0?"1.6":"0.8"} opacity="0.55"/>;
+        return <line key={i} x1={250+238*Math.sin(a)} y1={250-238*Math.cos(a)} x2={250+(i%3===0?226:232)*Math.sin(a)} y2={250-(i%3===0?226:232)*Math.cos(a)} stroke="#c8a020" strokeWidth={i%3===0?"1.6":"0.8"} opacity="0.55"/>;
       })}
       <g style={{transformOrigin:"250px 250px",animationName:"radar-sweep",animationDuration:"4s",animationTimingFunction:"linear",animationIterationCount:"infinite"}}>
         <path d="M250 250 L250 10 A240 240 0 0 1 490 250 Z" fill="url(#sweepGrad)"/>
-        <line x1="250" y1="250" x2="250" y2="10" stroke="#00ff88" strokeWidth="2" opacity="1" filter="url(#greenGlow)"/>
+        <line x1="250" y1="250" x2="250" y2="10" stroke="#c8a020" strokeWidth="2" opacity="1" filter="url(#greenGlow)"/>
       </g>
       {[[160,130,1.8],[330,175,1.3],[195,310,2.0],[370,345,1.5],[125,220,1.2],[405,145,1.7],[275,75,1.1],[88,330,1.9],[420,270,1.4],[230,390,1.6]].map(([bx,by,spd],i)=>(
         <g key={i}>
-          <circle cx={bx} cy={by} r="4" fill="#00ff88" filter="url(#softGlow)"><animate attributeName="opacity" values="0.1;1;0.1" dur={`${spd+0.5}s`} begin={`${i*0.5}s`} repeatCount="indefinite"/></circle>
-          <circle cx={bx} cy={by} r="8" fill="none" stroke="#00ff88" strokeWidth="0.9"><animate attributeName="r" values="5;18;5" dur={`${spd+1}s`} begin={`${i*0.5}s`} repeatCount="indefinite"/><animate attributeName="opacity" values="0.7;0;0.7" dur={`${spd+1}s`} begin={`${i*0.5}s`} repeatCount="indefinite"/></circle>
+          <circle cx={bx} cy={by} r="4" fill="#c8a020" filter="url(#softGlow)"><animate attributeName="opacity" values="0.1;1;0.1" dur={`${spd+0.5}s`} begin={`${i*0.5}s`} repeatCount="indefinite"/></circle>
+          <circle cx={bx} cy={by} r="8" fill="none" stroke="#c8a020" strokeWidth="0.9"><animate attributeName="r" values="5;18;5" dur={`${spd+1}s`} begin={`${i*0.5}s`} repeatCount="indefinite"/><animate attributeName="opacity" values="0.7;0;0.7" dur={`${spd+1}s`} begin={`${i*0.5}s`} repeatCount="indefinite"/></circle>
         </g>
       ))}
-      <circle cx="250" cy="250" r="5" fill="#00ff88" opacity="0.9" filter="url(#greenGlow)"/>
+      <circle cx="250" cy="250" r="5" fill="#c8a020" opacity="0.9" filter="url(#greenGlow)"/>
       <circle cx="250" cy="250" r="2" fill="#fff" opacity="1"/>
     </svg>
     {/* Scanlines */}
@@ -574,7 +574,7 @@ export default function App() {
   const tickRef = useRef(null);
 
   useEffect(() => {
-    if(tg){tg.ready();tg.expand();tg.setBackgroundColor("#0a0e1a");}
+    if(tg){tg.ready();tg.expand();tg.setBackgroundColor("#1a1008");tg.setHeaderColor("#1a1008");if(tg.requestFullscreen)tg.requestFullscreen();}
     initPlayer();
     // Recargar visas cuando la app recibe foco
     const onFocus = () => loadVisas();
@@ -604,26 +604,43 @@ export default function App() {
     syncTick();
     // Re-sincronizar con servidor cada 10 segundos — cualquier trampa se corrige rápido
     const si = setInterval(syncTick, 10000);
-    // Countdown local solo para UI fluida entre sincronizaciones
     tickRef.current = setInterval(() => {
       setCountdown(c => Math.max(0, c - 1));
       setFechaJuego(calcularFechaJuego());
     }, 1000);
-    // Energia: 1 punto cada 6s = 100 en 10 min
-    const energySync = setInterval(() => {
+
+    // ── Energía: 100 puntos en 10 min = 1 punto cada 6 segundos ──
+    // El timer local solo actualiza la UI cada segundo para que se vea fluido
+    // La fuente de verdad es Supabase (energia + energia_update_at)
+    const energyTick = setInterval(() => {
       setEnergia(prev => {
         if (prev >= 100) return 100;
-        const nueva = prev + 1;
+        return prev; // el cálculo real lo hace sincEnergy
+      });
+    }, 1000);
+
+    // Sincronizar energía con Supabase cada 6 segundos
+    const energySync = setInterval(async () => {
+      setEnergia(prev => {
+        if (prev >= 100) return 100;
+        const nueva = Math.min(100, prev + 1);
+        // Guardar en Supabase con timestamp — esto es la fuente de verdad
         if (jugador?.id) {
-          db.from('jugadores')
+          db.from("jugadores")
             .update({ energia: nueva, energia_update_at: new Date().toISOString() })
-            .eq('id', jugador.id)
+            .eq("id", jugador.id)
             .then(() => {});
         }
         return nueva;
       });
     }, 6000);
-    return () => { clearInterval(si); clearInterval(tickRef.current); clearInterval(energySync); };
+
+    return () => {
+      clearInterval(si);
+      clearInterval(tickRef.current);
+      clearInterval(energyTick);
+      clearInterval(energySync);
+    };
   }, [syncTick, jugador?.id]);
 
   // Realtime jugador — dinero, energía, visas en tiempo real
@@ -652,6 +669,17 @@ export default function App() {
     return () => { db.removeChannel(ch); };
   }, [jugador?.id]);
 
+  // ── Calcular energía actual basada en timestamps (sobrevive reinicios) ──
+  const calcularEnergiaConTimestamp = (energiaGuardada, timestampGuardado) => {
+    if (!timestampGuardado) return energiaGuardada ?? 100;
+    const ahora = Date.now();
+    const guardadoEn = new Date(timestampGuardado).getTime();
+    const segundosPasados = Math.max(0, Math.floor((ahora - guardadoEn) / 1000));
+    // 1 punto cada 6 segundos = 10 pts/min = 100 pts en 10 min
+    const regenerada = Math.floor(segundosPasados / 6);
+    return Math.min(100, (energiaGuardada ?? 0) + regenerada);
+  };
+
   const initPlayer = async () => {
     const tgUser = tg?.initDataUnsafe?.user;
     const tgId = tgUser?.id || 99999999;
@@ -667,7 +695,19 @@ export default function App() {
         setXp(xpVal);
         setNivel(nivelDesdeXP(xpVal));
         setDinero(existing.dinero ?? 1000);
-        setEnergia(existing.energia ?? 100);
+
+        // ── Energía: calcular cuánto regeneró mientras la app estaba cerrada ──
+        // Usa energia_update_at como fuente de verdad. Si no existe, usa ultimo_trabajo.
+        const timestamp = existing.energia_update_at || existing.ultimo_trabajo || null;
+        const energiaCalculada = calcularEnergiaConTimestamp(existing.energia ?? 0, timestamp);
+        setEnergia(energiaCalculada);
+
+        // Guardar inmediatamente en Supabase con timestamp actual
+        await db.from("jugadores").update({
+          energia: energiaCalculada,
+          energia_update_at: new Date().toISOString()
+        }).eq("id", tgId).then(() => {});
+
         const { data: nation } = await db.from("naciones").select("*").eq("jugador_id",tgId).single();
         if(nation) { setStats({pib:nation.pib,militar:nation.militar,aprobacion:nation.aprobacion,petroleo:nation.petroleo,comida:nation.comida,energia:nation.energia,educacion:nation.educacion,salud:nation.salud,rebeldia:nation.rebeldia,intel:nation.intel,industria:nation.industria}); setDecreeUsed(nation.decretos_usados||[]); }
         setScreen("game");
@@ -1775,7 +1815,7 @@ export default function App() {
       )}
 
       {/* ═══ HEADER — Mesa táctica ═══ */}
-      <div style={{position:"sticky",top:0,zIndex:100,background:"linear-gradient(180deg,#1c1208 0%,#160e06 60%,#120c05 100%)",borderBottom:"2px solid #3a2a0a",boxShadow:"0 4px 20px rgba(0,0,0,0.7)"}}>
+      <div style={{position:"sticky",top:0,zIndex:100,background:"linear-gradient(180deg,#1c1208 0%,#160e06 60%,#120c05 100%)",borderBottom:"2px solid #3a2a0a",boxShadow:"0 4px 20px rgba(0,0,0,0.7)",paddingTop:`calc(${(tg?.safeAreaInset?.top||0)}px + 4px)`}}>
         <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,#2a1a04,#c9a84c,#f0c040,#c9a84c,#2a1a04)",animationName:"pulse-glow",animationDuration:"3s",animationTimingFunction:"ease-in-out",animationIterationCount:"infinite"}}/>
         <div style={{padding:"8px 10px 6px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -2732,4 +2772,4 @@ export default function App() {
       </div>
     </div>
   );
-    }
+}
