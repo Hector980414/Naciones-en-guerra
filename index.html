@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover"/>
-    <meta name="theme-color" content="#030508"/>
+    <meta name="theme-color" content="#010f07"/>
     <meta name="mobile-web-app-capable" content="yes"/>
     <meta name="apple-mobile-web-app-capable" content="yes"/>
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -14,14 +14,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
       *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-      html,body{background:#030508;overscroll-behavior:none;height:100%;width:100%;font-family:'Rajdhani',sans-serif;color:#f0ece0;-webkit-font-smoothing:antialiased}
+      html,body{background:#010f07;overscroll-behavior:none;height:100%;width:100%;font-family:'Rajdhani',sans-serif;color:#f0ece0;-webkit-font-smoothing:antialiased}
       #root{min-height:100%;position:relative}
       ::-webkit-scrollbar{width:2px;height:2px}
-      ::-webkit-scrollbar-thumb{background:rgba(201,168,76,0.3);border-radius:2px}
+      ::-webkit-scrollbar-thumb{background:rgba(0,200,80,0.25);border-radius:2px}
       input,select,textarea,button{font-family:'Rajdhani',sans-serif}
 
-      /* ── KEYFRAMES ── */
-      @keyframes pulse-glow{0%,100%{opacity:1}50%{opacity:0.5}}
+      /* ════ KEYFRAMES ════ */
+      @keyframes pulse-glow{0%,100%{opacity:1}50%{opacity:0.45}}
       @keyframes slideInUp{from{transform:translateY(26px);opacity:0}to{transform:translateY(0);opacity:1}}
       @keyframes slideInDown{from{transform:translateY(-26px);opacity:0}to{transform:translateY(0);opacity:1}}
       @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -40,13 +40,13 @@
       @keyframes flicker{0%,100%,95%{opacity:1}96%{opacity:0.7}97%{opacity:1}98%{opacity:0.55}}
       @keyframes glow-line{0%,100%{opacity:0.4}50%{opacity:1}}
       @keyframes bar-grow{from{width:0%}}
-      @keyframes scanline{0%{transform:translateY(-100%);opacity:0.05}50%{opacity:0.12}100%{transform:translateY(100vh);opacity:0.05}}
+      @keyframes scanline{0%{transform:translateY(-100%);opacity:0.05}50%{opacity:0.13}100%{transform:translateY(100vh);opacity:0.05}}
+      /* Radar sweep — rotación continua del brazo */
+      @keyframes radar-sweep{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
     </style>
   </head>
   <body>
     <div id="root"></div>
-    <!-- Scanline sweep effect -->
-    <div style="position:fixed;top:0;left:0;right:0;height:80px;background:linear-gradient(to bottom,transparent,rgba(201,168,76,0.04),transparent);animation:scanline 8s linear infinite;pointer-events:none;z-index:9999"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
