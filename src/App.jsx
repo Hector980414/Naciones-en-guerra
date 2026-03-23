@@ -609,13 +609,22 @@ export default function App() {
       setCountdown(c => Math.max(0, c - 1));
       setFechaJuego(calcularFechaJuego());
     }, 1000);
-    // Regenerar energía cada minuto
-    const energyTimer = setInterval(() => {
-      setEnergia(e => Math.min(100, e + 1));
-    }, 60000);
-    return () => { clearInterval(si); clearInterval(tickRef.current); clearInterval(energyTimer); };
-    return () => { clearInterval(si); clearInterval(tickRef.current); };
-  }, [syncTick]);
+    // Energia: 1 punto cada 6s = 100 en 10 min
+    const energySync = setInterval(() => {
+      setEnergia(prev => {
+        if (prev >= 100) return 100;
+        const nueva = prev + 1;
+        if (jugador?.id) {
+          db.from('jugadores')
+            .update({ energia: nueva, energia_update_at: new Date().toISOString() })
+            .eq('id', jugador.id)
+            .then(() => {});
+        }
+        return nueva;
+      });
+    }, 6000);
+    return () => { clearInterval(si); clearInterval(tickRef.current); clearInterval(energySync); };
+  }, [syncTick, jugador?.id]);
 
   // Realtime jugador — dinero, energía, visas en tiempo real
   useEffect(() => {

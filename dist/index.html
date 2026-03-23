@@ -1,12 +1,124 @@
 <!DOCTYPE html>
 <html lang="es">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover"/>
+    <meta name="theme-color" content="#0a0600"/>
+    <meta name="mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
     <title>Naciones en Guerra</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; } body { background:#0a0e1a; overscroll-behavior:none; }</style>
-    <script type="module" crossorigin src="/Naciones-en-guerra/assets/index-CvCmG78C.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+      *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+      html,body{
+        background:#0a0600;
+        overscroll-behavior:none;height:100%;width:100%;
+        font-family:'Rajdhani',sans-serif;color:#f0e8c8;
+        -webkit-font-smoothing:antialiased;
+      }
+      #root{min-height:100%;position:relative}
+      ::-webkit-scrollbar{width:3px;height:3px}
+      ::-webkit-scrollbar-thumb{background:rgba(201,168,76,0.4);border-radius:2px}
+      input,select,textarea,button{font-family:'Rajdhani',sans-serif}
+
+      /* ════ KEYFRAMES COMPLETOS ════ */
+      @keyframes pulse-glow{0%,100%{opacity:1}50%{opacity:0.45}}
+      @keyframes slideInUp{from{transform:translateY(26px);opacity:0}to{transform:translateY(0);opacity:1}}
+      @keyframes slideInDown{from{transform:translateY(-26px);opacity:0}to{transform:translateY(0);opacity:1}}
+      @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+      @keyframes shimmer{0%{background-position:-300% center}100%{background-position:300% center}}
+      @keyframes float{0%,100%{transform:translateY(0) rotate(0deg)}33%{transform:translateY(-10px) rotate(1.5deg)}66%{transform:translateY(-5px) rotate(-1deg)}}
+      @keyframes heartbeat{0%,100%{transform:scale(1)}14%{transform:scale(1.15)}28%{transform:scale(1)}42%{transform:scale(1.08)}70%{transform:scale(1)}}
+      @keyframes pop-in{0%{transform:scale(0.4) translateY(8px);opacity:0}70%{transform:scale(1.1) translateY(-2px);opacity:1}100%{transform:scale(1) translateY(0);opacity:1}}
+      @keyframes bounce-in{0%{transform:scale(0);opacity:0}60%{transform:scale(1.18);opacity:1}80%{transform:scale(0.94)}100%{transform:scale(1)}}
+      @keyframes spin{to{transform:rotate(360deg)}}
+      @keyframes orbit{from{transform:rotate(0deg) translateX(34px) rotate(0deg)}to{transform:rotate(360deg) translateX(34px) rotate(-360deg)}}
+      @keyframes ring-expand{0%{transform:scale(0.6);opacity:0.85}100%{transform:scale(2.8);opacity:0}}
+      @keyframes border-glow{0%,100%{box-shadow:0 0 8px rgba(201,168,76,0.25),inset 0 0 6px rgba(201,168,76,0.04)}50%{box-shadow:0 0 22px rgba(201,168,76,0.6),inset 0 0 14px rgba(201,168,76,0.09)}}
+      @keyframes hud-glow{0%,100%{text-shadow:0 0 4px currentColor}50%{text-shadow:0 0 14px currentColor,0 0 28px currentColor}}
+      @keyframes particle-up{0%{transform:translateY(0) translateX(0) scale(1);opacity:1}100%{transform:translateY(-90px) translateX(var(--dx,0px)) scale(0);opacity:0}}
+      @keyframes streak{0%{transform:translateX(-120%) skewX(-18deg);opacity:0}15%{opacity:0.65}100%{transform:translateX(500%) skewX(-18deg);opacity:0}}
+      @keyframes flicker{0%,100%,95%{opacity:1}96%{opacity:0.7}97%{opacity:1}98%{opacity:0.55}}
+      @keyframes glow-line{0%,100%{opacity:0.4}50%{opacity:1}}
+      @keyframes scanline{0%{transform:translateY(-100%);opacity:0.06}50%{opacity:0.14}100%{transform:translateY(100vh);opacity:0.06}}
+      @keyframes radar-sweep{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+      @keyframes neon-pulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.3)}}
+
+      /* ════ EFECTOS 3D GLOBALES ════ */
+
+      /* Fondo madera intenso */
+      body::before{
+        content:'';
+        position:fixed;inset:0;pointer-events:none;z-index:0;
+        background:
+          repeating-linear-gradient(12deg,transparent 0px,transparent 22px,rgba(100,60,15,0.08) 23px,rgba(100,60,15,0.08) 24px),
+          repeating-linear-gradient(-7deg,transparent 0px,transparent 40px,rgba(70,40,8,0.06) 41px,rgba(70,40,8,0.06) 42px),
+          linear-gradient(180deg,#120800 0%,#0e0600 40%,#0a0a04 100%);
+      }
+
+      /* Scanline sweep global */
+      body::after{
+        content:'';
+        position:fixed;top:0;left:0;right:0;height:100px;
+        background:linear-gradient(to bottom,transparent,rgba(201,168,76,0.04),rgba(0,255,100,0.02),transparent);
+        animation:scanline 8s linear infinite;
+        pointer-events:none;z-index:9999;
+      }
+
+      /* Cards con marco metálico grabado */
+      .metal-card {
+        background: linear-gradient(145deg, #1a1206 0%, #0e0c04 50%, #080600 100%);
+        border: 1px solid rgba(201,168,76,0.35);
+        border-radius: 12px;
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,0.1),
+          inset 0 -2px 0 rgba(0,0,0,0.7),
+          inset 2px 0 0 rgba(255,255,255,0.04),
+          0 6px 24px rgba(0,0,0,0.8),
+          0 1px 0 rgba(201,168,76,0.2);
+        position: relative;
+        overflow: hidden;
+      }
+      .metal-card::before {
+        content:'';
+        position:absolute;top:0;left:0;right:0;height:1px;
+        background:linear-gradient(90deg,transparent,rgba(201,168,76,0.8),rgba(255,240,150,0.9),rgba(201,168,76,0.8),transparent);
+      }
+      .metal-card::after {
+        content:'';
+        position:absolute;top:0;left:0;right:0;height:45%;
+        background:linear-gradient(to bottom,rgba(255,255,255,0.04),transparent);
+        border-radius:12px 12px 0 0;pointer-events:none;
+      }
+
+      /* Botones 3D con sombra física */
+      .btn-3d {
+        position:relative;overflow:hidden;cursor:pointer;
+        transition:transform 0.1s,box-shadow 0.1s;
+        font-family:'Rajdhani',sans-serif;font-weight:700;
+      }
+      .btn-3d::before {
+        content:'';position:absolute;top:0;left:0;right:0;height:50%;
+        background:rgba(255,255,255,0.12);border-radius:inherit;pointer-events:none;
+      }
+      .btn-3d:active {transform:translateY(3px)}
+
+      /* Texto neón */
+      .neon-gold { color:#f0c040;text-shadow:0 0 10px #f0c040,0 0 20px rgba(240,192,64,0.5); }
+      .neon-green { color:#00ff88;text-shadow:0 0 10px #00ff88,0 0 20px rgba(0,255,136,0.5); }
+      .neon-red   { color:#ff3333;text-shadow:0 0 10px #ff3333,0 0 20px rgba(255,51,51,0.5); }
+
+      /* Números HUD */
+      .hud-num {
+        font-family:'Orbitron',monospace;font-weight:700;
+        animation:hud-glow 3.5s ease-in-out infinite;
+      }
+    </style>
+    <script type="module" crossorigin src="/Naciones-en-guerra/assets/index-Czr7Djr7.js"></script>
   </head>
   <body>
     <div id="root"></div>
