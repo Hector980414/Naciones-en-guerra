@@ -363,6 +363,7 @@ export default function App() {
   const [visaSeleccionada, setVisaSeleccionada] = useState(null);
   const [catActiva, setCatActiva] = useState("estatal");
   const [vistaOtroPais, setVistaOtroPais] = useState(false);
+  const [paisActivoFabricas, setPaisActivoFabricas] = useState(null);
   const [showCrearFabrica, setShowCrearFabrica] = useState(false);
   const [nuevaFabrica, setNuevaFabrica] = useState({nombre:"",tipo_recurso:"Comida",tasa_salarial:70});
   const tickRef = useRef(null);
@@ -2031,7 +2032,7 @@ export default function App() {
               ];
 
               // Separar fábricas por país
-              const fabsPais = fabricas.filter(f => f.pais === selectedCountry);
+              const fabsPais = fabricas.filter(f => f.pais === (paisActivoFabricas || selectedCountry));
               const fabsOtros = fabricas.filter(f => f.pais !== selectedCountry);
 
               const renderFabrica = (fab, i) => {
@@ -2075,8 +2076,14 @@ export default function App() {
               return (
                 <>
                   {/* Toggle mi país / otros países */}
+                  {paisActivoFabricas && (
+                    <div style={{background:"rgba(33,150,243,0.08)",border:"1px solid rgba(33,150,243,0.25)",borderRadius:8,padding:"10px 14px",marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <span style={{fontSize:13,color:"#2196f3",fontWeight:"bold"}}>🌍 Viendo: {paisActivoFabricas}</span>
+                      <button onClick={()=>{setPaisActivoFabricas(null);setVistaOtroPais(true);}} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",color:"#888",padding:"5px 10px",borderRadius:6,cursor:"pointer",fontSize:11,fontFamily:"Georgia,serif"}}>← Volver</button>
+                    </div>
+                  )}
                   <div style={{display:"flex",gap:8,marginBottom:12}}>
-                    <button onClick={()=>setVistaOtroPais(false)} style={{flex:1,background:!vistaOtroPais?"rgba(201,168,76,0.2)":"rgba(255,255,255,0.03)",border:`1px solid ${!vistaOtroPais?"rgba(201,168,76,0.5)":"rgba(255,255,255,0.08)"}`,color:!vistaOtroPais?"#c9a84c":"#666",padding:"10px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold",fontSize:12}}>
+                    <button onClick={()=>{setVistaOtroPais(false);setPaisActivoFabricas(null);}} style={{flex:1,background:!vistaOtroPais?"rgba(201,168,76,0.2)":"rgba(255,255,255,0.03)",border:`1px solid ${!vistaOtroPais?"rgba(201,168,76,0.5)":"rgba(255,255,255,0.08)"}`,color:!vistaOtroPais?"#c9a84c":"#666",padding:"10px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold",fontSize:12}}>
                       🏠 Mi País ({fabsPais.length})
                     </button>
                     <button onClick={()=>setVistaOtroPais(true)} style={{flex:1,background:vistaOtroPais?"rgba(255,152,0,0.2)":"rgba(255,255,255,0.03)",border:`1px solid ${vistaOtroPais?"rgba(255,152,0,0.5)":"rgba(255,255,255,0.08)"}`,color:vistaOtroPais?"#ff9800":"#666",padding:"10px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold",fontSize:12}}>
@@ -2085,7 +2092,7 @@ export default function App() {
                   </div>
 
                   {/* Vista Otros Países — lista de países con botón de visa */}
-                  {vistaOtroPais && (
+                  {vistaOtroPais && !paisActivoFabricas && (
                     <div style={{marginBottom:12}}>
                       <div style={{background:"rgba(255,152,0,0.08)",border:"1px solid rgba(255,152,0,0.3)",borderRadius:8,padding:12,marginBottom:12,fontSize:12,color:"#ff9800"}}>
                         🛂 Selecciona un país para solicitar visa de trabajo. Los países donde ya tienes visa aparecen primero.
