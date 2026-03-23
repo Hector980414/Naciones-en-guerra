@@ -1815,7 +1815,7 @@ export default function App() {
       )}
 
       {/* ═══ HEADER — Mesa táctica ═══ */}
-      <div style={{position:"sticky",top:0,zIndex:100,background:"linear-gradient(180deg,#1c1208 0%,#160e06 60%,#120c05 100%)",borderBottom:"2px solid #3a2a0a",boxShadow:"0 4px 20px rgba(0,0,0,0.7)",paddingTop:`calc(${(tg?.safeAreaInset?.top||0)}px + 4px)`}}>
+      <div style={{position:"sticky",top:0,zIndex:100,background:"linear-gradient(180deg,#1c1208 0%,#160e06 60%,#120c05 100%)",borderBottom:"2px solid #3a2a0a",boxShadow:"0 4px 20px rgba(0,0,0,0.7)",paddingTop:`calc(${(tg?.safeAreaInset?.top||0)}px + 36px)`}}>
         <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,#2a1a04,#c9a84c,#f0c040,#c9a84c,#2a1a04)",animationName:"pulse-glow",animationDuration:"3s",animationTimingFunction:"ease-in-out",animationIterationCount:"infinite"}}/>
         <div style={{padding:"8px 10px 6px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
