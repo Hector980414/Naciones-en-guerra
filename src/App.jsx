@@ -541,6 +541,10 @@ export default function App() {
   const [guerrasHistorial, setGuerrasHistorial] = useState([]);
   const [misionesGuerra, setMisionesGuerra] = useState([]);
   const [miPartMisiones, setMiPartMisiones] = useState(0);
+  const [vistaGuerra, setVistaGuerra] = useState("lista"); // "lista" | "elegir_tipo" | "elegir_pais" | "combate"
+  const [tipoGuerraSeleccionado, setTipoGuerraSeleccionado] = useState(null);
+  const [guerraViendoId, setGuerraViendoId] = useState(null);
+  const [todasGuerrasActivas, setTodasGuerrasActivas] = useState([]);
   const [nivel, setNivel] = useState(1);
   const [dinero, setDinero] = useState(1000);
   const [showXpModal, setShowXpModal] = useState(false);
@@ -804,6 +808,17 @@ export default function App() {
         .order("created_at", { ascending: false }).limit(5);
       if (hist) setGuerrasHistorial(hist);
     } catch(e) { console.error(e); }
+  };
+
+  // ── Cargar TODAS las guerras activas (para la lista) ──
+  const loadTodasGuerras = async () => {
+    try {
+      const { data } = await db.from("guerras_activas")
+        .select("*")
+        .in("fase", ["movilizacion","batalla"])
+        .order("created_at", { ascending: false });
+      if (data) setTodasGuerrasActivas(data);
+    } catch(e) {}
   };
 
   // ── Atacar en guerra ──
@@ -2407,206 +2422,408 @@ export default function App() {
         {tab==="guerra" && (
           <div style={{animationName:"slideInUp",animationDuration:"0.35s",animationTimingFunction:"cubic-bezier(0.34,1.2,0.64,1)",animationFillMode:"both"}}>
 
-            {/* Header */}
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,padding:"10px 14px",background:"linear-gradient(135deg,#1e0c08,#140804)",border:"1px solid rgba(255,80,80,0.35)",borderRadius:10,boxShadow:"inset 0 1px 0 rgba(255,255,255,0.08),0 3px 0 rgba(0,0,0,0.5)"}}>
-              <Icon type="war" size={18} color="#ff5555" glow/>
-              <span style={{fontSize:11,color:"#ff7777",letterSpacing:"0.18em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,textShadow:"0 0 8px rgba(255,80,80,0.5)"}}>Centro de Guerra</span>
-              <div style={{marginLeft:"auto",fontSize:10,color:"#6a3020",fontFamily:"'Orbitron',monospace"}}>
-                {guerraActiva ? <span style={{color:"#ff4444",animationName:"pulse-glow",animationDuration:"1s",animationIterationCount:"infinite"}}>● EN GUERRA</span> : "● PAZ"}
-              </div>
-            </div>
+            {/* ══ VISTA: LISTA PRINCIPAL ══ */}
+            {vistaGuerra==="lista" && (<>
 
-            {/* Estado militar */}
-            <div style={{background:"linear-gradient(135deg,#1e0c08,#140804)",border:"1px solid rgba(255,80,80,0.35)",borderLeft:"3px solid #ff4444",borderRadius:12,padding:14,marginBottom:14,position:"relative",overflow:"hidden",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.07),0 4px 0 rgba(0,0,0,0.5)"}}>
-              <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(255,80,80,0.8),transparent)"}}/>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                <div style={{display:"flex",alignItems:"center",gap:7}}>
-                  <Icon type="shield" size={16} color="#ff5555" glow/>
-                  <span style={{fontSize:11,color:"#ff7777",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"'Rajdhani',sans-serif"}}>Estado Militar</span>
-                </div>
-                <div style={{fontSize:9,color:esPresidente?"#f0c040":"#44cc66",background:esPresidente?"linear-gradient(135deg,#2a1e04,#1a1202)":"linear-gradient(135deg,#14200c,#0c1408)",padding:"3px 10px",borderRadius:4,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,border:`1px solid ${esPresidente?"rgba(240,192,64,0.4)":"rgba(68,204,102,0.4)"}`}}>
-                  {esPresidente?"👑 PRESIDENTE":"⚡ CIUDADANO"}
+              {/* Header */}
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,padding:"10px 14px",background:"linear-gradient(135deg,#1e0c08,#140804)",border:"1px solid rgba(255,80,80,0.35)",borderRadius:10,boxShadow:"inset 0 1px 0 rgba(255,255,255,0.08),0 3px 0 rgba(0,0,0,0.5)"}}>
+                <Icon type="war" size={18} color="#ff5555" glow/>
+                <span style={{fontSize:11,color:"#ff7777",letterSpacing:"0.18em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>Centro de Guerra</span>
+                <div style={{marginLeft:"auto",fontSize:10,fontFamily:"'Orbitron',monospace"}}>
+                  {todasGuerrasActivas.length>0?<span style={{color:"#ff4444",animationName:"pulse-glow",animationDuration:"1s",animationIterationCount:"infinite"}}>● {todasGuerrasActivas.length} EN GUERRA</span>:<span style={{color:"#3a5030"}}>● PAZ MUNDIAL</span>}
                 </div>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-                {[{ico:"sword",label:"Ejército",val:`${stats.militar}%`,c:"#ff5555"},{ico:"bolt",label:"Poder",val:`${jugador?.poder_politico||0}`,c:"#f0c040"},{ico:"fire",label:"Rebeldía",val:`${stats.rebeldia}%`,c:stats.rebeldia>50?"#ff4444":"#888888"}].map((s,i)=>(
-                  <div key={i} style={{background:"rgba(0,0,0,0.4)",borderRadius:8,padding:"8px 10px",textAlign:"center",border:`1px solid ${s.c}22`}}>
-                    <Icon type={s.ico} size={16} color={s.c} glow/>
-                    <div style={{fontSize:14,color:s.c,fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:`0 0 10px ${s.c}`,marginTop:4}}>{s.val}</div>
-                    <div style={{fontSize:9,color:"#5a4830",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:"'Rajdhani',sans-serif"}}>{s.label}</div>
-                  </div>
-                ))}
+
+              {/* BOTÓN DECLARAR GUERRA */}
+              <GlowBtn onClick={()=>setVistaGuerra("elegir_tipo")} color="#ff4444"
+                style={{padding:"15px",borderRadius:10,fontSize:14,fontWeight:700,letterSpacing:"0.08em",background:"linear-gradient(180deg,#2a0808,#1a0404)",color:"#ff6644",border:"2px solid rgba(255,80,80,0.55)",boxShadow:"0 0 20px rgba(255,60,60,0.2),0 4px 0 rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.08)",marginBottom:16,display:"block",textAlign:"center"}}>
+                ⚔️ DECLARAR GUERRA
+              </GlowBtn>
+
+              {/* LISTA DE GUERRAS ACTIVAS */}
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}>
+                <Icon type="target" size={14} color="#ff5555" glow/>
+                <span style={{fontSize:10,color:"#aa4444",letterSpacing:"0.15em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>Guerras Activas</span>
               </div>
-            </div>
 
-            {/* ══ GUERRA ACTIVA ══ */}
-            {guerraActiva && (
-              <div style={{background:"linear-gradient(135deg,#200808,#140404)",border:"2px solid rgba(255,60,60,0.5)",borderRadius:14,padding:16,marginBottom:16,position:"relative",overflow:"hidden",boxShadow:"0 0 30px rgba(255,0,0,0.15),inset 0 1px 0 rgba(255,255,255,0.08)"}}>
-                <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,#ff4444,#ff0000,#ff4444,transparent)",animationName:"pulse-glow",animationDuration:"1s",animationTimingFunction:"ease-in-out",animationIterationCount:"infinite"}}/>
-
-                {/* Título y fase */}
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                  <div style={{fontSize:13,color:"#ff4444",fontWeight:700,fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.08em",textShadow:"0 0 10px rgba(255,0,0,0.5)"}}>
-                    ⚔️ {guerraActiva.atacante_pais} vs {guerraActiva.defensor_pais}
-                  </div>
-                  <div style={{fontSize:10,color:"#ff6644",background:"rgba(255,60,60,0.15)",padding:"4px 10px",borderRadius:6,border:"1px solid rgba(255,60,60,0.3)",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,textTransform:"uppercase"}}>
-                    {guerraActiva.fase==="movilizacion"?"📢 MOVILIZACIÓN":guerraActiva.fase==="batalla"?"⚔️ BATALLA":"✅ RESUELTA"}
-                  </div>
+              {todasGuerrasActivas.length===0?(
+                <div style={{textAlign:"center",padding:"30px 20px",background:"linear-gradient(135deg,#1a1008,#100c04)",borderRadius:12,border:"1px solid rgba(255,80,80,0.1)"}}>
+                  <div style={{fontSize:32,marginBottom:10}}>🕊️</div>
+                  <div style={{fontSize:14,color:"#4a3820",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>Paz Mundial</div>
+                  <div style={{fontSize:12,color:"#3a2810",fontFamily:"'Rajdhani',sans-serif",marginTop:4}}>No hay guerras activas. Sé el primero en declararla.</div>
                 </div>
+              ):todasGuerrasActivas.map((g,i)=>{
+                const total=(g.fuerza_atacante||0)+(g.fuerza_defensor||0)||1;
+                const pctA=Math.round((g.fuerza_atacante||0)/total*100);
+                const pctD=100-pctA;
+                const esMiGuerra=g.atacante_pais===selectedCountry||g.defensor_pais===selectedCountry;
+                const msRestantes=new Date(g.fin_movilizacion_at)-Date.now();
+                const horas=Math.max(0,Math.floor(msRestantes/3600000));
+                const mins=Math.max(0,Math.floor((msRestantes%3600000)/60000));
+                return(
+                  <div key={i} onClick={()=>{setGuerraViendoId(g.id);setVistaGuerra("combate");loadGuerraActiva();}}
+                    style={{background:esMiGuerra?"linear-gradient(135deg,#220808,#160404)":"linear-gradient(135deg,#1a1008,#100804)",border:`2px solid ${esMiGuerra?"rgba(255,60,60,0.45)":"rgba(255,80,80,0.2)"}`,borderRadius:12,padding:"14px",marginBottom:10,cursor:"pointer",position:"relative",overflow:"hidden",boxShadow:esMiGuerra?"0 0 20px rgba(255,0,0,0.1),inset 0 1px 0 rgba(255,255,255,0.07)":"inset 0 1px 0 rgba(255,255,255,0.04),0 3px 0 rgba(0,0,0,0.4)"}}>
+                    {esMiGuerra&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,#ff4444,transparent)",animationName:"pulse-glow",animationDuration:"1.5s",animationIterationCount:"infinite"}}/>}
+                    <div style={{position:"absolute",top:0,left:0,right:0,height:"40%",background:"linear-gradient(to bottom,rgba(255,255,255,0.04),transparent)",pointerEvents:"none"}}/>
 
-                {/* Countdown */}
-                {guerraActiva.fase==="movilizacion" && (
-                  <div style={{textAlign:"center",marginBottom:14,padding:"10px",background:"rgba(0,0,0,0.3)",borderRadius:8,border:"1px solid rgba(255,60,60,0.15)"}}>
-                    <div style={{fontSize:10,color:"#6a3020",fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.12em",marginBottom:4}}>BATALLA COMIENZA EN</div>
-                    <div style={{fontSize:26,color:"#ff6644",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:"0 0 14px rgba(255,100,68,0.7)"}}>
-                      {Math.max(0,Math.floor((new Date(guerraActiva.fin_movilizacion_at)-Date.now())/3600000))}h {Math.max(0,Math.floor(((new Date(guerraActiva.fin_movilizacion_at)-Date.now())%3600000)/60000))}m
-                    </div>
-                    <div style={{fontSize:10,color:"#4a2010",fontFamily:"'Rajdhani',sans-serif",marginTop:4}}>Moviliza tropas y recursos antes de que empiece</div>
-                  </div>
-                )}
-
-                {/* Barras de fuerza */}
-                <div style={{marginBottom:14}}>
-                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:6,alignItems:"center"}}>
-                    <span style={{fontSize:12,color:"#ff5555",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>⚔️ {guerraActiva.atacante_pais} <span style={{fontFamily:"'Orbitron',monospace",fontSize:13}}>{Math.round(guerraActiva.fuerza_atacante||0)}</span></span>
-                    <span style={{fontSize:10,color:"#6a3020",fontFamily:"'Rajdhani',sans-serif"}}>FUERZA</span>
-                    <span style={{fontSize:12,color:"#4488ff",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}><span style={{fontFamily:"'Orbitron',monospace",fontSize:13}}>{Math.round(guerraActiva.fuerza_defensor||0)}</span> {guerraActiva.defensor_pais} 🛡️</span>
-                  </div>
-                  <div style={{height:22,background:"rgba(0,0,0,0.7)",borderRadius:11,overflow:"hidden",border:"1px solid rgba(255,255,255,0.08)",position:"relative",display:"flex",boxShadow:"inset 0 2px 4px rgba(0,0,0,0.5)"}}>
-                    {(()=>{
-                      const total=(guerraActiva.fuerza_atacante||0)+(guerraActiva.fuerza_defensor||0)||1;
-                      const pctA=Math.round((guerraActiva.fuerza_atacante||0)/total*100);
-                      const pctD=100-pctA;
-                      return(<>
-                        <div style={{width:`${pctA}%`,background:"linear-gradient(90deg,#881111,#ff4444,#ff6644)",transition:"width 0.8s ease",position:"relative",minWidth:pctA>0?20:0}}>
-                          <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.18)",borderRadius:"11px 0 0 0"}}/>
-                          {pctA>12&&<span style={{position:"absolute",right:6,top:"50%",transform:"translateY(-50%)",fontSize:10,color:"#fff",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:"0 0 4px rgba(0,0,0,0.8)"}}>{pctA}%</span>}
+                    {/* Top row */}
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <div style={{fontSize:18}}>{TIPOS_GUERRA[g.tipo]?.icon||"⚔️"}</div>
+                        <div>
+                          <div style={{fontSize:13,color:"#f0e0b0",fontWeight:700,fontFamily:"'Rajdhani',sans-serif"}}>{g.atacante_pais} <span style={{color:"#ff4444"}}>vs</span> {g.defensor_pais}</div>
+                          <div style={{fontSize:10,color:"#6a4828",fontFamily:"'Rajdhani',sans-serif"}}>{TIPOS_GUERRA[g.tipo]?.label||g.tipo}</div>
                         </div>
-                        <div style={{width:`${pctD}%`,background:"linear-gradient(90deg,#4488ff,#2244cc,#112288)",transition:"width 0.8s ease",position:"relative",minWidth:pctD>0?20:0}}>
-                          <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.12)"}}/>
-                          {pctD>12&&<span style={{position:"absolute",left:6,top:"50%",transform:"translateY(-50%)",fontSize:10,color:"#fff",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:"0 0 4px rgba(0,0,0,0.8)"}}>{pctD}%</span>}
-                        </div>
-                      </>);
-                    })()}
-                  </div>
-                </div>
-
-                {/* ── UNIRSE si no participa ── */}
-                {guerraActiva.fase==="movilizacion" && !yaParticipo && (
-                  <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
-                    <div style={{fontSize:10,color:"#6a3020",letterSpacing:"0.12em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,marginBottom:4}}>Elige tu bando</div>
-                    {(guerraActiva.atacante_pais===selectedCountry||guerraActiva.defensor_pais!==selectedCountry)&&(
-                      <GlowBtn onClick={()=>unirseGuerra(guerraActiva.id,"atacante",false)} color="#ff4444"
-                        style={{padding:"13px",borderRadius:8,fontSize:13,fontWeight:700,letterSpacing:"0.06em",background:"linear-gradient(180deg,#2a0808,#1a0404)",color:"#ff6644",border:"1px solid rgba(255,80,80,0.5)",boxShadow:"0 0 14px rgba(255,60,60,0.25),0 3px 0 rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.08)"}}>
-                        ⚔️ ATACAR — UNIRME AL BANDO ATACANTE
-                      </GlowBtn>
-                    )}
-                    {guerraActiva.defensor_pais===selectedCountry&&(
-                      <GlowBtn onClick={()=>unirseGuerra(guerraActiva.id,"defensor",false)} color="#4488ff"
-                        style={{padding:"13px",borderRadius:8,fontSize:13,fontWeight:700,letterSpacing:"0.06em",background:"linear-gradient(180deg,#081828,#041018)",color:"#4488ff",border:"1px solid rgba(68,136,255,0.5)",boxShadow:"0 0 14px rgba(68,136,255,0.25),0 3px 0 rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.08)"}}>
-                        🛡️ DEFENDER — PROTEGER MI PAÍS
-                      </GlowBtn>
-                    )}
-                    {guerraActiva.defensor_pais===selectedCountry&&(
-                      <GlowBtn onClick={()=>unirseGuerra(guerraActiva.id,"defensor",true)} color="#aa44ff"
-                        style={{padding:"10px",borderRadius:8,fontSize:11,fontWeight:700,letterSpacing:"0.06em",background:"linear-gradient(180deg,#180828,#100418)",color:"#aa44ff",border:"1px solid rgba(170,68,255,0.35)",boxShadow:"0 0 10px rgba(170,68,255,0.15),0 3px 0 rgba(0,0,0,0.6)"}}>
-                        🕵️ INFILTRARME — QUINTA COLUMNA (secreto)
-                      </GlowBtn>
-                    )}
-                  </div>
-                )}
-
-                {/* ── PANEL DE COMBATE ACTIVO (ya participa) ── */}
-                {yaParticipo && guerraActiva.fase!=="resuelta" && (
-                  <div style={{marginBottom:14}}>
-                    {/* Mi fuerza actual */}
-                    {(()=>{
-                      const miPart=participantesGuerra.find(p=>p.jugador_id===jugador?.id);
-                      return miPart?(
-                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 12px",background:"rgba(0,0,0,0.4)",borderRadius:8,border:`1px solid ${miPart.bando==="atacante"?"rgba(255,60,60,0.25)":"rgba(68,136,255,0.25)"}`,marginBottom:12}}>
-                          <div>
-                            <div style={{fontSize:10,color:"#6a4020",fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.1em"}}>MI CONTRIBUCIÓN</div>
-                            <div style={{fontSize:11,color:"#a08050",fontFamily:"'Rajdhani',sans-serif",marginTop:2}}>
-                              {miPart.total_ataques||0} ataques · Bando: <span style={{color:miPart.bando==="atacante"?"#ff6644":"#4488ff",fontWeight:700}}>{miPart.bando==="atacante"?"ATACANTE":miPart.es_traidor?"INFILTRADO":"DEFENSOR"}</span>
-                            </div>
-                          </div>
-                          <div style={{textAlign:"right"}}>
-                            <div style={{fontSize:20,color:miPart.bando==="atacante"?"#ff6644":"#4488ff",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:`0 0 12px ${miPart.bando==="atacante"?"rgba(255,100,68,0.7)":"rgba(68,136,255,0.7)"}`}}>{Math.round(miPart.fuerza_aportada||0)}</div>
-                            <div style={{fontSize:9,color:"#5a3820",fontFamily:"'Rajdhani',sans-serif"}}>FUERZA TOTAL</div>
-                          </div>
-                        </div>
-                      ):null;
-                    })()}
-
-                    {/* BOTÓN ATACAR PRINCIPAL */}
-                    <GlowBtn onClick={atacarEnGuerra} color="#ff4444"
-                      style={{padding:"16px",borderRadius:10,fontSize:15,fontWeight:700,letterSpacing:"0.08em",background:"linear-gradient(180deg,#3a0808,#220404)",color:"#ff6644",border:"2px solid rgba(255,80,80,0.6)",boxShadow:"0 0 20px rgba(255,60,60,0.3),0 4px 0 rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.1)",marginBottom:8,display:"block",textAlign:"center"}}>
-                      ⚔️ ATACAR  <span style={{fontSize:11,opacity:0.7}}>(-10 ⚡ · +fuerza)</span>
-                    </GlowBtn>
-                    <div style={{fontSize:10,color:"#4a2810",textAlign:"center",fontFamily:"'Rajdhani',sans-serif",marginBottom:14}}>Energía disponible: <span style={{color:energia>=10?"#44cc66":"#ff4444",fontFamily:"'Orbitron',monospace",fontWeight:700}}>{energia}/100</span></div>
-
-                    {/* Enviar recursos */}
-                    <div style={{background:"rgba(0,0,0,0.35)",borderRadius:10,padding:12,marginBottom:12,border:"1px solid rgba(240,192,64,0.15)"}}>
-                      <div style={{fontSize:10,color:"#8a6020",letterSpacing:"0.12em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,marginBottom:10}}>💰 Enviar Recursos (oro → fuerza)</div>
-                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-                        {[{label:"$1,000",oro:1000,fuerza:10},{label:"$5,000",oro:5000,fuerza:55},{label:"$10,000",oro:10000,fuerza:125},{label:"$50,000",oro:50000,fuerza:700}].map((op,i)=>(
-                          <GlowBtn key={i} onClick={()=>enviarRecursosGuerra(op.oro)} color="#f0c040"
-                            disabled={dinero<op.oro}
-                            style={{padding:"9px 6px",borderRadius:7,fontSize:11,fontWeight:700,background:dinero>=op.oro?"linear-gradient(180deg,#281e04,#181202)":"rgba(0,0,0,0.4)",color:dinero>=op.oro?"#f0c040":"#4a3820",border:`1px solid ${dinero>=op.oro?"rgba(240,192,64,0.4)":"rgba(255,255,255,0.05)"}`,boxShadow:dinero>=op.oro?"0 0 8px rgba(240,192,64,0.15),0 2px 0 rgba(0,0,0,0.5)":"none",textAlign:"center"}}>
-                            {op.label}<br/><span style={{fontSize:9,opacity:0.7}}>+{op.fuerza} fuerza</span>
-                          </GlowBtn>
-                        ))}
+                      </div>
+                      <div style={{textAlign:"right"}}>
+                        <div style={{fontSize:9,color:g.fase==="movilizacion"?"#ff8844":"#ff4444",background:g.fase==="movilizacion"?"rgba(255,136,68,0.12)":"rgba(255,60,60,0.12)",padding:"3px 8px",borderRadius:4,border:`1px solid ${g.fase==="movilizacion"?"rgba(255,136,68,0.3)":"rgba(255,60,60,0.3)"}`,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,marginBottom:4}}>{g.fase==="movilizacion"?"📢 MOVILIZACIÓN":"⚔️ BATALLA"}</div>
+                        {g.fase==="movilizacion"&&<div style={{fontSize:11,color:"#ff6644",fontFamily:"'Orbitron',monospace",fontWeight:700}}>{horas}h {mins}m</div>}
                       </div>
                     </div>
 
-                    {/* Misiones */}
-                    <div style={{background:"rgba(0,0,0,0.35)",borderRadius:10,padding:12,border:"1px solid rgba(170,68,255,0.15)"}}>
-                      <div style={{fontSize:10,color:"#7a40aa",letterSpacing:"0.12em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,marginBottom:10}}>🎯 Misiones de Guerra</div>
-                      {misionesGuerra.length===0?(
-                        <div style={{textAlign:"center",color:"#4a3060",fontSize:12,fontFamily:"'Rajdhani',sans-serif",padding:"10px 0"}}>Cargando misiones...</div>
-                      ):misionesGuerra.map((m,i)=>{
-                        const pct=Math.min(100,Math.round((m.progreso||0)/m.meta*100));
-                        const reclamada=!!(miPartMisiones&(m.id==="m1"?1:m.id==="m2"?2:4));
-                        return(
-                          <div key={i} style={{background:m.completada?"rgba(68,204,102,0.06)":"rgba(0,0,0,0.3)",borderRadius:8,padding:"10px 12px",marginBottom:8,border:`1px solid ${m.completada?"rgba(68,204,102,0.25)":"rgba(170,68,255,0.15)"}`}}>
-                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
-                              <div style={{flex:1}}>
-                                <div style={{fontSize:13,color:m.completada?"#44cc66":"#d0b080",fontWeight:700,fontFamily:"'Rajdhani',sans-serif"}}>{m.icono} {m.titulo}</div>
-                                <div style={{fontSize:11,color:"#5a4030",fontFamily:"'Rajdhani',sans-serif",marginTop:2}}>{m.desc}</div>
-                              </div>
-                              <div style={{textAlign:"right",flexShrink:0,marginLeft:8}}>
-                                <div style={{fontSize:12,color:"#aa44ff",fontFamily:"'Orbitron',monospace",fontWeight:700}}>+{m.recompensa} XP</div>
-                                <div style={{fontSize:9,color:"#5a3060",fontFamily:"'Rajdhani',sans-serif"}}>+{Math.round(m.recompensa*0.5)} fuerza</div>
-                              </div>
-                            </div>
-                            <div style={{height:6,background:"rgba(0,0,0,0.5)",borderRadius:3,overflow:"hidden",marginBottom:6,border:"1px solid rgba(255,255,255,0.05)"}}>
-                              <div style={{height:"100%",width:`${pct}%`,background:m.completada?"linear-gradient(90deg,#44aa44,#44ff44)":"linear-gradient(90deg,#6622aa,#aa44ff)",borderRadius:3,transition:"width 0.5s ease",boxShadow:m.completada?"0 0 8px #44ff44":"0 0 8px #aa44ff"}}/>
-                            </div>
-                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                              <span style={{fontSize:10,color:"#6a4830",fontFamily:"'Rajdhani',sans-serif"}}>{m.progreso||0}/{m.meta}</span>
-                              {m.completada&&!reclamada&&(
-                                <GlowBtn onClick={()=>reclamarMision(m)} color="#44cc66"
-                                  style={{padding:"5px 12px",borderRadius:6,fontSize:11,fontWeight:700,background:"linear-gradient(180deg,#0c2010,#081408)",color:"#44cc66",border:"1px solid rgba(68,204,102,0.4)",boxShadow:"0 0 10px rgba(68,204,102,0.2),0 2px 0 rgba(0,0,0,0.5)"}}>
-                                  ✅ RECLAMAR
-                                </GlowBtn>
-                              )}
-                              {reclamada&&<span style={{fontSize:10,color:"#44cc66",fontFamily:"'Rajdhani',sans-serif"}}>✓ Reclamado</span>}
-                              {!m.completada&&<span style={{fontSize:10,color:"#4a3060",fontFamily:"'Rajdhani',sans-serif"}}>{pct}%</span>}
-                            </div>
-                          </div>
-                        );
-                      })}
+                    {/* Barra de fuerzas */}
+                    <div style={{height:16,background:"rgba(0,0,0,0.6)",borderRadius:8,overflow:"hidden",border:"1px solid rgba(255,255,255,0.06)",display:"flex",marginBottom:8,boxShadow:"inset 0 2px 3px rgba(0,0,0,0.4)"}}>
+                      <div style={{width:`${pctA}%`,background:"linear-gradient(90deg,#881111,#ff4444)",position:"relative",minWidth:pctA>0?16:0,transition:"width 0.8s ease"}}>
+                        <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.15)"}}/>
+                        {pctA>15&&<span style={{position:"absolute",right:4,top:"50%",transform:"translateY(-50%)",fontSize:9,color:"#fff",fontFamily:"'Orbitron',monospace",fontWeight:700}}>{Math.round(g.fuerza_atacante||0)}</span>}
+                      </div>
+                      <div style={{width:`${pctD}%`,background:"linear-gradient(90deg,#4488ff,#2244cc)",position:"relative",minWidth:pctD>0?16:0,transition:"width 0.8s ease"}}>
+                        <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.1)"}}/>
+                        {pctD>15&&<span style={{position:"absolute",left:4,top:"50%",transform:"translateY(-50%)",fontSize:9,color:"#fff",fontFamily:"'Orbitron',monospace",fontWeight:700}}>{Math.round(g.fuerza_defensor||0)}</span>}
+                      </div>
+                    </div>
+
+                    {/* Bottom */}
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <span style={{fontSize:10,color:"#ff5555",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>⚔️ {g.atacante_pais}</span>
+                      {esMiGuerra&&<span style={{fontSize:9,color:"#f0c040",background:"rgba(240,192,64,0.12)",padding:"2px 8px",borderRadius:4,border:"1px solid rgba(240,192,64,0.3)",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>TU GUERRA → ENTRAR</span>}
+                      <span style={{fontSize:10,color:"#4488ff",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>{g.defensor_pais} 🛡️</span>
                     </div>
                   </div>
-                )}
+                );
+              })}
 
-                {/* Participantes */}
-                {participantesGuerra.length>0&&(
-                  <div style={{marginTop:12}}>
-                    <div style={{fontSize:10,color:"#6a3020",letterSpacing:"0.12em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",marginBottom:8}}>Combatientes ({participantesGuerra.length})</div>
-                    <div style={{display:"flex",flexDirection:"column",gap:5}}>
+              {/* Historial */}
+              {guerrasHistorial.length>0&&(
+                <div style={{marginTop:16}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}>
+                    <Icon type="scroll" size={14} color="#c9a84c"/>
+                    <span style={{fontSize:10,color:"#a08040",letterSpacing:"0.15em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>Historial</span>
+                  </div>
+                  {guerrasHistorial.map((g,i)=>{
+                    const gano=(g.resultado==="atacante"&&g.atacante_pais===selectedCountry)||(g.resultado==="defensor"&&g.defensor_pais===selectedCountry);
+                    return(
+                      <div key={i} style={{background:gano?"linear-gradient(135deg,#0c1a08,#081004)":"linear-gradient(135deg,#1a0808,#100404)",border:`1px solid ${gano?"rgba(68,204,68,0.2)":"rgba(255,60,60,0.2)"}`,borderLeft:`3px solid ${gano?"#44cc44":"#ff4444"}`,borderRadius:8,padding:"10px 14px",marginBottom:6,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                        <div>
+                          <div style={{fontSize:12,color:"#d0c090",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>{TIPOS_GUERRA[g.tipo]?.icon||"⚔️"} {g.atacante_pais} vs {g.defensor_pais}</div>
+                          <div style={{fontSize:10,color:"#5a4828",fontFamily:"'Rajdhani',sans-serif"}}>{new Date(g.created_at).toLocaleDateString()}</div>
+                        </div>
+                        <span style={{fontSize:13,color:gano?"#44cc66":"#ff5555",fontWeight:700,fontFamily:"'Rajdhani',sans-serif"}}>{gano?"✓ Victoria":"✗ Derrota"}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>)}
+
+            {/* ══ VISTA: ELEGIR TIPO DE GUERRA ══ */}
+            {vistaGuerra==="elegir_tipo" && (<>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+                <button onClick={()=>setVistaGuerra("lista")} style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",color:"#a09070",padding:"6px 12px",borderRadius:6,cursor:"pointer",fontSize:12,fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>← VOLVER</button>
+                <span style={{fontSize:12,color:"#f0c040",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,letterSpacing:"0.08em"}}>SELECCIONA TIPO DE GUERRA</span>
+              </div>
+
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                {Object.entries(TIPOS_GUERRA).map(([key,tipo])=>{
+                  const req=tipo.requiere;
+                  let disponible=true, razon="";
+                  if(req.rol==="presidente"&&!esPresidente){disponible=false;razon="Solo presidentes";}
+                  if(req.rol==="ciudadano"&&esPresidente){disponible=false;razon="Solo ciudadanos";}
+                  if(req.poder_politico&&(jugador?.poder_politico||0)<req.poder_politico){disponible=false;razon=`Necesitas ${req.poder_politico} poder político`;}
+                  if(req.militar&&stats.militar<req.militar){disponible=false;razon=`Necesitas ${req.militar}% ejército`;}
+                  if(req.rebeldia_pais&&stats.rebeldia<req.rebeldia_pais){disponible=false;razon=`Necesitas ${req.rebeldia_pais}% rebeldía`;}
+                  if(req.colonizado&&!jugador?.colonizado_por){disponible=false;razon="Solo si estás colonizado";}
+                  if(req.pib&&stats.pib<req.pib){disponible=false;razon=`Necesitas ${req.pib}% PIB`;}
+                  return(
+                    <div key={key} onClick={()=>{if(!disponible)return;setTipoGuerraSeleccionado(key);setVistaGuerra("elegir_pais");}}
+                      style={{background:disponible?`linear-gradient(135deg,${tipo.color}18,#0e0a04)`:"linear-gradient(135deg,#120e06,#0a0804)",border:`2px solid ${disponible?tipo.color+"55":"rgba(255,255,255,0.05)"}`,borderLeft:`4px solid ${disponible?tipo.color:"rgba(255,255,255,0.05)"}`,borderRadius:12,padding:"16px",cursor:disponible?"pointer":"not-allowed",opacity:disponible?1:0.4,position:"relative",overflow:"hidden",boxShadow:disponible?`inset 0 1px 0 rgba(255,255,255,0.07),0 3px 0 rgba(0,0,0,0.5),0 0 18px ${tipo.color}0a`:"0 2px 0 rgba(0,0,0,0.4)"}}>
+                      {disponible&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,transparent,${tipo.color}88,transparent)`}}/>}
+                      <div style={{position:"absolute",top:0,left:0,right:0,height:"40%",background:"linear-gradient(to bottom,rgba(255,255,255,0.04),transparent)",pointerEvents:"none"}}/>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                        <div style={{display:"flex",gap:14,alignItems:"center"}}>
+                          <div style={{width:50,height:50,background:`linear-gradient(145deg,${tipo.color}44,${tipo.color}11)`,border:`1px solid ${tipo.color}55`,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,boxShadow:`inset 0 1px 0 rgba(255,255,255,0.15),0 3px 0 rgba(0,0,0,0.5)`,flexShrink:0,position:"relative",overflow:"hidden"}}>
+                            <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.1)",borderRadius:"10px 10px 0 0"}}/>
+                            <span style={{position:"relative"}}>{tipo.icon}</span>
+                          </div>
+                          <div>
+                            <div style={{fontSize:15,color:disponible?tipo.color:"#4a4030",fontWeight:700,fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.04em"}}>{tipo.label}</div>
+                            <div style={{fontSize:12,color:"#5a4828",fontFamily:"'Rajdhani',sans-serif",marginTop:2}}>{tipo.desc}</div>
+                            {!disponible&&<div style={{fontSize:11,color:"#aa3333",marginTop:4,fontFamily:"'Rajdhani',sans-serif"}}>⛔ {razon}</div>}
+                            {disponible&&<div style={{fontSize:10,color:"#6a5020",marginTop:4,fontFamily:"'Rajdhani',sans-serif"}}>Requiere: {req.rol?`Rol ${req.rol}`:"Cualquiera"}{req.militar?` · ${req.militar}% ejército`:""}{req.poder_politico?` · ${req.poder_politico} poder`:""}</div>}
+                          </div>
+                        </div>
+                        <span style={{fontSize:9,color:tipo.color,background:`${tipo.color}18`,padding:"4px 10px",borderRadius:6,flexShrink:0,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,border:`1px solid ${tipo.color}33`,marginLeft:8}}>{tipo.dificultad}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>)}
+
+            {/* ══ VISTA: ELEGIR PAÍS OBJETIVO ══ */}
+            {vistaGuerra==="elegir_pais" && tipoGuerraSeleccionado && (<>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+                <button onClick={()=>setVistaGuerra("elegir_tipo")} style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",color:"#a09070",padding:"6px 12px",borderRadius:6,cursor:"pointer",fontSize:12,fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>← VOLVER</button>
+                <div>
+                  <span style={{fontSize:12,color:"#f0c040",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>{TIPOS_GUERRA[tipoGuerraSeleccionado]?.icon} {TIPOS_GUERRA[tipoGuerraSeleccionado]?.label}</span>
+                  <div style={{fontSize:10,color:"#6a5020",fontFamily:"'Rajdhani',sans-serif"}}>Selecciona el país objetivo</div>
+                </div>
+              </div>
+
+              {/* Costo de declarar guerra */}
+              <div style={{display:"flex",gap:10,marginBottom:14,padding:"10px 14px",background:"rgba(0,0,0,0.4)",borderRadius:8,border:"1px solid rgba(255,255,255,0.06)"}}>
+                {[{ico:"coin",label:"Costo",val:"$5,000",c:"#f0c040"},{ico:"sword",label:"Ejército mín.",val:"30%",c:"#ff5555"},{ico:"bolt",label:"Duración",val:"12h",c:"#44aaff"}].map((d,i)=>(
+                  <div key={i} style={{flex:1,textAlign:"center"}}>
+                    <Icon type={d.ico} size={14} color={d.c}/>
+                    <div style={{fontSize:12,color:d.c,fontFamily:"'Orbitron',monospace",fontWeight:700,marginTop:2}}>{d.val}</div>
+                    <div style={{fontSize:9,color:"#4a3820",fontFamily:"'Rajdhani',sans-serif"}}>{d.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {/* Para golpe de estado: solo países donde hay presidente */}
+                {/* Para conquista/económica: cualquier país con presidente diferente */}
+                {(() => {
+                  const tipo=TIPOS_GUERRA[tipoGuerraSeleccionado];
+                  let paises = [];
+                  if(tipoGuerraSeleccionado==="golpe_estado"){
+                    // Golpe: solo presidentes del mismo país
+                    paises = otrosJugadores.filter(j=>j.pais===selectedCountry&&j.rol==="presidente");
+                  } else if(tipoGuerraSeleccionado==="liberacion"){
+                    // Liberación: el colonizador
+                    paises = jugador?.colonizado_por?otrosJugadores.filter(j=>j.pais===jugador.colonizado_por&&j.rol==="presidente"):[];
+                  } else {
+                    // Conquista, revolución, económica: otros países
+                    const paisesUnicos = [...new Set(otrosJugadores.filter(j=>j.pais!==selectedCountry&&j.id!==jugador?.id).map(j=>j.pais))];
+                    paises = paisesUnicos.map(p=>{
+                      const pres = otrosJugadores.find(j=>j.pais===p&&j.rol==="presidente");
+                      const ciudadanos = otrosJugadores.filter(j=>j.pais===p);
+                      return {pais:p, presidente:pres, ciudadanos:ciudadanos.length, ideologia:pres?.ideologia||"democracia"};
+                    });
+                  }
+                  if(paises.length===0) return <div style={{textAlign:"center",padding:30,color:"#4a3820",fontFamily:"'Rajdhani',sans-serif",fontSize:13}}>No hay objetivos disponibles para este tipo de guerra</div>;
+                  return paises.map((obj,i)=>{
+                    const jideo=IDEOLOGIES[obj.ideologia||obj.ideologia]||IDEOLOGIES.democracia;
+                    const nombre=obj.pais||obj.nombre;
+                    const presidente=obj.presidente||obj;
+                    return(
+                      <div key={i} style={{background:"linear-gradient(135deg,#1e1008,#140804)",border:"1px solid rgba(255,80,80,0.25)",borderLeft:"3px solid #ff4444",borderRadius:10,padding:"14px",position:"relative",overflow:"hidden",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.05),0 3px 0 rgba(0,0,0,0.5)"}}>
+                        <div style={{position:"absolute",top:0,left:0,right:0,height:"40%",background:"linear-gradient(to bottom,rgba(255,255,255,0.04),transparent)",pointerEvents:"none"}}/>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                          <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                            <div style={{width:44,height:44,borderRadius:9,background:`linear-gradient(145deg,${jideo.color}44,${jideo.color}11)`,border:`1px solid ${jideo.color}55`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,boxShadow:`inset 0 1px 0 rgba(255,255,255,0.15),0 3px 0 rgba(0,0,0,0.5)`,position:"relative",overflow:"hidden",flexShrink:0}}>
+                              <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.1)",borderRadius:"9px 9px 0 0"}}/>
+                              <span style={{position:"relative"}}>{jideo.icon}</span>
+                            </div>
+                            <div>
+                              <div style={{fontSize:16,color:"#f0e8c8",fontWeight:700,fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.04em"}}>{nombre}</div>
+                              <div style={{fontSize:11,color:jideo.color,fontFamily:"'Rajdhani',sans-serif"}}>{jideo.label}</div>
+                              {presidente?.nombre&&<div style={{fontSize:10,color:"#6a5020",fontFamily:"'Rajdhani',sans-serif",marginTop:2}}>👑 Presidente: {presidente.nombre}</div>}
+                            </div>
+                          </div>
+                          <div style={{textAlign:"right"}}>
+                            <div style={{fontSize:9,color:"#f0c040",background:"rgba(240,192,64,0.1)",padding:"3px 8px",borderRadius:4,border:"1px solid rgba(240,192,64,0.25)",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>{obj.ciudadanos||1} jugadores</div>
+                          </div>
+                        </div>
+                        <GlowBtn onClick={()=>declararGuerra(presidente||obj, tipoGuerraSeleccionado)} color="#ff4444"
+                          style={{padding:"12px",borderRadius:8,fontSize:13,fontWeight:700,letterSpacing:"0.06em",background:"linear-gradient(180deg,#2a0808,#1a0404)",color:"#ff6644",border:"1px solid rgba(255,80,80,0.5)",boxShadow:"0 0 14px rgba(255,60,60,0.2),0 3px 0 rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.08)",display:"block",textAlign:"center"}}>
+                          ⚔️ DECLARAR GUERRA CONTRA {nombre.toUpperCase()}
+                        </GlowBtn>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </>)}
+
+            {/* ══ VISTA: COMBATE ACTIVO ══ */}
+            {vistaGuerra==="combate" && (<>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+                <button onClick={()=>{setVistaGuerra("lista");loadTodasGuerras();}} style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",color:"#a09070",padding:"6px 12px",borderRadius:6,cursor:"pointer",fontSize:12,fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>← GUERRAS</button>
+                {guerraActiva&&<span style={{fontSize:12,color:"#ff7777",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>{guerraActiva.atacante_pais} vs {guerraActiva.defensor_pais}</span>}
+              </div>
+
+              {guerraActiva?(
+                <div style={{background:"linear-gradient(135deg,#200808,#140404)",border:"2px solid rgba(255,60,60,0.5)",borderRadius:14,padding:16,position:"relative",overflow:"hidden",boxShadow:"0 0 30px rgba(255,0,0,0.15),inset 0 1px 0 rgba(255,255,255,0.08)"}}>
+                  <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,#ff4444,#ff0000,#ff4444,transparent)",animationName:"pulse-glow",animationDuration:"1s",animationTimingFunction:"ease-in-out",animationIterationCount:"infinite"}}/>
+
+                  {/* Título y fase */}
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                    <div style={{fontSize:13,color:"#ff4444",fontWeight:700,fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.08em",textShadow:"0 0 10px rgba(255,0,0,0.5)"}}>
+                      {TIPOS_GUERRA[guerraActiva.tipo]?.icon||"⚔️"} {guerraActiva.atacante_pais} vs {guerraActiva.defensor_pais}
+                    </div>
+                    <div style={{fontSize:10,color:"#ff6644",background:"rgba(255,60,60,0.15)",padding:"4px 10px",borderRadius:6,border:"1px solid rgba(255,60,60,0.3)",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,textTransform:"uppercase"}}>
+                      {guerraActiva.fase==="movilizacion"?"📢 MOVILIZACIÓN":guerraActiva.fase==="batalla"?"⚔️ BATALLA":"✅ RESUELTA"}
+                    </div>
+                  </div>
+
+                  {/* Countdown */}
+                  {guerraActiva.fase==="movilizacion"&&(
+                    <div style={{textAlign:"center",marginBottom:14,padding:"10px",background:"rgba(0,0,0,0.3)",borderRadius:8,border:"1px solid rgba(255,60,60,0.15)"}}>
+                      <div style={{fontSize:10,color:"#6a3020",fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.12em",marginBottom:4}}>BATALLA COMIENZA EN</div>
+                      <div style={{fontSize:26,color:"#ff6644",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:"0 0 14px rgba(255,100,68,0.7)"}}>
+                        {Math.max(0,Math.floor((new Date(guerraActiva.fin_movilizacion_at)-Date.now())/3600000))}h {Math.max(0,Math.floor(((new Date(guerraActiva.fin_movilizacion_at)-Date.now())%3600000)/60000))}m
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Barras de fuerza */}
+                  <div style={{marginBottom:14}}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:6,alignItems:"center"}}>
+                      <span style={{fontSize:12,color:"#ff5555",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>⚔️ {guerraActiva.atacante_pais} <span style={{fontFamily:"'Orbitron',monospace",fontSize:13}}>{Math.round(guerraActiva.fuerza_atacante||0)}</span></span>
+                      <span style={{fontSize:10,color:"#6a3020",fontFamily:"'Rajdhani',sans-serif"}}>vs</span>
+                      <span style={{fontSize:12,color:"#4488ff",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}><span style={{fontFamily:"'Orbitron',monospace",fontSize:13}}>{Math.round(guerraActiva.fuerza_defensor||0)}</span> {guerraActiva.defensor_pais} 🛡️</span>
+                    </div>
+                    <div style={{height:22,background:"rgba(0,0,0,0.7)",borderRadius:11,overflow:"hidden",border:"1px solid rgba(255,255,255,0.08)",position:"relative",display:"flex",boxShadow:"inset 0 2px 4px rgba(0,0,0,0.5)"}}>
+                      {(()=>{
+                        const total=(guerraActiva.fuerza_atacante||0)+(guerraActiva.fuerza_defensor||0)||1;
+                        const pctA=Math.round((guerraActiva.fuerza_atacante||0)/total*100);
+                        const pctD=100-pctA;
+                        return(<>
+                          <div style={{width:`${pctA}%`,background:"linear-gradient(90deg,#881111,#ff4444,#ff6644)",transition:"width 0.8s ease",position:"relative",minWidth:pctA>0?20:0}}>
+                            <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.18)",borderRadius:"11px 0 0 0"}}/>
+                            {pctA>12&&<span style={{position:"absolute",right:6,top:"50%",transform:"translateY(-50%)",fontSize:10,color:"#fff",fontFamily:"'Orbitron',monospace",fontWeight:700}}>{pctA}%</span>}
+                          </div>
+                          <div style={{width:`${pctD}%`,background:"linear-gradient(90deg,#4488ff,#2244cc,#112288)",transition:"width 0.8s ease",position:"relative",minWidth:pctD>0?20:0}}>
+                            <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.12)"}}/>
+                            {pctD>12&&<span style={{position:"absolute",left:6,top:"50%",transform:"translateY(-50%)",fontSize:10,color:"#fff",fontFamily:"'Orbitron',monospace",fontWeight:700}}>{pctD}%</span>}
+                          </div>
+                        </>);
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Unirse si no participa */}
+                  {guerraActiva.fase!=="resuelta"&&!yaParticipo&&(
+                    <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
+                      <div style={{fontSize:10,color:"#6a3020",letterSpacing:"0.12em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,marginBottom:4}}>Elige tu bando</div>
+                      {(guerraActiva.atacante_pais===selectedCountry||guerraActiva.defensor_pais!==selectedCountry)&&(
+                        <GlowBtn onClick={()=>unirseGuerra(guerraActiva.id,"atacante",false)} color="#ff4444"
+                          style={{padding:"13px",borderRadius:8,fontSize:13,fontWeight:700,background:"linear-gradient(180deg,#2a0808,#1a0404)",color:"#ff6644",border:"1px solid rgba(255,80,80,0.5)",boxShadow:"0 0 14px rgba(255,60,60,0.25),0 3px 0 rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.08)"}}>
+                          ⚔️ ATACAR — BANDO {guerraActiva.atacante_pais.toUpperCase()}
+                        </GlowBtn>
+                      )}
+                      {guerraActiva.defensor_pais===selectedCountry&&(
+                        <GlowBtn onClick={()=>unirseGuerra(guerraActiva.id,"defensor",false)} color="#4488ff"
+                          style={{padding:"13px",borderRadius:8,fontSize:13,fontWeight:700,background:"linear-gradient(180deg,#081828,#041018)",color:"#4488ff",border:"1px solid rgba(68,136,255,0.5)",boxShadow:"0 0 14px rgba(68,136,255,0.25),0 3px 0 rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.08)"}}>
+                          🛡️ DEFENDER — {guerraActiva.defensor_pais.toUpperCase()}
+                        </GlowBtn>
+                      )}
+                      {/* Terceros países pueden participar */}
+                      {guerraActiva.atacante_pais!==selectedCountry&&guerraActiva.defensor_pais!==selectedCountry&&(
+                        <div style={{display:"flex",gap:8}}>
+                          <GlowBtn onClick={()=>unirseGuerra(guerraActiva.id,"atacante",false)} color="#ff4444"
+                            style={{padding:"11px 8px",borderRadius:8,fontSize:11,fontWeight:700,background:"linear-gradient(180deg,#2a0808,#1a0404)",color:"#ff6644",border:"1px solid rgba(255,80,80,0.4)",flex:1,textAlign:"center"}}>
+                            ⚔️ APOYAR {guerraActiva.atacante_pais}
+                          </GlowBtn>
+                          <GlowBtn onClick={()=>unirseGuerra(guerraActiva.id,"defensor",false)} color="#4488ff"
+                            style={{padding:"11px 8px",borderRadius:8,fontSize:11,fontWeight:700,background:"linear-gradient(180deg,#081828,#041018)",color:"#4488ff",border:"1px solid rgba(68,136,255,0.4)",flex:1,textAlign:"center"}}>
+                            🛡️ APOYAR {guerraActiva.defensor_pais}
+                          </GlowBtn>
+                        </div>
+                      )}
+                      {guerraActiva.defensor_pais===selectedCountry&&(
+                        <GlowBtn onClick={()=>unirseGuerra(guerraActiva.id,"defensor",true)} color="#aa44ff"
+                          style={{padding:"10px",borderRadius:8,fontSize:11,fontWeight:700,background:"linear-gradient(180deg,#180828,#100418)",color:"#aa44ff",border:"1px solid rgba(170,68,255,0.35)",boxShadow:"0 0 10px rgba(170,68,255,0.15),0 3px 0 rgba(0,0,0,0.6)"}}>
+                          🕵️ INFILTRARME — QUINTA COLUMNA (secreto)
+                        </GlowBtn>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Panel combate activo */}
+                  {yaParticipo&&guerraActiva.fase!=="resuelta"&&(
+                    <div style={{marginBottom:14}}>
+                      {(()=>{
+                        const miPart=participantesGuerra.find(p=>p.jugador_id===jugador?.id);
+                        return miPart?(
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 12px",background:"rgba(0,0,0,0.4)",borderRadius:8,border:`1px solid ${miPart.bando==="atacante"?"rgba(255,60,60,0.25)":"rgba(68,136,255,0.25)"}`,marginBottom:12}}>
+                            <div>
+                              <div style={{fontSize:10,color:"#6a4020",fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.1em"}}>MI CONTRIBUCIÓN</div>
+                              <div style={{fontSize:11,color:"#a08050",fontFamily:"'Rajdhani',sans-serif",marginTop:2}}>
+                                {miPart.total_ataques||0} ataques · <span style={{color:miPart.bando==="atacante"?"#ff6644":"#4488ff",fontWeight:700}}>{miPart.bando==="atacante"?"ATACANTE":miPart.es_traidor?"INFILTRADO":"DEFENSOR"}</span>
+                              </div>
+                            </div>
+                            <div style={{textAlign:"right"}}>
+                              <div style={{fontSize:20,color:miPart.bando==="atacante"?"#ff6644":"#4488ff",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:`0 0 12px ${miPart.bando==="atacante"?"rgba(255,100,68,0.7)":"rgba(68,136,255,0.7)"}`}}>{Math.round(miPart.fuerza_aportada||0)}</div>
+                              <div style={{fontSize:9,color:"#5a3820",fontFamily:"'Rajdhani',sans-serif"}}>FUERZA</div>
+                            </div>
+                          </div>
+                        ):null;
+                      })()}
+                      <GlowBtn onClick={atacarEnGuerra} color="#ff4444"
+                        style={{padding:"16px",borderRadius:10,fontSize:15,fontWeight:700,letterSpacing:"0.08em",background:"linear-gradient(180deg,#3a0808,#220404)",color:"#ff6644",border:"2px solid rgba(255,80,80,0.6)",boxShadow:"0 0 20px rgba(255,60,60,0.3),0 4px 0 rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.1)",marginBottom:8,display:"block",textAlign:"center"}}>
+                        ⚔️ ATACAR  <span style={{fontSize:11,opacity:0.7}}>(-10 ⚡ · +fuerza)</span>
+                      </GlowBtn>
+                      <div style={{fontSize:10,color:"#4a2810",textAlign:"center",fontFamily:"'Rajdhani',sans-serif",marginBottom:14}}>Energía: <span style={{color:energia>=10?"#44cc66":"#ff4444",fontFamily:"'Orbitron',monospace",fontWeight:700}}>{energia}/100</span></div>
+                      <div style={{background:"rgba(0,0,0,0.35)",borderRadius:10,padding:12,marginBottom:12,border:"1px solid rgba(240,192,64,0.15)"}}>
+                        <div style={{fontSize:10,color:"#8a6020",letterSpacing:"0.12em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,marginBottom:10}}>💰 Recursos → Fuerza</div>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                          {[{label:"$1,000",oro:1000,fuerza:10},{label:"$5,000",oro:5000,fuerza:55},{label:"$10,000",oro:10000,fuerza:125},{label:"$50,000",oro:50000,fuerza:700}].map((op,i)=>(
+                            <GlowBtn key={i} onClick={()=>enviarRecursosGuerra(op.oro)} color="#f0c040"
+                              disabled={dinero<op.oro}
+                              style={{padding:"9px 6px",borderRadius:7,fontSize:11,fontWeight:700,background:dinero>=op.oro?"linear-gradient(180deg,#281e04,#181202)":"rgba(0,0,0,0.4)",color:dinero>=op.oro?"#f0c040":"#4a3820",border:`1px solid ${dinero>=op.oro?"rgba(240,192,64,0.4)":"rgba(255,255,255,0.05)"}`,textAlign:"center"}}>
+                              {op.label}<br/><span style={{fontSize:9,opacity:0.7}}>+{op.fuerza} fuerza</span>
+                            </GlowBtn>
+                          ))}
+                        </div>
+                      </div>
+                      {/* Misiones */}
+                      <div style={{background:"rgba(0,0,0,0.35)",borderRadius:10,padding:12,border:"1px solid rgba(170,68,255,0.15)"}}>
+                        <div style={{fontSize:10,color:"#7a40aa",letterSpacing:"0.12em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,marginBottom:10}}>🎯 Misiones</div>
+                        {misionesGuerra.length===0?(
+                          <div style={{textAlign:"center",color:"#4a3060",fontSize:12,fontFamily:"'Rajdhani',sans-serif",padding:"8px 0"}}>Cargando...</div>
+                        ):misionesGuerra.map((m,i)=>{
+                          const pct=Math.min(100,Math.round((m.progreso||0)/m.meta*100));
+                          const reclamada=!!(miPartMisiones&(m.id==="m1"?1:m.id==="m2"?2:4));
+                          return(
+                            <div key={i} style={{background:m.completada?"rgba(68,204,102,0.06)":"rgba(0,0,0,0.3)",borderRadius:8,padding:"10px 12px",marginBottom:8,border:`1px solid ${m.completada?"rgba(68,204,102,0.25)":"rgba(170,68,255,0.15)"}`}}>
+                              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+                                <div style={{flex:1}}>
+                                  <div style={{fontSize:13,color:m.completada?"#44cc66":"#d0b080",fontWeight:700,fontFamily:"'Rajdhani',sans-serif"}}>{m.icono} {m.titulo}</div>
+                                  <div style={{fontSize:11,color:"#5a4030",fontFamily:"'Rajdhani',sans-serif"}}>{m.desc}</div>
+                                </div>
+                                <div style={{textAlign:"right",flexShrink:0,marginLeft:8}}>
+                                  <div style={{fontSize:12,color:"#aa44ff",fontFamily:"'Orbitron',monospace",fontWeight:700}}>+{m.recompensa} XP</div>
+                                </div>
+                              </div>
+                              <div style={{height:6,background:"rgba(0,0,0,0.5)",borderRadius:3,overflow:"hidden",marginBottom:6}}>
+                                <div style={{height:"100%",width:`${pct}%`,background:m.completada?"linear-gradient(90deg,#44aa44,#44ff44)":"linear-gradient(90deg,#6622aa,#aa44ff)",borderRadius:3,boxShadow:m.completada?"0 0 8px #44ff44":"0 0 8px #aa44ff"}}/>
+                              </div>
+                              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                                <span style={{fontSize:10,color:"#6a4830",fontFamily:"'Rajdhani',sans-serif"}}>{m.progreso||0}/{m.meta}</span>
+                                {m.completada&&!reclamada&&(
+                                  <GlowBtn onClick={()=>reclamarMision(m)} color="#44cc66"
+                                    style={{padding:"5px 12px",borderRadius:6,fontSize:11,fontWeight:700,background:"linear-gradient(180deg,#0c2010,#081408)",color:"#44cc66",border:"1px solid rgba(68,204,102,0.4)"}}>
+                                    ✅ RECLAMAR
+                                  </GlowBtn>
+                                )}
+                                {reclamada&&<span style={{fontSize:10,color:"#44cc66",fontFamily:"'Rajdhani',sans-serif"}}>✓ Reclamado</span>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Combatientes */}
+                  {participantesGuerra.length>0&&(
+                    <div style={{marginTop:12}}>
+                      <div style={{fontSize:10,color:"#6a3020",letterSpacing:"0.12em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",marginBottom:8}}>Combatientes ({participantesGuerra.length})</div>
                       {participantesGuerra.map((p,i)=>(
-                        <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 12px",background:p.bando==="atacante"?"rgba(255,60,60,0.08)":"rgba(68,136,255,0.08)",borderRadius:7,border:`1px solid ${p.bando==="atacante"?"rgba(255,60,60,0.2)":"rgba(68,136,255,0.2)"}`,boxShadow:"inset 0 1px 0 rgba(255,255,255,0.04)"}}>
+                        <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 12px",background:p.bando==="atacante"?"rgba(255,60,60,0.08)":"rgba(68,136,255,0.08)",borderRadius:7,border:`1px solid ${p.bando==="atacante"?"rgba(255,60,60,0.2)":"rgba(68,136,255,0.2)"}`,marginBottom:5}}>
                           <div style={{display:"flex",alignItems:"center",gap:8}}>
                             <span style={{fontSize:16}}>{p.es_traidor?"🕵️":p.bando==="atacante"?"⚔️":"🛡️"}</span>
                             <div>
@@ -2614,104 +2831,26 @@ export default function App() {
                               <div style={{fontSize:10,color:"#5a4020",fontFamily:"'Rajdhani',sans-serif"}}>{p.total_ataques||0} ataques</div>
                             </div>
                           </div>
-                          <span style={{fontSize:13,color:p.bando==="atacante"?"#ff6644":"#4488ff",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:`0 0 8px ${p.bando==="atacante"?"rgba(255,100,68,0.5)":"rgba(68,136,255,0.5)"}`}}>{Math.round(p.fuerza_aportada)}</span>
+                          <span style={{fontSize:13,color:p.bando==="atacante"?"#ff6644":"#4488ff",fontFamily:"'Orbitron',monospace",fontWeight:700}}>{Math.round(p.fuerza_aportada)}</span>
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Resultado */}
-                {guerraActiva.fase==="resuelta"&&(
-                  <div style={{textAlign:"center",marginTop:14,padding:16,background:guerraActiva.resultado==="atacante"?"rgba(255,60,60,0.1)":"rgba(68,136,255,0.1)",borderRadius:10,border:`2px solid ${guerraActiva.resultado==="atacante"?"rgba(255,60,60,0.4)":"rgba(68,136,255,0.4)"}`}}>
-                    <div style={{fontSize:32,marginBottom:8}}>{guerraActiva.resultado==="atacante"?"⚔️🏆":"🛡️🏆"}</div>
-                    <div style={{fontSize:18,fontWeight:700,color:guerraActiva.resultado==="atacante"?"#ff6644":"#4488ff",fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.08em",textShadow:`0 0 14px ${guerraActiva.resultado==="atacante"?"rgba(255,100,68,0.6)":"rgba(68,136,255,0.6)"}`}}>
-                      VICTORIA: {guerraActiva.resultado==="atacante"?guerraActiva.atacante_pais:guerraActiva.defensor_pais}
-                    </div>
-                    <div style={{fontSize:12,color:"#6a5030",marginTop:6,fontFamily:"'Rajdhani',sans-serif"}}>+50 XP para los ganadores</div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ══ DECLARAR NUEVA GUERRA ══ */}
-            {!guerraActiva && esPresidente && (
-              <div style={{marginBottom:16}}>
-                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}>
-                  <Icon type="bomb" size={14} color="#ff5555" glow/>
-                  <span style={{fontSize:10,color:"#aa4444",letterSpacing:"0.15em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>Declarar Guerra</span>
-                </div>
-                <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                  {otrosJugadores.filter(j=>j.id!==jugador?.id&&j.rol==="presidente").map((j,i)=>{
-                    const jideo=IDEOLOGIES[j.ideologia]||IDEOLOGIES.democracia;
-                    return (
-                      <div key={i} style={{background:"linear-gradient(135deg,#1a1008,#100804)",border:"1px solid rgba(255,80,80,0.2)",borderLeft:"3px solid #ff4444",borderRadius:10,padding:"12px 14px",position:"relative",overflow:"hidden",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.05),0 3px 0 rgba(0,0,0,0.5)"}}>
-                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                          <div style={{display:"flex",gap:10,alignItems:"center"}}>
-                            <div style={{width:38,height:38,borderRadius:9,background:`linear-gradient(145deg,${jideo.color}44,${jideo.color}11)`,border:`1px solid ${jideo.color}55`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,boxShadow:`inset 0 1px 0 rgba(255,255,255,0.12),0 2px 0 rgba(0,0,0,0.4)`}}>{jideo.icon}</div>
-                            <div>
-                              <div style={{fontSize:14,color:"#f0e0b0",fontWeight:700,fontFamily:"'Rajdhani',sans-serif"}}>{j.nombre}</div>
-                              <div style={{fontSize:11,color:jideo.color,fontFamily:"'Rajdhani',sans-serif"}}>{j.pais} · {jideo.label}</div>
-                            </div>
-                          </div>
-                          <span style={{fontSize:9,color:"#f0c040",background:"rgba(240,192,64,0.12)",padding:"3px 8px",borderRadius:4,border:"1px solid rgba(240,192,64,0.3)",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>👑 PRES</span>
-                        </div>
-                        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                          {Object.entries(TIPOS_GUERRA).filter(([key,tipo])=>{
-                            const req=tipo.requiere;
-                            if(req.rol==="presidente"&&!esPresidente) return false;
-                            if(req.poder_politico&&(jugador?.poder_politico||0)<req.poder_politico) return false;
-                            if(req.militar&&stats.militar<req.militar) return false;
-                            if(key==="golpe_estado"&&j.pais!==selectedCountry) return false;
-                            if(key==="liberacion"&&!jugador?.colonizado_por) return false;
-                            return true;
-                          }).map(([key,tipo])=>(
-                            <GlowBtn key={key} onClick={()=>declararGuerra(j,key)} color={tipo.color}
-                              style={{padding:"8px 12px",borderRadius:7,fontSize:11,fontWeight:700,background:`linear-gradient(180deg,${tipo.color}22,${tipo.color}08)`,color:tipo.color,border:`1px solid ${tipo.color}44`,boxShadow:`0 0 10px ${tipo.color}15,0 2px 0 rgba(0,0,0,0.5)`}}>
-                              {tipo.icon} {tipo.label.split(" ")[0]}
-                            </GlowBtn>
-                          ))}
-                        </div>
+                  {/* Resultado */}
+                  {guerraActiva.fase==="resuelta"&&(
+                    <div style={{textAlign:"center",marginTop:14,padding:16,background:guerraActiva.resultado==="atacante"?"rgba(255,60,60,0.1)":"rgba(68,136,255,0.1)",borderRadius:10,border:`2px solid ${guerraActiva.resultado==="atacante"?"rgba(255,60,60,0.4)":"rgba(68,136,255,0.4)"}`}}>
+                      <div style={{fontSize:32,marginBottom:8}}>{guerraActiva.resultado==="atacante"?"⚔️🏆":"🛡️🏆"}</div>
+                      <div style={{fontSize:18,fontWeight:700,color:guerraActiva.resultado==="atacante"?"#ff6644":"#4488ff",fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.08em"}}>
+                        VICTORIA: {guerraActiva.resultado==="atacante"?guerraActiva.atacante_pais:guerraActiva.defensor_pais}
                       </div>
-                    );
-                  })}
-                  {otrosJugadores.filter(j=>j.id!==jugador?.id&&j.rol==="presidente").length===0&&(
-                    <div style={{textAlign:"center",padding:20,color:"#4a3820",fontFamily:"'Rajdhani',sans-serif",fontSize:13}}>No hay otros presidentes disponibles</div>
+                    </div>
                   )}
                 </div>
-              </div>
-            )}
-
-            {/* ══ UNIRSE A GUERRA (ciudadanos) ══ */}
-            {!guerraActiva && esCiudadano && (
-              <div style={{background:"linear-gradient(135deg,#141e10,#0c1008)",border:"1px solid rgba(68,200,100,0.25)",borderRadius:12,padding:14,marginBottom:14,position:"relative",overflow:"hidden"}}>
-                <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,#44cc66,transparent)"}}/>
-                <div style={{fontSize:11,color:"#44cc66",letterSpacing:"0.12em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,marginBottom:8}}>⚡ Panel Ciudadano — Guerra</div>
-                <p style={{fontSize:13,color:"#5a6a5a",lineHeight:1.8,fontFamily:"'Rajdhani',sans-serif"}}>Cuando tu presidente declare guerra o tu país sea atacado, podrás unirte como soldado, defensor o incluso como quinta columna.</p>
-              </div>
-            )}
-
-            {/* ══ HISTORIAL ══ */}
-            {guerrasHistorial.length>0 && (
-              <div style={{marginTop:16}}>
-                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}>
-                  <Icon type="scroll" size={14} color="#c9a84c"/>
-                  <span style={{fontSize:10,color:"#a08040",letterSpacing:"0.15em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>Historial de Guerras</span>
-                </div>
-                {guerrasHistorial.map((g,i)=>{
-                  const gano=(g.resultado==="atacante"&&g.atacante_pais===selectedCountry)||(g.resultado==="defensor"&&g.defensor_pais===selectedCountry);
-                  return (
-                    <div key={i} style={{background:gano?"linear-gradient(135deg,#102008,#081404)":"linear-gradient(135deg,#200808,#140404)",border:`1px solid ${gano?"rgba(68,204,68,0.25)":"rgba(255,60,60,0.25)"}`,borderLeft:`3px solid ${gano?"#44cc44":"#ff4444"}`,borderRadius:8,padding:"10px 14px",marginBottom:6,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                      <div>
-                        <div style={{fontSize:12,color:"#d0c090",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>{g.atacante_pais} vs {g.defensor_pais}</div>
-                        <div style={{fontSize:10,color:"#5a4828",fontFamily:"'Rajdhani',sans-serif"}}>{new Date(g.created_at).toLocaleDateString()}</div>
-                      </div>
-                      <span style={{fontSize:13,color:gano?"#44cc66":"#ff5555",fontWeight:700,fontFamily:"'Rajdhani',sans-serif"}}>{gano?"✓ Victoria":"✗ Derrota"}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+              ):(
+                <div style={{textAlign:"center",padding:30,color:"#4a3820",fontFamily:"'Rajdhani',sans-serif",fontSize:13}}>Guerra no encontrada</div>
+              )}
+            </>)}
           </div>
         )}
 
@@ -3041,7 +3180,7 @@ export default function App() {
             const active=tab===id;
             return (
               <button key={id}
-                onClick={()=>{tg?.HapticFeedback?.selectionChanged();setTab(id);if(id==="empresas"){loadFabricas();loadVisas();}if(id==="guerra"){loadGuerraActiva();}}}
+                onClick={()=>{tg?.HapticFeedback?.selectionChanged();setTab(id);if(id==="empresas"){loadFabricas();loadVisas();}if(id==="guerra"){setVistaGuerra("lista");loadGuerraActiva();loadTodasGuerras();}}}
                 style={{flex:1,background:"transparent",border:"none",padding:"6px 2px 10px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,position:"relative",transition:"all 0.2s"}}>
                 {active&&<div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 50% 10%,rgba(201,168,76,0.14),transparent 65%)",borderRadius:8,animationName:"pulse-glow",animationDuration:"2s",animationTimingFunction:"ease-in-out",animationIterationCount:"infinite"}}/>}
                 {active&&<div style={{position:"absolute",top:0,left:"18%",right:"18%",height:2,background:"linear-gradient(90deg,transparent,#f0c040,rgba(255,240,100,0.9),#f0c040,transparent)",borderRadius:1,boxShadow:"0 0 10px rgba(240,192,64,0.9),0 0 20px rgba(240,192,64,0.4)"}}/>}
