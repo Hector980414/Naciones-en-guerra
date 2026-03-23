@@ -37,15 +37,17 @@ def es_host(update):
 def menu_admin():
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("📊 Ver jugadores", callback_data="admin_jugadores")],
+        [InlineKeyboardButton("🟢 Mas activos", callback_data="admin_activos"),
+         InlineKeyboardButton("🔍 Buscar usuario", callback_data="admin_buscar")],
         [InlineKeyboardButton("💰 Darme dinero", callback_data="admin_dinero_host"),
-         InlineKeyboardButton("⚡ Recargar mi energía", callback_data="admin_energia_host")],
+         InlineKeyboardButton("⚡ Mi energia", callback_data="admin_energia_host")],
         [InlineKeyboardButton("💸 Dar dinero a jugador", callback_data="admin_dinero_jugador"),
-         InlineKeyboardButton("⚡ Energía a jugador", callback_data="admin_energia_jugador")],
-        [InlineKeyboardButton("🌍 Estadísticas", callback_data="admin_stats")],
-        [InlineKeyboardButton("⚔️ Ver guerras", callback_data="admin_guerras")],
-        [InlineKeyboardButton("🏭 Ver fábricas", callback_data="admin_fabricas")],
-        [InlineKeyboardButton("💎 Activar premium", callback_data="admin_premium")],
-        [InlineKeyboardButton("🚫 Banear jugador", callback_data="admin_banear")],
+         InlineKeyboardButton("⚡ Energia a jugador", callback_data="admin_energia_jugador")],
+        [InlineKeyboardButton("🌍 Estadisticas", callback_data="admin_stats")],
+        [InlineKeyboardButton("⚔️ Ver guerras", callback_data="admin_guerras"),
+         InlineKeyboardButton("🏭 Ver fabricas", callback_data="admin_fabricas")],
+        [InlineKeyboardButton("💎 Activar premium", callback_data="admin_premium"),
+         InlineKeyboardButton("🚫 Banear jugador", callback_data="admin_banear")],
         [InlineKeyboardButton("🔄 Resetear tick", callback_data="admin_tick")],
         [InlineKeyboardButton("💣 Dinero a todos", callback_data="admin_dinero_todos")],
         [InlineKeyboardButton("📢 Broadcast", callback_data="admin_broadcast")],
@@ -56,18 +58,16 @@ async def start(update, context):
     if es_host(update):
         keyboard.append([InlineKeyboardButton("⚙️ Panel Admin", callback_data="admin_menu")])
     await update.message.reply_text(
-        "🌍 *Naciones en Guerra*\n\n195 naciones compiten por el poder global\\.\nToma el control, emite decretos y lidera tu partido\\.",
-        parse_mode="MarkdownV2",
+        "🌍 Naciones en Guerra\n\n195 naciones compiten por el poder global.\nToma el control, emite decretos y lidera tu partido.",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 async def admin(update, context):
     if not es_host(update):
-        await update.message.reply_text("⛔ Sin acceso.")
+        await update.message.reply_text("Sin acceso.")
         return
     await update.message.reply_text(
-        "🎮 *Panel de Control*\nSelecciona una acción:",
-        parse_mode="Markdown",
+        "Panel de Control - Naciones en Guerra",
         reply_markup=menu_admin()
     )
 
@@ -78,141 +78,155 @@ async def estado(update, context):
         j = jugador[0]
         nacion = await sb_get("naciones", f"select=pib,militar,aprobacion&jugador_id=eq.{uid}")
         n = nacion[0] if nacion else {}
-        premium_text = f"💎 {j.get('premium_plan')}" if j.get('premium') else "Sin premium"
-        keyboard = [[InlineKeyboardButton("📊 Ver panel", web_app=WebAppInfo(url=WEBAPP_URL))]]
-        await update.message.reply_text(
-            f"🏴 *{j['nombre']}* — {j['pais']}\n{j.get('rol','ciudadano').upper()}\n\n"
-            f"💰 PIB: {n.get('pib',67)}%\n⚔️ Militar: {n.get('militar',45)}%\n"
-            f"⭐ Nivel: {j.get('nivel',1)} · XP: {j.get('xp',0)}\n"
-            f"💵 ${j.get('dinero',1000):,}\n⚡ {j.get('energia',100)}/100\n🎖️ {premium_text}",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(keyboard)
+        premium_text = j.get('premium_plan', 'Sin premium') if j.get('premium') else 'Sin premium'
+        keyboard = [[InlineKeyboardButton("Ver panel", web_app=WebAppInfo(url=WEBAPP_URL))]]
+        msg = (
+            f"*{j['nombre']}* - {j['pais']}\n"
+            f"{j.get('rol','ciudadano').upper()}\n\n"
+            f"PIB: {n.get('pib',67)}%\n"
+            f"Militar: {n.get('militar',45)}%\n"
+            f"Nivel: {j.get('nivel',1)} XP: {j.get('xp',0)}\n"
+            f"Dinero: ${j.get('dinero',1000):,}\n"
+            f"Energia: {j.get('energia',100)}/100\n"
+            f"Premium: {premium_text}"
         )
+        await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
     else:
-        await update.message.reply_text("No tienes nación registrada.")
+        await update.message.reply_text("No tienes nacion registrada.")
 
 async def ayuda(update, context):
-    text = "🎮 *Comandos*\n\n/start — Jugar\n/estado — Ver nación\n/ayuda — Ayuda"
+    text = "Comandos:\n/start - Jugar\n/estado - Ver nacion\n/ayuda - Ayuda"
     if es_host(update):
-        text += "\n\n⚙️ *Admin:*\n/admin — Panel\n/dinero ID CANTIDAD\n/energia ID\n/premium ID\n/ban ID\n/broadcast MENSAJE"
-    await update.message.reply_text(text, parse_mode="Markdown")
+        text += "\n\nAdmin:\n/admin - Panel\n/dinero ID CANTIDAD\n/energia ID\n/buscar NOMBRE\n/premium ID\n/ban ID\n/broadcast MENSAJE"
+    await update.message.reply_text(text)
 
 async def button_handler(update, context):
     query = update.callback_query
     await query.answer()
     uid = query.from_user.id
     data = query.data
-    volver = InlineKeyboardMarkup([[InlineKeyboardButton("← Volver", callback_data="admin_menu")]])
+    volver = InlineKeyboardMarkup([[InlineKeyboardButton("Volver", callback_data="admin_menu")]])
 
     if data.startswith("admin_") and uid != HOST_ID:
-        await query.edit_message_text("⛔ Sin acceso.")
+        await query.edit_message_text("Sin acceso.")
         return
 
     if data == "admin_menu":
-        await query.edit_message_text("🎮 *Panel de Control*", parse_mode="Markdown", reply_markup=menu_admin())
+        await query.edit_message_text("Panel de Control", reply_markup=menu_admin())
 
     elif data == "admin_jugadores":
         jugadores = await sb_get("jugadores", "select=nombre,pais,rol,nivel,dinero,energia&order=nivel.desc&limit=20")
-        texto = "👥 *Jugadores:*\n\n"
+        lineas = ["Jugadores registrados:\n"]
         for j in jugadores:
-            rol_icon = "👑" if j.get('rol') == 'presidente' else "🏴"
-            texto += f"{rol_icon} *{j['nombre']}* — {j['pais']} Nv.{j.get('nivel',1)} ${j.get('dinero',0):,} ⚡{j.get('energia',100)}\n"
-        await query.edit_message_text(texto, parse_mode="Markdown", reply_markup=volver)
+            icon = "👑" if j.get('rol') == 'presidente' else "🏴"
+            lineas.append(f"{icon} {j['nombre']} - {j['pais']} Nv.{j.get('nivel',1)} ${j.get('dinero',0):,} E:{j.get('energia',100)}")
+        await query.edit_message_text("\n".join(lineas) or "Sin jugadores.", reply_markup=volver)
+
+    elif data == "admin_activos":
+        jugadores = await sb_get("jugadores", "select=nombre,pais,rol,nivel,dinero,energia,ultimo_acceso&order=ultimo_acceso.desc.nullslast&limit=20")
+        lineas = ["Usuarios por ultima actividad:\n"]
+        for j in jugadores:
+            icon = "👑" if j.get("rol") == "presidente" else "🏴"
+            ultimo = j.get("ultimo_acceso", "")[:10] if j.get("ultimo_acceso") else "Nunca"
+            lineas.append(f"{icon} {j['nombre']} - {j['pais']} Nv.{j.get('nivel',1)} ${j.get('dinero',0):,} E:{j.get('energia',100)} Ultimo:{ultimo}")
+        await query.edit_message_text("\n".join(lineas) or "Sin datos.", reply_markup=volver)
+
+    elif data == "admin_buscar":
+        await query.edit_message_text("Para buscar usa: /buscar NOMBRE\nEjemplo: /buscar Marta", reply_markup=volver)
 
     elif data == "admin_dinero_host":
         await sb_patch("jugadores", {"dinero": 9999999}, f"id=eq.{HOST_ID}")
-        await query.edit_message_text("💰 *¡Saldo actualizado a $9,999,999!*\nRecarga el juego.", parse_mode="Markdown", reply_markup=volver)
+        await query.edit_message_text("Saldo actualizado a $9,999,999. Recarga el juego.", reply_markup=volver)
 
     elif data == "admin_energia_host":
         await sb_patch("jugadores", {"energia": 100, "ultima_energia": datetime.utcnow().isoformat()}, f"id=eq.{HOST_ID}")
-        await query.edit_message_text("⚡ *¡Energía recargada a 100/100!*\nRecarga el juego.", parse_mode="Markdown", reply_markup=volver)
+        await query.edit_message_text("Energia recargada a 100/100. Recarga el juego.", reply_markup=volver)
 
     elif data == "admin_dinero_jugador":
-        await query.edit_message_text(
-            "💸 *Dar dinero a jugador*\n\nUsa: `/dinero ID CANTIDAD`\nEjemplo: `/dinero 123456789 50000`",
-            parse_mode="Markdown", reply_markup=volver)
+        await query.edit_message_text("Para dar dinero usa: /dinero ID CANTIDAD\nEjemplo: /dinero 123456789 50000", reply_markup=volver)
 
     elif data == "admin_energia_jugador":
-        await query.edit_message_text(
-            "⚡ *Recargar energía*\n\nUsa: `/energia ID`\nEjemplo: `/energia 123456789`",
-            parse_mode="Markdown", reply_markup=volver)
+        await query.edit_message_text("Para recargar energia usa: /energia ID\nEjemplo: /energia 123456789", reply_markup=volver)
 
     elif data == "admin_stats":
         jugadores = await sb_get("jugadores", "select=id,rol&limit=200")
         presidentes = len([j for j in jugadores if j.get('rol') == 'presidente'])
         fabricas = await sb_get("fabricas", "select=id&activa=eq.true&limit=200")
         visas = await sb_get("visas", "select=id&estado=eq.pendiente&limit=50")
-        await query.edit_message_text(
-            f"📊 *Estadísticas*\n\n👥 Jugadores: {len(jugadores)}\n👑 Presidentes: {presidentes}\n"
-            f"🏭 Fábricas: {len(fabricas)}\n🛂 Visas pendientes: {len(visas)}",
-            parse_mode="Markdown", reply_markup=volver)
+        msg = (
+            f"Estadisticas:\n\n"
+            f"Jugadores: {len(jugadores)}\n"
+            f"Presidentes: {presidentes}\n"
+            f"Ciudadanos: {len(jugadores)-presidentes}\n"
+            f"Fabricas: {len(fabricas)}\n"
+            f"Visas pendientes: {len(visas)}"
+        )
+        await query.edit_message_text(msg, reply_markup=volver)
 
     elif data == "admin_tick":
         await sb_patch("tick_global", {
             "ultimo_tick": datetime.utcnow().isoformat(),
             "proximo_tick": (datetime.utcnow() + timedelta(hours=1)).isoformat()
         }, "id=eq.1")
-        await query.edit_message_text("🔄 *Tick reseteado — próximo en 1 hora.*", parse_mode="Markdown", reply_markup=volver)
+        await query.edit_message_text("Tick reseteado. Proximo en 1 hora.", reply_markup=volver)
 
     elif data == "admin_guerras":
         guerras = await sb_get("guerras", "select=tipo,pais_atacante,pais_defensor,resultado&order=created_at.desc&limit=10")
-        texto = "⚔️ *Últimas guerras:*\n\n"
+        lineas = ["Ultimas guerras:\n"]
         for g in guerras:
-            texto += f"• {g['tipo']}: {g['pais_atacante']} vs {g['pais_defensor']} — {g.get('resultado','?')}\n"
-        await query.edit_message_text(texto or "Sin guerras.", parse_mode="Markdown", reply_markup=volver)
+            lineas.append(f"{g['tipo']}: {g['pais_atacante']} vs {g['pais_defensor']} - {g.get('resultado','?')}")
+        await query.edit_message_text("\n".join(lineas) or "Sin guerras.", reply_markup=volver)
 
     elif data == "admin_fabricas":
         fabricas = await sb_get("fabricas", "select=nombre,pais,tipo_recurso,nivel,trabajadores_actuales&activa=eq.true&limit=20")
-        texto = "🏭 *Fábricas:*\n\n"
+        lineas = ["Fabricas activas:\n"]
         for f in fabricas:
-            texto += f"• {f['nombre']} ({f['pais']}) Nv.{f['nivel']} {f['tipo_recurso']} 👥{f.get('trabajadores_actuales',0)}\n"
-        await query.edit_message_text(texto or "Sin fábricas.", parse_mode="Markdown", reply_markup=volver)
+            lineas.append(f"{f['nombre']} ({f['pais']}) Nv.{f['nivel']} {f['tipo_recurso']} Trabajadores:{f.get('trabajadores_actuales',0)}")
+        await query.edit_message_text("\n".join(lineas) or "Sin fabricas.", reply_markup=volver)
 
     elif data == "admin_premium":
-        await query.edit_message_text("💎 Usa: `/premium ID`", parse_mode="Markdown", reply_markup=volver)
+        await query.edit_message_text("Para activar premium usa: /premium ID", reply_markup=volver)
 
     elif data == "admin_banear":
-        await query.edit_message_text("🚫 Usa: `/ban ID`", parse_mode="Markdown", reply_markup=volver)
+        await query.edit_message_text("Para banear usa: /ban ID", reply_markup=volver)
 
     elif data == "admin_dinero_todos":
         await query.edit_message_text(
-            "💣 ¿Dar $5,000 a TODOS?",
+            "Dar $5,000 a TODOS los jugadores?",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("✅ Confirmar", callback_data="admin_dinero_todos_confirm")],
-                [InlineKeyboardButton("← Cancelar", callback_data="admin_menu")]
+                [InlineKeyboardButton("SI confirmar", callback_data="admin_dinero_todos_ok")],
+                [InlineKeyboardButton("Cancelar", callback_data="admin_menu")]
             ]))
 
-    elif data == "admin_dinero_todos_confirm":
+    elif data == "admin_dinero_todos_ok":
         jugadores = await sb_get("jugadores", "select=id,dinero&limit=200")
         count = 0
         for j in jugadores:
             nuevo = (j.get('dinero') or 1000) + 5000
             ok = await sb_patch("jugadores", {"dinero": nuevo}, f"id=eq.{j['id']}")
             if ok: count += 1
-        await query.edit_message_text(f"✅ *$5,000 enviados a {count} jugadores*", parse_mode="Markdown", reply_markup=volver)
+        await query.edit_message_text(f"$5,000 enviados a {count} jugadores.", reply_markup=volver)
 
     elif data == "admin_broadcast":
-        await query.edit_message_text("📢 Usa: `/broadcast MENSAJE`", parse_mode="Markdown", reply_markup=volver)
+        await query.edit_message_text("Para broadcast usa: /broadcast MENSAJE", reply_markup=volver)
 
-    # ── Visas ──────────────────────────────────────────────
     elif data.startswith("visa_aprobar_"):
         parts = data.split("_")
         visa_id, sol_id, precio = int(parts[2]), int(parts[3]), int(parts[4])
         await sb_patch("visas", {"estado": "aprobada"}, f"id=eq.{visa_id}")
         ganancia = int(precio * 0.3)
-        jugador_data = await sb_get("jugadores", f"select=dinero&id=eq.{uid}")
-        if jugador_data:
-            nuevo = (jugador_data[0].get("dinero") or 1000) + ganancia
+        jdata = await sb_get("jugadores", f"select=dinero&id=eq.{uid}")
+        if jdata:
+            nuevo = (jdata[0].get("dinero") or 1000) + ganancia
             await sb_patch("jugadores", {"dinero": nuevo}, f"id=eq.{uid}")
         await query.edit_message_text(
-            f"✅ *Visa aprobada*\n\n💰 Ganaste *${ganancia:,}* (30%)",
-            parse_mode="Markdown"
+            f"Visa aprobada. Ganaste ${ganancia:,} (30%)",
+            reply_markup=volver
         )
         try:
             await context.bot.send_message(
                 chat_id=sol_id,
-                text="🎉 *Tu visa fue aprobada*\n\nYa puedes trabajar en ese país. Recarga el juego.",
-                parse_mode="Markdown"
+                text="Tu visa fue aprobada. Ya puedes trabajar en ese pais. Recarga el juego."
             )
         except Exception as e:
             log.error(f"Error visa aprobada: {e}")
@@ -221,16 +235,15 @@ async def button_handler(update, context):
         parts = data.split("_")
         visa_id, sol_id, precio = int(parts[2]), int(parts[3]), int(parts[4])
         await sb_patch("visas", {"estado": "rechazada"}, f"id=eq.{visa_id}")
-        sol_data = await sb_get("jugadores", f"select=dinero&id=eq.{sol_id}")
-        if sol_data:
-            devolver = (sol_data[0].get("dinero") or 0) + precio
+        sdata = await sb_get("jugadores", f"select=dinero&id=eq.{sol_id}")
+        if sdata:
+            devolver = (sdata[0].get("dinero") or 0) + precio
             await sb_patch("jugadores", {"dinero": devolver}, f"id=eq.{sol_id}")
-        await query.edit_message_text("❌ *Visa rechazada* — dinero devuelto.", parse_mode="Markdown")
+        await query.edit_message_text("Visa rechazada. Dinero devuelto al solicitante.", reply_markup=volver)
         try:
             await context.bot.send_message(
                 chat_id=sol_id,
-                text="❌ *Tu visa fue rechazada*\n\nSe te devolvió el dinero.",
-                parse_mode="Markdown"
+                text="Tu visa fue rechazada. Se te devolvio el dinero."
             )
         except Exception as e:
             log.error(f"Error visa rechazada: {e}")
@@ -240,18 +253,25 @@ async def cmd_dinero(update, context):
     if len(context.args) < 2:
         await update.message.reply_text("Uso: /dinero ID CANTIDAD")
         return
-    target_id, cantidad = context.args[0], int(context.args[1])
+    target_id = context.args[0]
+    try:
+        cantidad = int(context.args[1])
+    except:
+        await update.message.reply_text("La cantidad debe ser un numero.")
+        return
     jugador = await sb_get("jugadores", f"select=nombre,dinero&id=eq.{target_id}")
     if not jugador:
-        await update.message.reply_text("❌ Jugador no encontrado")
+        await update.message.reply_text("Jugador no encontrado.")
         return
     nuevo = (jugador[0].get("dinero") or 0) + cantidad
     await sb_patch("jugadores", {"dinero": nuevo}, f"id=eq.{target_id}")
     nombre = jugador[0].get("nombre", "?")
-    await update.message.reply_text(f"✅ *${cantidad:,}* enviados a *{nombre}*\nSaldo: *${nuevo:,}*", parse_mode="Markdown")
+    await update.message.reply_text(f"${cantidad:,} enviados a {nombre}. Saldo: ${nuevo:,}")
     try:
-        await context.bot.send_message(chat_id=int(target_id),
-            text=f"💰 *El admin te envió ${cantidad:,}*\nSaldo: ${nuevo:,}", parse_mode="Markdown")
+        await context.bot.send_message(
+            chat_id=int(target_id),
+            text=f"El admin te envio ${cantidad:,}. Saldo: ${nuevo:,}"
+        )
     except: pass
 
 async def cmd_energia(update, context):
@@ -262,14 +282,34 @@ async def cmd_energia(update, context):
     target_id = context.args[0]
     jugador = await sb_get("jugadores", f"select=nombre&id=eq.{target_id}")
     if not jugador:
-        await update.message.reply_text("❌ No encontrado")
+        await update.message.reply_text("Jugador no encontrado.")
         return
     await sb_patch("jugadores", {"energia": 100, "ultima_energia": datetime.utcnow().isoformat()}, f"id=eq.{target_id}")
-    await update.message.reply_text(f"⚡ Energía recargada a *{jugador[0]['nombre']}*", parse_mode="Markdown")
+    nombre = jugador[0].get("nombre", "?")
+    await update.message.reply_text(f"Energia recargada a {nombre}.")
     try:
-        await context.bot.send_message(chat_id=int(target_id),
-            text="⚡ *El admin recargó tu energía a 100/100*", parse_mode="Markdown")
+        await context.bot.send_message(chat_id=int(target_id), text="El admin recargo tu energia a 100/100.")
     except: pass
+
+async def cmd_buscar(update, context):
+    if not es_host(update): return
+    if not context.args:
+        await update.message.reply_text("Uso: /buscar NOMBRE")
+        return
+    nombre = " ".join(context.args)
+    jugadores = await sb_get("jugadores", f"select=id,nombre,pais,rol,nivel,dinero,energia,ultimo_acceso&nombre=ilike.*{nombre}*&limit=10")
+    if not jugadores:
+        await update.message.reply_text(f"No se encontro: {nombre}")
+        return
+    lineas = [f"Resultados para {nombre}:\n"]
+    for j in jugadores:
+        icon = "👑" if j.get("rol") == "presidente" else "🏴"
+        ultimo = j.get("ultimo_acceso", "")[:10] if j.get("ultimo_acceso") else "Nunca"
+        lineas.append(
+            f"{icon} {j['nombre']} ID:{j['id']}\n"
+            f"  {j['pais']} Nv.{j.get('nivel',1)} ${j.get('dinero',0):,} E:{j.get('energia',100)} Ultimo:{ultimo}"
+        )
+    await update.message.reply_text("\n".join(lineas))
 
 async def cmd_premium(update, context):
     if not es_host(update): return
@@ -280,13 +320,12 @@ async def cmd_premium(update, context):
     expira = (datetime.utcnow() + timedelta(days=30)).isoformat()
     await sb_patch("jugadores", {
         "premium": True, "premium_hasta": expira,
-        "premium_plan": "Pase Presidencial (Admin)",
+        "premium_plan": "Pase Presidencial Admin",
         "trabajo_intervalo": 3, "bonus_xp": 200, "bonus_salario": 200
     }, f"id=eq.{target_id}")
-    await update.message.reply_text(f"✅ Premium activado para {target_id}")
+    await update.message.reply_text(f"Premium activado para {target_id} por 30 dias.")
     try:
-        await context.bot.send_message(chat_id=int(target_id),
-            text="🎉 *El admin te activó Premium Presidencial por 30 días*", parse_mode="Markdown")
+        await context.bot.send_message(chat_id=int(target_id), text="El admin te activo Premium Presidencial por 30 dias.")
     except: pass
 
 async def cmd_ban(update, context):
@@ -296,7 +335,7 @@ async def cmd_ban(update, context):
         return
     target_id = context.args[0]
     await sb_patch("jugadores", {"exiliado": True, "exilio_hasta": "2099-01-01T00:00:00Z"}, f"id=eq.{target_id}")
-    await update.message.reply_text(f"🚫 Jugador {target_id} baneado.")
+    await update.message.reply_text(f"Jugador {target_id} baneado.")
 
 async def cmd_broadcast(update, context):
     if not es_host(update): return
@@ -308,12 +347,11 @@ async def cmd_broadcast(update, context):
     enviados = 0
     for j in jugadores:
         try:
-            await context.bot.send_message(chat_id=j["id"],
-                text=f"📢 *Mensaje del admin:*\n\n{mensaje}", parse_mode="Markdown")
+            await context.bot.send_message(chat_id=j["id"], text=f"Mensaje del admin:\n\n{mensaje}")
             enviados += 1
             await asyncio.sleep(0.05)
         except: pass
-    await update.message.reply_text(f"✅ Enviado a {enviados} jugadores.")
+    await update.message.reply_text(f"Enviado a {enviados} jugadores.")
 
 async def check_visas_pendientes(app):
     try:
@@ -325,23 +363,29 @@ async def check_visas_pendientes(app):
             sol = await sb_get("jugadores", f"select=nombre,pais&id=eq.{sol_id}")
             sol_nombre = sol[0]["nombre"] if sol else "?"
             sol_pais = sol[0]["pais"] if sol else "?"
-            visa_tipo = v.get("tipo","?").replace("_"," ")
+            visa_tipo = v.get("tipo", "?").replace("_", " ")
             precio = v.get("precio", 0)
             visa_id = v.get("id")
             keyboard = InlineKeyboardMarkup([[
-                InlineKeyboardButton("✅ APROBAR", callback_data=f"visa_aprobar_{visa_id}_{sol_id}_{precio}"),
-                InlineKeyboardButton("❌ RECHAZAR", callback_data=f"visa_rechazar_{visa_id}_{sol_id}_{precio}")
+                InlineKeyboardButton("APROBAR", callback_data=f"visa_aprobar_{visa_id}_{sol_id}_{precio}"),
+                InlineKeyboardButton("RECHAZAR", callback_data=f"visa_rechazar_{visa_id}_{sol_id}_{precio}")
             ]])
             try:
                 await app.bot.send_message(
                     chat_id=pres_id,
-                    text=f"🛂 *Solicitud de Visa*\n\n👤 {sol_nombre} ({sol_pais})\n📋 {visa_tipo}\n💰 ${precio:,}\n🏛️ Tu ganancia: ${int(precio*0.3):,}",
-                    parse_mode="Markdown",
+                    text=(
+                        f"Solicitud de Visa de Trabajo\n\n"
+                        f"Solicitante: {sol_nombre} ({sol_pais})\n"
+                        f"Tipo: {visa_tipo}\n"
+                        f"Precio: ${precio:,}\n"
+                        f"Tu ganancia (30%): ${int(precio*0.3):,}\n\n"
+                        f"Apruebas esta visa?"
+                    ),
                     reply_markup=keyboard
                 )
                 await sb_patch("visas", {"estado": "notificada"}, f"id=eq.{visa_id}")
             except Exception as e:
-                log.error(f"Error notificando visa: {e}")
+                log.error(f"Error notificando visa {visa_id}: {e}")
     except Exception as e:
         log.error(f"Error check_visas: {e}")
 
@@ -351,39 +395,55 @@ async def run_minor_tick(app):
             "ultimo_tick": datetime.utcnow().isoformat(),
             "proximo_tick": (datetime.utcnow() + timedelta(hours=1)).isoformat()
         }, "id=eq.1")
+        log.info("Tick menor ejecutado")
     except Exception as e:
-        log.error(f"Tick error: {e}")
+        log.error(f"Tick menor error: {e}")
 
 async def run_major_tick(app):
     try:
-        await sb_patch("naciones", {"decretos_usados": [], "updated_at": datetime.utcnow().isoformat()}, "jugador_id=gt.0")
+        await sb_patch("naciones", {
+            "decretos_usados": [],
+            "updated_at": datetime.utcnow().isoformat()
+        }, "jugador_id=gt.0")
         jugadores = await sb_get("jugadores", "select=id")
         for j in jugadores:
             try:
                 await app.bot.send_message(
                     chat_id=j["id"],
-                    text="🌅 *Nuevo día* — Tienes 3 decretos frescos\\.",
-                    parse_mode="MarkdownV2",
-                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("📜 Gobernar", web_app=WebAppInfo(url=WEBAPP_URL))]])
+                    text="Nuevo dia. Tienes 3 decretos frescos para gobernar.",
+                    reply_markup=InlineKeyboardMarkup([[
+                        InlineKeyboardButton("Gobernar", web_app=WebAppInfo(url=WEBAPP_URL))
+                    ]])
                 )
             except: pass
+        log.info(f"Tick mayor: {len(jugadores)} jugadores notificados")
     except Exception as e:
         log.error(f"Tick mayor error: {e}")
 
 async def scheduler(app):
     minor = major = alive = visa_check = 0
-    log.info("⏰ Scheduler iniciado")
+    log.info("Scheduler iniciado")
     while True:
         await asyncio.sleep(60)
-        minor += 60; major += 60; alive += 60; visa_check += 60
-        if minor >= 3600: await run_minor_tick(app); minor = 0
-        if major >= 86400: await run_major_tick(app); major = 0
-        if visa_check >= 120: await check_visas_pendientes(app); visa_check = 0
+        minor += 60
+        major += 60
+        alive += 60
+        visa_check += 60
+        if minor >= 3600:
+            await run_minor_tick(app)
+            minor = 0
+        if major >= 86400:
+            await run_major_tick(app)
+            major = 0
+        if visa_check >= 120:
+            await check_visas_pendientes(app)
+            visa_check = 0
         if alive >= 259200:
-            await sb_get("jugadores", "select=id&limit=1"); alive = 0
+            await sb_get("jugadores", "select=id&limit=1")
+            alive = 0
 
 async def main():
-    log.info(f"🚀 Bot iniciando... HOST: {HOST_ID}")
+    log.info(f"Bot iniciando. HOST: {HOST_ID}")
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("estado", estado))
@@ -392,6 +452,7 @@ async def main():
     app.add_handler(CommandHandler("admin", admin))
     app.add_handler(CommandHandler("dinero", cmd_dinero))
     app.add_handler(CommandHandler("energia", cmd_energia))
+    app.add_handler(CommandHandler("buscar", cmd_buscar))
     app.add_handler(CommandHandler("premium", cmd_premium))
     app.add_handler(CommandHandler("ban", cmd_ban))
     app.add_handler(CommandHandler("broadcast", cmd_broadcast))
@@ -399,7 +460,7 @@ async def main():
     async with app:
         await app.start()
         await app.updater.start_polling(allowed_updates=Update.ALL_TYPES)
-        log.info("✅ Bot corriendo con panel admin y visas")
+        log.info("Bot corriendo con panel admin y visas")
         await scheduler(app)
 
 if __name__ == "__main__":
