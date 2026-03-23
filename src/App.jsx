@@ -449,36 +449,63 @@ const GlowBtn = ({ onClick, disabled, color="#c9a84c", darkColor="#0a0810", chil
   );
 };
 
-// ── Barra de recurso 3D (estilo juego de estrategia) ─────
+// ── Barra de recurso 3D épica ─────────────────────────────
 const ResourceBar = ({ icon, label, value, color }) => (
-  <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8,padding:"10px 12px",
-    background:"linear-gradient(135deg,rgba(20,14,6,0.92),rgba(12,10,4,0.95))",
-    borderRadius:10,border:`1px solid ${color}44`,
-    boxShadow:`inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -1px 0 rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.5)`,
+  <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:10,padding:"12px 14px",
+    background:`linear-gradient(135deg,rgba(15,10,4,0.97),rgba(8,6,2,0.99))`,
+    borderRadius:12,
+    border:`1px solid ${color}55`,
+    borderLeft:`3px solid ${color}`,
+    boxShadow:`inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -2px 0 rgba(0,0,0,0.6), 0 4px 16px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,0,0,0.8)`,
     position:"relative",overflow:"hidden"}}>
-    {/* Subtle top sheen */}
-    <div style={{position:"absolute",top:0,left:0,right:0,height:"40%",background:"linear-gradient(to bottom,rgba(255,255,255,0.04),transparent)",pointerEvents:"none",borderRadius:"10px 10px 0 0"}}/>
-    {/* 3D stacked icon */}
-    <div style={{width:44,height:44,flexShrink:0,position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}}>
-      {/* Stack layers */}
-      <div style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:38,height:8,background:`linear-gradient(180deg,${color}33,${color}18)`,borderRadius:"3px",border:`1px solid ${color}44`,boxShadow:`0 2px 0 rgba(0,0,0,0.5)`}}/>
-      <div style={{position:"absolute",bottom:5,left:"50%",transform:"translateX(-50%)",width:40,height:28,background:`linear-gradient(180deg,${color}22,${color}11)`,borderRadius:"6px 6px 3px 3px",border:`1px solid ${color}44`}}/>
-      <div style={{position:"absolute",bottom:8,left:"50%",transform:"translateX(-50%)",width:40,height:30,background:`linear-gradient(145deg,${color}40,${color}20,${color}35)`,borderRadius:7,border:`1px solid ${color}66`,boxShadow:`0 0 10px ${color}33, inset 0 1px 0 rgba(255,255,255,0.15)`,display:"flex",alignItems:"center",justifyContent:"center",zIndex:1}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.1)",borderRadius:"7px 7px 0 0"}}/>
-        {typeof icon === "string" ? <span style={{fontSize:16,position:"relative"}}>{icon}</span> : <div style={{position:"relative"}}>{icon}</div>}
+    {/* Top sheen */}
+    <div style={{position:"absolute",top:0,left:0,right:0,height:"35%",background:"linear-gradient(to bottom,rgba(255,255,255,0.05),transparent)",pointerEvents:"none"}}/>
+    {/* Color tint bg */}
+    <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse at 20% 50%, ${color}0a 0%, transparent 60%)`,pointerEvents:"none"}}/>
+    {/* 3D ICON — torre apilada */}
+    <div style={{width:56,height:56,flexShrink:0,position:"relative",display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+      {/* Sombra base */}
+      <div style={{position:"absolute",bottom:-2,left:"50%",transform:"translateX(-50%)",width:44,height:6,background:"rgba(0,0,0,0.7)",borderRadius:"50%",filter:"blur(3px)"}}/>
+      {/* Capa 1 - base */}
+      <div style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:46,height:7,background:`linear-gradient(180deg,${color}55,${color}22)`,borderRadius:"4px 4px 2px 2px",border:`1px solid ${color}44`,boxShadow:`0 3px 0 rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1)`}}/>
+      {/* Capa 2 - medio */}
+      <div style={{position:"absolute",bottom:5,left:"50%",transform:"translateX(-50%)",width:44,height:20,background:`linear-gradient(180deg,${color}33,${color}18)`,borderRadius:"5px 5px 2px 2px",border:`1px solid ${color}44`}}/>
+      {/* Capa 3 - frente (cara principal) */}
+      <div style={{position:"absolute",bottom:8,left:"50%",transform:"translateX(-50%)",width:46,height:38,
+        background:`linear-gradient(160deg,${color}66 0%,${color}33 40%,${color}44 100%)`,
+        borderRadius:9,border:`1.5px solid ${color}88`,
+        boxShadow:`0 0 16px ${color}55, 0 0 32px ${color}22, inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.4)`,
+        display:"flex",alignItems:"center",justifyContent:"center",zIndex:1,overflow:"hidden"}}>
+        {/* Brillo superior */}
+        <div style={{position:"absolute",top:0,left:0,right:0,height:"45%",background:"linear-gradient(to bottom,rgba(255,255,255,0.18),transparent)",borderRadius:"9px 9px 0 0"}}/>
+        {/* Brillo lateral */}
+        <div style={{position:"absolute",top:0,left:0,bottom:0,width:"30%",background:"linear-gradient(to right,rgba(255,255,255,0.08),transparent)"}}/>
+        <div style={{position:"relative",zIndex:2}}>
+          {typeof icon === "string" ? <span style={{fontSize:20}}>{icon}</span> : icon}
+        </div>
       </div>
     </div>
-    <div style={{flex:1}}>
-      <div style={{display:"flex",justifyContent:"space-between",marginBottom:6,alignItems:"center"}}>
-        <span style={{fontSize:11,color:"#a09070",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase"}}>{label}</span>
-        <span style={{fontSize:14,fontFamily:"'Orbitron',monospace",fontWeight:700,color:value>60?"#66ff88":value>35?color:"#ff4444",textShadow:`0 0 10px currentColor, 0 0 20px ${value>60?"rgba(100,255,136,0.3)":value>35?color+"44":"rgba(255,68,68,0.3)"}`}}>{value}<span style={{fontSize:9,opacity:.7}}>%</span></span>
+    {/* Info */}
+    <div style={{flex:1,minWidth:0}}>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:8,alignItems:"center"}}>
+        <span style={{fontSize:12,color:"#b0a080",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase"}}>{label}</span>
+        <span style={{fontSize:16,fontFamily:"'Orbitron',monospace",fontWeight:900,
+          color:value>60?"#00ff88":value>35?color:"#ff3333",
+          textShadow:`0 0 12px currentColor, 0 0 24px currentColor`}}>{value}<span style={{fontSize:10,opacity:.6}}>%</span></span>
       </div>
-      {/* Neon bar */}
-      <div style={{height:10,background:"rgba(0,0,0,0.6)",borderRadius:5,overflow:"hidden",border:"1px solid rgba(255,255,255,0.06)",position:"relative",boxShadow:"inset 0 2px 4px rgba(0,0,0,0.5)"}}>
-        <div style={{height:"100%",width:`${value}%`,borderRadius:5,background:`linear-gradient(90deg,${color}88,${color},${color}cc)`,transition:"width 1.4s cubic-bezier(0.4,0,0.2,1)",boxShadow:`0 0 12px ${color}, 0 0 24px ${color}66`,position:"relative"}}>
-          <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.25)",borderRadius:"5px 5px 0 0"}}/>
-          {/* Animated shimmer */}
-          <div style={{position:"absolute",top:0,bottom:0,left:"-60%",width:"50%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)",animationName:"shimmer",animationDuration:"2s",animationTimingFunction:"linear",animationIterationCount:"infinite",animationDelay:`${Math.random()}s`}}/>
+      {/* Barra neón gruesa */}
+      <div style={{height:14,background:"rgba(0,0,0,0.8)",borderRadius:7,overflow:"hidden",
+        border:"1px solid rgba(255,255,255,0.08)",
+        boxShadow:"inset 0 3px 6px rgba(0,0,0,0.8),inset 0 1px 0 rgba(255,255,255,0.05)"}}>
+        <div style={{height:"100%",width:`${value}%`,borderRadius:7,
+          background:`linear-gradient(90deg,${color}77,${color}ff,${color}cc)`,
+          transition:"width 1.5s cubic-bezier(0.4,0,0.2,1)",
+          boxShadow:`0 0 16px ${color}, 0 0 32px ${color}88`,
+          position:"relative"}}>
+          {/* Brillo superior de la barra */}
+          <div style={{position:"absolute",top:0,left:0,right:0,height:"55%",background:"rgba(255,255,255,0.3)",borderRadius:"7px 7px 0 0"}}/>
+          {/* Shimmer */}
+          <div style={{position:"absolute",top:0,bottom:0,left:"-80%",width:"60%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent)",animationName:"shimmer",animationDuration:"2.5s",animationTimingFunction:"linear",animationIterationCount:"infinite"}}/>
         </div>
       </div>
     </div>
@@ -1894,20 +1921,32 @@ export default function App() {
             )}
 
             {/* ── INDICADORES NACIONALES ── */}
-            <div style={{background:"linear-gradient(135deg,rgba(255,255,255,0.02),rgba(0,0,0,0.3))",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:14,position:"relative",overflow:"hidden"}}>
-              <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,rgba(201,168,76,0.5),transparent)"}}/>
-              <div style={{fontSize:10,color:"#4a5878",letterSpacing:"0.15em",marginBottom:14,textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>📊 Indicadores Nacionales</div>
-              <ResourceBar icon={<Icon type="coin" size={18} color="#c9a84c" glow/>} label="PIB Nacional" value={stats.pib} color="#c9a84c" />
-              <ResourceBar icon={<Icon type="oil" size={18} color="#ff8f00" glow/>} label="Petróleo" value={stats.petroleo} color="#ff8f00" />
-              <ResourceBar icon={<Icon type="wheat" size={18} color="#4caf50" glow/>} label="Comida" value={stats.comida} color="#4caf50" />
-              <ResourceBar icon={<Icon type="bolt" size={18} color="#03a9f4" glow/>} label="Energía" value={stats.energia} color="#03a9f4" />
-              <ResourceBar icon={<Icon type="factory" size={18} color="#9c27b0" glow/>} label="Industria" value={stats.industria} color="#9c27b0" />
-              <ResourceBar icon={<Icon type="users" size={18} color="#e91e63" glow/>} label="Aprobación" value={stats.aprobacion} color="#e91e63" />
-              <ResourceBar icon={<Icon type="grad" size={18} color="#3f51b5" glow/>} label="Educación" value={stats.educacion} color="#3f51b5" />
-              <ResourceBar icon={<Icon type="heart" size={18} color="#00bcd4" glow/>} label="Salud" value={stats.salud} color="#00bcd4" />
-              <ResourceBar icon={<Icon type="fire" size={18} color="#e53935" glow/>} label="Rebeldía" value={stats.rebeldia} color="#e53935" />
-              <ResourceBar icon={<Icon type="sword" size={18} color="#f44336" glow/>} label="Ejército" value={stats.militar} color="#f44336" />
-              <ResourceBar icon={<Icon type="spy" size={18} color="#795548" glow/>} label="Inteligencia" value={stats.intel} color="#795548" />
+            <div style={{background:"linear-gradient(160deg,#181006 0%,#100c04 50%,#080600 100%)",border:"1px solid rgba(201,168,76,0.3)",borderRadius:14,padding:"14px 12px",position:"relative",overflow:"hidden",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.08),inset 0 -2px 0 rgba(0,0,0,0.6),0 8px 32px rgba(0,0,0,0.8)"}}>
+              {/* Top gold line */}
+              <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(201,168,76,0.4) 20%,rgba(255,220,100,0.9) 50%,rgba(201,168,76,0.4) 80%,transparent)"}}/>
+              {/* Top sheen */}
+              <div style={{position:"absolute",top:0,left:0,right:0,height:"30%",background:"linear-gradient(to bottom,rgba(255,255,255,0.04),transparent)",pointerEvents:"none"}}/>
+              {/* Corner decorations */}
+              <div style={{position:"absolute",top:8,left:8,width:16,height:16,borderTop:"2px solid rgba(201,168,76,0.6)",borderLeft:"2px solid rgba(201,168,76,0.6)",borderRadius:"3px 0 0 0"}}/>
+              <div style={{position:"absolute",top:8,right:8,width:16,height:16,borderTop:"2px solid rgba(201,168,76,0.6)",borderRight:"2px solid rgba(201,168,76,0.6)",borderRadius:"0 3px 0 0"}}/>
+              <div style={{position:"absolute",bottom:8,left:8,width:16,height:16,borderBottom:"2px solid rgba(201,168,76,0.6)",borderLeft:"2px solid rgba(201,168,76,0.6)",borderRadius:"0 0 0 3px"}}/>
+              <div style={{position:"absolute",bottom:8,right:8,width:16,height:16,borderBottom:"2px solid rgba(201,168,76,0.6)",borderRight:"2px solid rgba(201,168,76,0.6)",borderRadius:"0 0 3px 0"}}/>
+              {/* Title */}
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,paddingBottom:10,borderBottom:"1px solid rgba(201,168,76,0.15)"}}>
+                <Icon type="panel" size={16} color="#c9a84c" glow/>
+                <span style={{fontSize:11,color:"#c9a84c",letterSpacing:"0.2em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,textShadow:"0 0 8px rgba(201,168,76,0.5)"}}>Indicadores Nacionales</span>
+              </div>
+              <ResourceBar icon={<Icon type="coin" size={20} color="#c9a84c" glow/>} label="PIB Nacional" value={stats.pib} color="#c9a84c" />
+              <ResourceBar icon={<Icon type="oil" size={20} color="#ff8800" glow/>} label="Petróleo" value={stats.petroleo} color="#ff8800" />
+              <ResourceBar icon={<Icon type="wheat" size={20} color="#44cc44" glow/>} label="Comida" value={stats.comida} color="#44cc44" />
+              <ResourceBar icon={<Icon type="bolt" size={20} color="#44aaff" glow/>} label="Energía" value={stats.energia} color="#44aaff" />
+              <ResourceBar icon={<Icon type="factory" size={20} color="#aa44ff" glow/>} label="Industria" value={stats.industria} color="#aa44ff" />
+              <ResourceBar icon={<Icon type="users" size={20} color="#ff44aa" glow/>} label="Aprobación" value={stats.aprobacion} color="#ff44aa" />
+              <ResourceBar icon={<Icon type="grad" size={20} color="#4466ff" glow/>} label="Educación" value={stats.educacion} color="#4466ff" />
+              <ResourceBar icon={<Icon type="heart" size={20} color="#00ddff" glow/>} label="Salud" value={stats.salud} color="#00ddff" />
+              <ResourceBar icon={<Icon type="fire" size={20} color="#ff4444" glow/>} label="Rebeldía" value={stats.rebeldia} color="#ff4444" />
+              <ResourceBar icon={<Icon type="sword" size={20} color="#ff6644" glow/>} label="Ejército" value={stats.militar} color="#ff6644" />
+              <ResourceBar icon={<Icon type="spy" size={20} color="#aa8855" glow/>} label="Inteligencia" value={stats.intel} color="#aa8855" />
             </div>
           </div>
         )}
@@ -2662,4 +2701,4 @@ export default function App() {
       </div>
     </div>
   );
-                     }
+    }
