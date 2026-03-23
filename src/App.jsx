@@ -293,15 +293,40 @@ function calcularPuntuacion(stats, jugador) {
 
 // ── Components ────────────────────────────────────────────
 const ResourceBar = ({ icon, label, value, color }) => (
-  <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
-    <div style={{ width:28,height:28,background:`${color}22`,border:`1px solid ${color}44`,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0 }}>{icon}</div>
+  <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
+    <div style={{
+      width:36, height:36,
+      background:`linear-gradient(135deg,${color}33,${color}11)`,
+      border:`1px solid ${color}66`,
+      borderRadius:8,
+      display:"flex", alignItems:"center", justifyContent:"center",
+      fontSize:16, flexShrink:0,
+      boxShadow:`0 0 10px ${color}22`
+    }}>{icon}</div>
     <div style={{ flex:1 }}>
-      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:3 }}>
-        <span style={{ fontSize:11,color:"#aaa",fontFamily:"monospace" }}>{label}</span>
-        <span style={{ fontSize:11,color:value>60?"#4caf50":value>35?"#c9a84c":"#e53935",fontFamily:"monospace",fontWeight:"bold" }}>{value}%</span>
+      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5 }}>
+        <span style={{ fontSize:12, color:"#ccc", fontFamily:"'Rajdhani',sans-serif", fontWeight:600, letterSpacing:0.5 }}>{label}</span>
+        <span style={{
+          fontSize:13,
+          color: value>60?"#4caf50": value>35?"#c9a84c":"#e53935",
+          fontFamily:"'Rajdhani',sans-serif",
+          fontWeight:700
+        }}>{value}%</span>
       </div>
-      <div style={{ height:5,background:"rgba(255,255,255,0.06)",borderRadius:3,overflow:"hidden" }}>
-        <div style={{ height:"100%",width:`${value}%`,background:`linear-gradient(90deg,${color},${color}88)`,borderRadius:3,transition:"width 0.8s ease" }} />
+      <div style={{ height:7, background:"rgba(255,255,255,0.06)", borderRadius:4, overflow:"hidden", position:"relative" }}>
+        <div style={{
+          height:"100%",
+          width:`${value}%`,
+          background:`linear-gradient(90deg,${color}cc,${color})`,
+          borderRadius:4,
+          transition:"width 1s cubic-bezier(0.4,0,0.2,1)",
+          boxShadow:`0 0 8px ${color}88`
+        }} />
+        {/* Shine effect */}
+        <div style={{
+          position:"absolute", top:0, left:0, right:0, height:"50%",
+          background:"rgba(255,255,255,0.08)", borderRadius:"4px 4px 0 0"
+        }} />
       </div>
     </div>
   </div>
@@ -1196,82 +1221,144 @@ export default function App() {
 
   // ── LOADING ─────────────────────────────────────────────
   if(screen==="loading") return (
-    <div style={{minHeight:"100vh",background:"#0a0e1a",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16,fontFamily:"Georgia,serif"}}>
-      <div style={{fontSize:52}}>🌍</div>
-      <div style={{color:"#c9a84c",fontSize:13,letterSpacing:3,textTransform:"uppercase"}}>Cargando...</div>
+    <div style={{minHeight:"100vh",background:"radial-gradient(ellipse at center,#0d1528 0%,#050810 100%)",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:20,overflow:"hidden",position:"relative"}}>
+      <div style={{position:"absolute",inset:0,background:"radial-gradient(circle at 50% 50%,rgba(201,168,76,0.08) 0%,transparent 60%)",animation:"pulse-glow 3s ease-in-out infinite"}}/>
+      <div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(201,168,76,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.03) 1px,transparent 1px)",backgroundSize:"40px 40px"}}/>
+      <div style={{fontSize:72,animation:"float 3s ease-in-out infinite",filter:"drop-shadow(0 0 24px rgba(201,168,76,0.6))",position:"relative",zIndex:1}}>🌍</div>
+      <div style={{position:"relative",zIndex:1,textAlign:"center"}}>
+        <div style={{fontFamily:"'Cinzel',serif",fontSize:26,fontWeight:900,color:"#c9a84c",letterSpacing:4,textTransform:"uppercase",textShadow:"0 0 30px rgba(201,168,76,0.5)"}}>NACIONES EN GUERRA</div>
+        <div style={{color:"#4a5568",fontSize:11,letterSpacing:4,marginTop:8,textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif"}}>Preparando el mundo...</div>
+      </div>
+      <div style={{width:200,height:3,background:"rgba(255,255,255,0.06)",borderRadius:2,overflow:"hidden",position:"relative",zIndex:1}}>
+        <div style={{height:"100%",width:"70%",background:"linear-gradient(90deg,transparent,#c9a84c,#ffe082,#c9a84c)",borderRadius:2,backgroundSize:"200% auto",animation:"shimmer 1.5s linear infinite"}}/>
+      </div>
     </div>
   );
 
   // ── ONBOARDING ──────────────────────────────────────────
   if(screen==="onboarding") return (
-    <div style={{minHeight:"100vh",background:"#0a0e1a",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"Georgia,serif",padding:20,position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(201,168,76,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.04) 1px,transparent 1px)",backgroundSize:"40px 40px"}} />
-      <div style={{position:"relative",zIndex:1,width:"100%",maxWidth:420}}>
+    <div style={{minHeight:"100vh",background:"radial-gradient(ellipse at 50% 30%,#0d1a2e 0%,#050810 100%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Rajdhani',sans-serif",padding:"20px 16px",position:"relative",overflow:"hidden"}}>
+      {/* Animated grid */}
+      <div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(201,168,76,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.04) 1px,transparent 1px)",backgroundSize:"40px 40px",pointerEvents:"none"}}/>
+      {/* Corner decorations */}
+      <div style={{position:"absolute",top:20,left:20,width:40,height:40,borderTop:"2px solid rgba(201,168,76,0.4)",borderLeft:"2px solid rgba(201,168,76,0.4)"}}/>
+      <div style={{position:"absolute",top:20,right:20,width:40,height:40,borderTop:"2px solid rgba(201,168,76,0.4)",borderRight:"2px solid rgba(201,168,76,0.4)"}}/>
+      <div style={{position:"absolute",bottom:100,left:20,width:40,height:40,borderBottom:"2px solid rgba(201,168,76,0.4)",borderLeft:"2px solid rgba(201,168,76,0.4)"}}/>
+      <div style={{position:"absolute",bottom:100,right:20,width:40,height:40,borderBottom:"2px solid rgba(201,168,76,0.4)",borderRight:"2px solid rgba(201,168,76,0.4)"}}/>
+      
+      <div style={{position:"relative",zIndex:1,width:"100%",maxWidth:420,animation:"slideInUp 0.5s ease"}}>
         {step===0 && (
           <div style={{textAlign:"center"}}>
-            <div style={{fontSize:64,marginBottom:16}}>🌍</div>
-            <div style={{fontSize:11,color:"#c9a84c",letterSpacing:4,textTransform:"uppercase",marginBottom:8}}>Bienvenido al</div>
-            <h1 style={{fontSize:28,color:"#e8e8e8",letterSpacing:3,margin:"0 0 4px",textTransform:"uppercase",fontWeight:"normal"}}>NACIONES</h1>
-            <h1 style={{fontSize:28,color:"#c9a84c",letterSpacing:3,margin:"0 0 20px",textTransform:"uppercase"}}>EN GUERRA</h1>
-            <p style={{color:"#6a6a8a",fontSize:13,lineHeight:1.8,marginBottom:32}}>195 naciones compiten por el poder global.<br/>Sé presidente o ciudadano. Forma partidos.<br/>Haz golpes de estado. Conquista el mundo.</p>
-            <button onClick={()=>setStep(1)} style={{background:"linear-gradient(135deg,#c9a84c,#a07830)",border:"none",color:"#0a0e1a",padding:"16px",borderRadius:6,fontSize:14,letterSpacing:3,textTransform:"uppercase",cursor:"pointer",fontWeight:"bold",width:"100%",boxShadow:"0 4px 20px rgba(201,168,76,0.3)"}}>TOMAR EL PODER</button>
+            <div style={{fontSize:80,marginBottom:16,animation:"float 3s ease-in-out infinite",filter:"drop-shadow(0 0 30px rgba(201,168,76,0.4))"}}>🌍</div>
+            <div style={{fontSize:11,color:"#c9a84c",letterSpacing:6,textTransform:"uppercase",marginBottom:6,fontFamily:"'Rajdhani',sans-serif",opacity:0.8}}>Bienvenido al</div>
+            <h1 style={{fontFamily:"'Cinzel',serif",fontSize:32,color:"#e8e8e8",letterSpacing:4,margin:"0 0 2px",textTransform:"uppercase",fontWeight:700,textShadow:"0 0 20px rgba(255,255,255,0.1)"}}>NACIONES</h1>
+            <h1 style={{fontFamily:"'Cinzel',serif",fontSize:32,color:"#c9a84c",letterSpacing:4,margin:"0 0 6px",textTransform:"uppercase",fontWeight:900,textShadow:"0 0 30px rgba(201,168,76,0.4)"}}>EN GUERRA</h1>
+            <div style={{width:80,height:2,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"0 auto 20px"}}/>
+            <p style={{color:"#5a6a8a",fontSize:14,lineHeight:1.9,marginBottom:36,fontFamily:"'Rajdhani',sans-serif",fontWeight:500}}>
+              195 naciones compiten por el poder global.<br/>
+              Sé presidente o ciudadano. Forma partidos.<br/>
+              Haz golpes de estado. Conquista el mundo.
+            </p>
+            <button onClick={()=>setStep(1)} style={{background:"linear-gradient(135deg,#c9a84c,#e6b84a,#a07830)",border:"none",color:"#0a0e1a",padding:"16px",borderRadius:8,fontSize:15,letterSpacing:4,textTransform:"uppercase",cursor:"pointer",fontWeight:700,width:"100%",boxShadow:"0 4px 30px rgba(201,168,76,0.4),inset 0 1px 0 rgba(255,255,255,0.2)",fontFamily:"'Cinzel',serif",transition:"all 0.2s"}}>
+              ⚔️ TOMAR EL PODER
+            </button>
           </div>
         )}
         {step===1 && (
           <div>
-            <div style={{fontSize:32,textAlign:"center",marginBottom:12}}>🗺️</div>
-            <h2 style={{color:"#c9a84c",letterSpacing:2,marginBottom:6,textTransform:"uppercase",fontSize:15,textAlign:"center"}}>Elige tu Nación</h2>
-            <p style={{color:"#6a6a8a",fontSize:12,marginBottom:6,textAlign:"center"}}>Si el país ya tiene presidente, serás ciudadano.</p>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:7,marginBottom:18,maxHeight:280,overflowY:"auto"}}>
-              {COUNTRIES.map(c=><button key={c} onClick={()=>setSelectedCountry(c)} style={{background:selectedCountry===c?"rgba(201,168,76,0.2)":"rgba(255,255,255,0.04)",border:`1px solid ${selectedCountry===c?"#c9a84c":"rgba(255,255,255,0.08)"}`,color:selectedCountry===c?"#c9a84c":"#777",padding:"9px 4px",borderRadius:4,fontSize:10,cursor:"pointer",transition:"all 0.2s"}}>{c}</button>)}
+            <div style={{textAlign:"center",marginBottom:16}}>
+              <div style={{fontSize:40,marginBottom:6}}>🗺️</div>
+              <h2 style={{fontFamily:"'Cinzel',serif",color:"#c9a84c",letterSpacing:3,marginBottom:4,textTransform:"uppercase",fontSize:16,textShadow:"0 0 20px rgba(201,168,76,0.3)"}}>Elige tu Nación</h2>
+              <p style={{color:"#5a6a8a",fontSize:12,fontFamily:"'Rajdhani',sans-serif"}}>Si el país ya tiene presidente, serás ciudadano.</p>
             </div>
-            <button disabled={!selectedCountry} onClick={()=>setStep(2)} style={{background:selectedCountry?"linear-gradient(135deg,#c9a84c,#a07830)":"#2a2a3a",border:"none",color:selectedCountry?"#0a0e1a":"#444",padding:"14px",borderRadius:6,fontSize:13,letterSpacing:2,textTransform:"uppercase",cursor:selectedCountry?"pointer":"not-allowed",fontWeight:"bold",width:"100%"}}>CONTINUAR →</button>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:16,maxHeight:290,overflowY:"auto"}}>
+              {COUNTRIES.map(c=>(
+                <button key={c} onClick={()=>setSelectedCountry(c)} style={{
+                  background:selectedCountry===c?"linear-gradient(135deg,rgba(201,168,76,0.25),rgba(201,168,76,0.1))":"rgba(255,255,255,0.03)",
+                  border:`1px solid ${selectedCountry===c?"#c9a84c":"rgba(255,255,255,0.07)"}`,
+                  color:selectedCountry===c?"#c9a84c":"#666",
+                  padding:"8px 4px",borderRadius:6,fontSize:10,cursor:"pointer",
+                  transition:"all 0.15s",fontFamily:"'Rajdhani',sans-serif",fontWeight:600,
+                  boxShadow:selectedCountry===c?"0 0 10px rgba(201,168,76,0.2)":"none"
+                }}>{c}</button>
+              ))}
+            </div>
+            <button disabled={!selectedCountry} onClick={()=>setStep(2)} style={{background:selectedCountry?"linear-gradient(135deg,#c9a84c,#e6b84a,#a07830)":"rgba(255,255,255,0.05)",border:"none",color:selectedCountry?"#0a0e1a":"#333",padding:"14px",borderRadius:8,fontSize:14,letterSpacing:3,textTransform:"uppercase",cursor:selectedCountry?"pointer":"not-allowed",fontWeight:700,width:"100%",fontFamily:"'Cinzel',serif",boxShadow:selectedCountry?"0 4px 20px rgba(201,168,76,0.3)":"none"}}>CONTINUAR →</button>
           </div>
         )}
         {step===2 && (
           <div>
-            <div style={{fontSize:32,textAlign:"center",marginBottom:12}}>🏛️</div>
-            <h2 style={{color:"#c9a84c",letterSpacing:2,marginBottom:6,textTransform:"uppercase",fontSize:15,textAlign:"center"}}>Tu Ideología</h2>
-            <p style={{color:"#6a6a8a",fontSize:12,marginBottom:14,textAlign:"center"}}>Define cómo gobernarás o lucharás por el poder.</p>
-            <div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:18,maxHeight:300,overflowY:"auto"}}>
-              {Object.entries(IDEOLOGIES).map(([key,val])=><button key={key} onClick={()=>setSelectedIdeology(key)} style={{background:selectedIdeology===key?`${val.color}22`:"rgba(255,255,255,0.03)",border:`1px solid ${selectedIdeology===key?val.color:"rgba(255,255,255,0.07)"}`,color:selectedIdeology===key?val.color:"#777",padding:"11px 16px",borderRadius:6,fontSize:12,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",transition:"all 0.2s"}}><span style={{fontSize:14}}>{val.icon} {val.label}</span><span style={{fontSize:10,opacity:0.7,maxWidth:150,textAlign:"right"}}>{val.bonus}</span></button>)}
+            <div style={{textAlign:"center",marginBottom:16}}>
+              <div style={{fontSize:40,marginBottom:6}}>🏛️</div>
+              <h2 style={{fontFamily:"'Cinzel',serif",color:"#c9a84c",letterSpacing:3,marginBottom:4,textTransform:"uppercase",fontSize:16}}>Tu Ideología</h2>
+              <p style={{color:"#5a6a8a",fontSize:12,fontFamily:"'Rajdhani',sans-serif"}}>Define cómo gobernarás o lucharás por el poder.</p>
             </div>
-            <button disabled={!selectedIdeology} onClick={()=>setStep(3)} style={{background:selectedIdeology?"linear-gradient(135deg,#c9a84c,#a07830)":"#2a2a3a",border:"none",color:selectedIdeology?"#0a0e1a":"#444",padding:"14px",borderRadius:6,fontSize:13,letterSpacing:2,textTransform:"uppercase",cursor:selectedIdeology?"pointer":"not-allowed",fontWeight:"bold",width:"100%"}}>CONTINUAR →</button>
+            <div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:16,maxHeight:300,overflowY:"auto"}}>
+              {Object.entries(IDEOLOGIES).map(([key,val])=>(
+                <button key={key} onClick={()=>setSelectedIdeology(key)} style={{
+                  background:selectedIdeology===key?`linear-gradient(135deg,${val.color}25,${val.color}10)`:"rgba(255,255,255,0.02)",
+                  border:`1px solid ${selectedIdeology===key?val.color:"rgba(255,255,255,0.07)"}`,
+                  color:selectedIdeology===key?val.color:"#666",
+                  padding:"12px 16px",borderRadius:8,fontSize:13,cursor:"pointer",
+                  display:"flex",justifyContent:"space-between",alignItems:"center",
+                  transition:"all 0.15s",fontFamily:"'Rajdhani',sans-serif",fontWeight:600,
+                  boxShadow:selectedIdeology===key?`0 0 12px ${val.color}22`:"none"
+                }}>
+                  <span style={{fontSize:15}}>{val.icon} {val.label}</span>
+                  <span style={{fontSize:10,opacity:0.7,maxWidth:150,textAlign:"right"}}>{val.bonus}</span>
+                </button>
+              ))}
+            </div>
+            <button disabled={!selectedIdeology} onClick={()=>setStep(3)} style={{background:selectedIdeology?"linear-gradient(135deg,#c9a84c,#e6b84a,#a07830)":"rgba(255,255,255,0.05)",border:"none",color:selectedIdeology?"#0a0e1a":"#333",padding:"14px",borderRadius:8,fontSize:14,letterSpacing:3,textTransform:"uppercase",cursor:selectedIdeology?"pointer":"not-allowed",fontWeight:700,width:"100%",fontFamily:"'Cinzel',serif",boxShadow:selectedIdeology?"0 4px 20px rgba(201,168,76,0.3)":"none"}}>CONTINUAR →</button>
           </div>
         )}
         {step===3 && (
           <div>
-            <div style={{fontSize:32,textAlign:"center",marginBottom:12}}>✍️</div>
-            <h2 style={{color:"#c9a84c",letterSpacing:2,marginBottom:6,textTransform:"uppercase",fontSize:15,textAlign:"center"}}>Tu Identidad</h2>
-            <p style={{color:"#6a6a8a",fontSize:12,marginBottom:20,textAlign:"center"}}>El partido es opcional — puedes crearlo después.</p>
-            <input placeholder="Tu nombre como líder..." value={leaderName} onChange={e=>setLeaderName(e.target.value)} style={{width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(201,168,76,0.3)",color:"#e8e8e8",padding:"12px 16px",borderRadius:6,fontSize:14,marginBottom:24,boxSizing:"border-box",outline:"none",fontFamily:"Georgia,serif"}} />
-            <button disabled={!leaderName||saving} onClick={registerPlayer} style={{background:leaderName?"linear-gradient(135deg,#c9a84c,#a07830)":"#2a2a3a",border:"none",color:leaderName?"#0a0e1a":"#444",padding:"16px",borderRadius:6,fontSize:13,letterSpacing:2,textTransform:"uppercase",cursor:leaderName?"pointer":"not-allowed",fontWeight:"bold",width:"100%",boxShadow:leaderName?"0 4px 20px rgba(201,168,76,0.3)":"none"}}>
+            <div style={{textAlign:"center",marginBottom:16}}>
+              <div style={{fontSize:40,marginBottom:6}}>✍️</div>
+              <h2 style={{fontFamily:"'Cinzel',serif",color:"#c9a84c",letterSpacing:3,marginBottom:4,textTransform:"uppercase",fontSize:16}}>Tu Identidad</h2>
+              <p style={{color:"#5a6a8a",fontSize:12,marginBottom:16,fontFamily:"'Rajdhani',sans-serif"}}>El partido es opcional — puedes crearlo después.</p>
+            </div>
+            <input placeholder="Tu nombre como líder..." value={leaderName} onChange={e=>setLeaderName(e.target.value)} style={{width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(201,168,76,0.4)",color:"#e8e8e8",padding:"14px 16px",borderRadius:8,fontSize:15,marginBottom:20,boxSizing:"border-box",outline:"none",fontFamily:"'Rajdhani',sans-serif",fontWeight:600,letterSpacing:1}} />
+            <button disabled={!leaderName||saving} onClick={registerPlayer} style={{background:leaderName?"linear-gradient(135deg,#c9a84c,#e6b84a,#a07830)":"rgba(255,255,255,0.05)",border:"none",color:leaderName?"#0a0e1a":"#333",padding:"16px",borderRadius:8,fontSize:14,letterSpacing:3,textTransform:"uppercase",cursor:leaderName?"pointer":"not-allowed",fontWeight:700,width:"100%",fontFamily:"'Cinzel',serif",boxShadow:leaderName?"0 4px 30px rgba(201,168,76,0.4)":"none"}}>
               {saving?"⏳ REGISTRANDO...":"🌍 ASUMIR MI DESTINO"}
             </button>
           </div>
         )}
-        <div style={{display:"flex",justifyContent:"center",gap:8,marginTop:20}}>
-          {[0,1,2,3].map(i=><div key={i} style={{width:i===step?20:6,height:6,borderRadius:3,background:i===step?"#c9a84c":"#2a2a3a",transition:"all 0.3s"}} />)}
+        <div style={{display:"flex",justifyContent:"center",gap:10,marginTop:24}}>
+          {[0,1,2,3].map(i=>(
+            <div key={i} style={{
+              width:i===step?28:8,height:4,borderRadius:2,
+              background:i===step?"#c9a84c": i<step?"rgba(201,168,76,0.4)":"rgba(255,255,255,0.1)",
+              transition:"all 0.3s ease",
+              boxShadow:i===step?"0 0 8px rgba(201,168,76,0.5)":"none"
+            }}/>
+          ))}
         </div>
       </div>
     </div>
   );
 
-  // ── GAME ────────────────────────────────────────────────
+// ── GAME ────────────────────────────────────────────────
   return (
-    <div style={{minHeight:"100vh",background:"#0a0e1a",fontFamily:"Georgia,serif",color:"#e8e8e8",position:"relative"}}>
-      <div style={{position:"fixed",inset:0,backgroundImage:"linear-gradient(rgba(201,168,76,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.025) 1px,transparent 1px)",backgroundSize:"50px 50px",pointerEvents:"none"}} />
+    <div style={{minHeight:"100vh",background:"#060810",fontFamily:"'Rajdhani',sans-serif",color:"#f0ece0",position:"relative"}}>
+      {/* Fondo texturizado */}
+      <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,background:"radial-gradient(ellipse 120% 60% at 50% -5%,rgba(201,168,76,0.04) 0%,transparent 55%)"}}/>
+      <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,backgroundImage:"linear-gradient(rgba(201,168,76,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.012) 1px,transparent 1px)",backgroundSize:"50px 50px"}}/>
 
 
-      {/* XP Gained Popup */}
+      {/* XP Gained Popup — Game Style */}
       {showXpModal && (
-        <div style={{position:"fixed",top:80,right:16,background:"linear-gradient(135deg,rgba(201,168,76,0.95),rgba(160,120,48,0.95))",borderRadius:10,padding:"10px 16px",zIndex:2000,boxShadow:"0 4px 20px rgba(201,168,76,0.4)",animation:"slideIn 0.3s ease"}}>
-          <div style={{fontSize:13,color:"#0a0e1a",fontWeight:"bold"}}>+{xpGanado} XP ⭐</div>
-          <div style={{fontSize:11,color:"#0a0e1a88"}}>{xpMotivo}</div>
+        <div style={{position:"fixed",top:70,right:12,background:"linear-gradient(135deg,#c9a84c,#a07830)",borderRadius:10,padding:"10px 16px",zIndex:2000,boxShadow:"0 0 24px rgba(201,168,76,0.6), 0 4px 0 rgba(0,0,0,0.4)",animation:"pop-in 0.3s cubic-bezier(0.34,1.56,0.64,1) both",border:"1px solid rgba(255,255,255,0.2)"}}>
+          <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,rgba(255,255,255,0.12),transparent)",borderRadius:10}}/>
+          <div style={{fontSize:14,color:"#0a0e1a",fontWeight:800,fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.05em",position:"relative"}}>✦ +{xpGanado} XP</div>
+          <div style={{fontSize:10,color:"rgba(10,14,26,0.7)",fontFamily:"'Rajdhani',sans-serif",fontWeight:600,position:"relative"}}>{xpMotivo}</div>
         </div>
       )}
-      {/* Notification */}
-      {notification && <div style={{position:"fixed",top:12,left:"50%",transform:"translateX(-50%)",background:notification.type==="error"?"rgba(229,57,53,0.15)":"rgba(201,168,76,0.15)",border:`1px solid ${notification.type==="error"?"#e53935":"#c9a84c"}`,color:notification.type==="error"?"#e53935":"#c9a84c",padding:"10px 20px",borderRadius:6,fontSize:13,zIndex:1000,whiteSpace:"nowrap",backdropFilter:"blur(10px)"}}>{notification.msg}</div>}
+      {/* Notification — Game Style */}
+      {notification && (
+        <div style={{position:"fixed",top:10,left:"50%",transform:"translateX(-50%)",background:notification.type==="error"?"linear-gradient(135deg,rgba(229,57,53,0.2),rgba(183,28,28,0.3))":"linear-gradient(135deg,rgba(201,168,76,0.2),rgba(160,120,48,0.3))",border:`1px solid ${notification.type==="error"?"rgba(229,57,53,0.6)":"rgba(201,168,76,0.6)"}`,color:notification.type==="error"?"#ff5252":"#f0c040",padding:"10px 20px",borderRadius:8,fontSize:13,zIndex:1000,whiteSpace:"nowrap",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",boxShadow:`0 4px 16px ${notification.type==="error"?"rgba(229,57,53,0.3)":"rgba(201,168,76,0.3)"}`,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,letterSpacing:"0.03em"}}>{notification.msg}</div>
+      )}
 
 
       {/* Modal Perfil */}
@@ -1446,57 +1533,71 @@ export default function App() {
         </div>
       )}
 
-      {/* Header */}
-      <div style={{background:"linear-gradient(180deg,rgba(10,14,26,0.98) 0%,rgba(10,14,26,0.95) 100%)",borderBottom:"1px solid rgba(201,168,76,0.25)",position:"sticky",top:0,zIndex:100,backdropFilter:"blur(20px)"}}>
-        <div style={{background:"rgba(0,0,0,0.4)",padding:"6px 12px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <button onClick={()=>{setNuevoNombre(leaderName);setShowPerfilModal(true);}} style={{width:34,height:34,borderRadius:"50%",background:`linear-gradient(135deg,${ideo.color},${ideo.color}88)`,border:`2px solid ${ideo.color}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,cursor:"pointer",flexShrink:0}}>{ideo.icon}</button>
+      {/* Header — Game HUD */}
+      <div style={{background:"linear-gradient(180deg,rgba(4,6,14,0.99) 0%,rgba(8,12,22,0.97) 100%)",borderBottom:"1px solid transparent",backgroundClip:"padding-box",position:"sticky",top:0,zIndex:100,backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)"}}>
+        {/* Animated gold border bottom */}
+        <div style={{position:"absolute",bottom:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent 0%,rgba(201,168,76,0.2) 15%,rgba(240,192,64,0.7) 50%,rgba(201,168,76,0.2) 85%,transparent 100%)"}}/>
+        {/* Row 1 — Player info + clock */}
+        <div style={{padding:"8px 12px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            {/* Avatar button */}
+            <button onClick={()=>{setNuevoNombre(leaderName);setShowPerfilModal(true);}}
+              style={{width:40,height:40,borderRadius:10,background:`linear-gradient(135deg,${ideo.color}cc,${ideo.color}55)`,border:`2px solid ${ideo.color}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,cursor:"pointer",flexShrink:0,boxShadow:`0 0 12px ${ideo.color}44`,position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,rgba(255,255,255,0.15),transparent)"}}/>
+              {ideo.icon}
+            </button>
             <div>
-              <div style={{fontSize:12,color:"#e8e8e8",fontWeight:"bold",display:"flex",alignItems:"center",gap:8}}>{leaderName}<span style={{fontSize:12,color:"#c9a84c",fontFamily:"monospace"}}>{formatDinero(dinero)}</span></div>
-              <div style={{fontSize:10,display:"flex",alignItems:"center",gap:6}}>
-                <span style={{color:ideo.color}}>{selectedCountry}</span>
-                <span style={{background:esPresidente?"rgba(201,168,76,0.2)":"rgba(76,175,80,0.2)",color:esPresidente?"#c9a84c":"#4caf50",padding:"1px 6px",borderRadius:10,fontSize:9,letterSpacing:0.5}}>
-                  {esPresidente?"PRESIDENTE":"CIUDADANO"}
+              <div style={{fontSize:14,color:"#f0ece0",fontWeight:700,display:"flex",alignItems:"center",gap:8,fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.03em"}}>
+                {leaderName}
+                <span style={{fontSize:13,color:"#66bb6a",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:"0 0 8px rgba(102,187,106,0.5)"}}>{formatDinero(dinero)}</span>
+              </div>
+              <div style={{fontSize:11,display:"flex",alignItems:"center",gap:6,marginTop:1}}>
+                <span style={{color:ideo.color,fontFamily:"'Rajdhani',sans-serif",fontWeight:600}}>{selectedCountry}</span>
+                <span style={{background:esPresidente?"rgba(201,168,76,0.15)":"rgba(76,175,80,0.15)",color:esPresidente?"#f0c040":"#66bb6a",padding:"2px 7px",borderRadius:4,fontSize:9,letterSpacing:"0.1em",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,border:`1px solid ${esPresidente?"rgba(201,168,76,0.4)":"rgba(76,175,80,0.4)"}`}}>
+                  {esPresidente?"👑 PRESIDENTE":"🏴 CIUDADANO"}
                 </span>
               </div>
             </div>
           </div>
+          {/* Clock HUD */}
           <div style={{textAlign:"right",cursor:"default"}}>
             {countdown === 0 ? (
-              <div style={{fontSize:10,color:"#e53935",fontWeight:"bold"}}>⚠️ FECHA INVÁLIDA</div>
+              <div style={{fontSize:10,color:"#ff5252",fontWeight:"bold",fontFamily:"'Rajdhani',sans-serif"}}>⚠️ FECHA INVÁLIDA</div>
             ) : (
               <>
-                <div style={{fontSize:14,color:"#c9a84c",fontFamily:"monospace",fontWeight:"bold"}}>
+                <div style={{fontSize:16,color:"#f0c040",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:"0 0 10px rgba(240,192,64,0.5)",letterSpacing:"0.05em"}}>
                   {iconoHora(fechaJuego.hora)} {fechaJuego.hora}:{fechaJuego.min}
                 </div>
-                <div style={{fontSize:10,color:"#666",letterSpacing:0.5}}>{fechaJuego.dia} {fechaJuego.mes} {fechaJuego.anio}</div>
+                <div style={{fontSize:10,color:"#5a6080",letterSpacing:"0.08em",fontFamily:"'Rajdhani',sans-serif",fontWeight:500}}>{fechaJuego.dia} {fechaJuego.mes} {fechaJuego.anio}</div>
               </>
             )}
           </div>
         </div>
-        <div style={{padding:"8px 12px",display:"flex",gap:8,overflowX:"auto"}}>
+        {/* Row 2 — Stats HUD bar */}
+        <div style={{padding:"0 10px 8px",display:"flex",gap:6,overflowX:"auto"}}>
           {esPresidente
             ? [{icon:"💰",val:stats.pib,color:"#c9a84c"},{icon:"⚔️",val:stats.militar,color:"#e53935"},{icon:"👥",val:stats.aprobacion,color:"#e91e63"},{icon:"🛢️",val:stats.petroleo,color:"#ff8f00"},{icon:"🌾",val:stats.comida,color:"#4caf50"},{icon:"⚡",val:stats.energia,color:"#03a9f4"}].map((s,i)=>(
-              <div key={i} style={{display:"flex",flexDirection:"column",alignItems:"center",background:"rgba(0,0,0,0.3)",border:`1px solid ${s.color}33`,borderRadius:8,padding:"5px 10px",minWidth:52}}>
-                <span style={{fontSize:14}}>{s.icon}</span>
-                <span style={{fontSize:13,color:s.val>60?"#4caf50":s.val>35?"#c9a84c":"#e53935",fontFamily:"monospace",fontWeight:"bold"}}>{s.val}%</span>
+              <div key={i} style={{display:"flex",flexDirection:"column",alignItems:"center",background:`linear-gradient(135deg,${s.color}18,rgba(0,0,0,0.4))`,border:`1px solid ${s.color}33`,borderRadius:8,padding:"6px 10px",minWidth:50,position:"relative",overflow:"hidden",flexShrink:0}}>
+                <div style={{position:"absolute",bottom:0,left:0,right:0,height:`${s.val}%`,background:`${s.color}08`,transition:"height 1s ease"}}/>
+                <span style={{fontSize:15,position:"relative"}}>{s.icon}</span>
+                <span style={{fontSize:12,color:s.val>60?"#66bb6a":s.val>35?"#f0c040":"#ff5252",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:`0 0 6px currentColor`,position:"relative"}}>{s.val}<span style={{fontSize:8,opacity:0.7}}>%</span></span>
               </div>
             ))
             : (
-              <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                <div style={{background:"rgba(201,168,76,0.1)",border:"1px solid rgba(201,168,76,0.3)",borderRadius:8,padding:"6px 14px",textAlign:"center"}}>
-                  <div style={{fontSize:10,color:"#666",textTransform:"uppercase",letterSpacing:0.5}}>Poder Político</div>
-                  <div style={{fontSize:18,color:"#c9a84c",fontFamily:"monospace",fontWeight:"bold"}}>{jugador?.poder_politico||0}/100</div>
+              <div style={{display:"flex",gap:7,alignItems:"center",width:"100%"}}>
+                <div style={{background:"linear-gradient(135deg,rgba(201,168,76,0.12),rgba(0,0,0,0.3))",border:"1px solid rgba(201,168,76,0.35)",borderRadius:8,padding:"6px 12px",textAlign:"center",flex:1}}>
+                  <div style={{fontSize:9,color:"#6a6040",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"'Rajdhani',sans-serif",fontWeight:600}}>Poder Político</div>
+                  <div style={{fontSize:17,color:"#f0c040",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:"0 0 8px rgba(240,192,64,0.4)"}}>{jugador?.poder_politico||0}<span style={{fontSize:10,opacity:0.5}}>/100</span></div>
                 </div>
-                <div style={{background:"rgba(76,175,80,0.1)",border:"1px solid rgba(76,175,80,0.3)",borderRadius:8,padding:"6px 14px",textAlign:"center"}}>
-                  <div style={{fontSize:10,color:"#666",textTransform:"uppercase",letterSpacing:0.5}}>Partido</div>
-                  <div style={{fontSize:12,color:"#4caf50"}}>{jugador?.partido||"Sin partido"}</div>
+                <div style={{background:"linear-gradient(135deg,rgba(76,175,80,0.1),rgba(0,0,0,0.3))",border:"1px solid rgba(76,175,80,0.3)",borderRadius:8,padding:"6px 12px",textAlign:"center",flex:1}}>
+                  <div style={{fontSize:9,color:"#2a5030",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"'Rajdhani',sans-serif",fontWeight:600}}>Partido</div>
+                  <div style={{fontSize:11,color:"#66bb6a",fontFamily:"'Rajdhani',sans-serif",fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:90}}>{jugador?.partido||"Sin partido"}</div>
                 </div>
-              <div style={{background:"rgba(3,169,244,0.1)",border:"1px solid rgba(3,169,244,0.3)",borderRadius:8,padding:"6px 14px",textAlign:"center",minWidth:70}}>
-                  <div style={{fontSize:10,color:"#666",textTransform:"uppercase",letterSpacing:0.5}}>Energía</div>
-                  <div style={{fontSize:12,color:energia>30?"#03a9f4":"#e53935",fontFamily:"monospace",fontWeight:"bold"}}>⚡{energia}/100</div>
+                <div style={{background:"linear-gradient(135deg,rgba(3,169,244,0.1),rgba(0,0,0,0.3))",border:"1px solid rgba(3,169,244,0.3)",borderRadius:8,padding:"6px 10px",textAlign:"center",minWidth:72,flex:1}}>
+                  <div style={{fontSize:9,color:"#104060",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"'Rajdhani',sans-serif",fontWeight:600}}>Energía</div>
+                  <div style={{fontSize:12,color:energia>30?"#4fc3f7":"#ff5252",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:"0 0 6px currentColor"}}>⚡{energia}<span style={{fontSize:9,opacity:0.5}}>/100</span></div>
                   <div style={{height:3,background:"rgba(255,255,255,0.06)",borderRadius:2,marginTop:3,overflow:"hidden"}}>
-                    <div style={{height:"100%",width:`${energia}%`,background:energia>30?"#03a9f4":"#e53935",borderRadius:2,transition:"width 1s ease"}}/>
+                    <div style={{height:"100%",width:`${energia}%`,background:energia>30?"#03a9f4":"#e53935",borderRadius:2,transition:"width 1s ease",boxShadow:`0 0 4px ${energia>30?"#03a9f4":"#e53935"}`}}/>
                   </div>
                 </div>
               </div>
@@ -1505,85 +1606,130 @@ export default function App() {
         </div>
       </div>
 
-      <div style={{padding:12,paddingBottom:80}}>
+      <div style={{padding:"10px 12px",paddingBottom:90,position:"relative",zIndex:1}}>
 
         {/* PANEL */}
         {tab==="panel" && (
-          <div>
-            {/* Ciudadano panel */}
+          <div style={{animation:"slideInUp 0.3s ease"}}>
+
+            {/* ── CIUDADANO PANEL ── */}
             {esCiudadano && (
-              <div style={{background:"linear-gradient(135deg,rgba(76,175,80,0.1),rgba(76,175,80,0.05))",border:"1px solid rgba(76,175,80,0.25)",borderRadius:8,padding:16,marginBottom:14}}>
-                <div style={{fontSize:11,color:"#4caf50",letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>🏴 PANEL CIUDADANO</div>
-                <p style={{fontSize:13,color:"#aaa",lineHeight:1.7,marginBottom:14}}>Como ciudadano puedes crear un partido, acumular poder político y hacer un golpe de estado para convertirte en Presidente.</p>
-                <div style={{background:"rgba(0,0,0,0.3)",borderRadius:8,padding:12,marginBottom:12}}>
+              <div style={{background:"linear-gradient(135deg,rgba(76,175,80,0.08),rgba(0,0,0,0.4))",border:"1px solid rgba(76,175,80,0.3)",borderRadius:12,padding:16,marginBottom:14,position:"relative",overflow:"hidden"}}>
+                {/* Top shimmer line */}
+                <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,#66bb6a,transparent)"}}/>
+                <div style={{fontSize:10,color:"#66bb6a",letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:12,fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>🏴 PANEL CIUDADANO</div>
+                <p style={{fontSize:13,color:"#7a8a9a",lineHeight:1.8,marginBottom:14,fontFamily:"'Rajdhani',sans-serif"}}>
+                  Crea un partido, acumula poder político y haz un golpe de estado para convertirte en Presidente.
+                </p>
+
+                {/* Poder político bar */}
+                <div style={{background:"rgba(0,0,0,0.35)",borderRadius:10,padding:12,marginBottom:10,border:"1px solid rgba(255,255,255,0.05)"}}>
                   <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-                    <span style={{fontSize:12,color:"#aaa"}}>Poder político</span>
-                    <span style={{fontSize:12,color:"#c9a84c",fontFamily:"monospace",fontWeight:"bold"}}>{jugador?.poder_politico||0}/100</span>
+                    <span style={{fontSize:12,color:"#8a9aaa",fontFamily:"'Rajdhani',sans-serif",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.05em"}}>Poder Político</span>
+                    <span style={{fontSize:14,color:"#f0c040",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:"0 0 8px rgba(240,192,64,0.5)"}}>{jugador?.poder_politico||0}<span style={{fontSize:10,opacity:0.6}}>/100</span></span>
                   </div>
-                  <div style={{height:8,background:"rgba(255,255,255,0.06)",borderRadius:4,overflow:"hidden"}}>
-                    <div style={{height:"100%",width:`${jugador?.poder_politico||0}%`,background:"linear-gradient(90deg,#c9a84c,#e6c96a)",borderRadius:4,transition:"width 0.8s ease"}} />
+                  <div style={{height:10,background:"rgba(255,255,255,0.05)",borderRadius:5,overflow:"hidden",position:"relative"}}>
+                    <div style={{height:"100%",width:`${jugador?.poder_politico||0}%`,background:"linear-gradient(90deg,#c9a84c,#f0c040,#c9a84c)",borderRadius:5,transition:"width 1s ease",boxShadow:"0 0 8px rgba(240,192,64,0.5)",backgroundSize:"200% auto",animation:"shimmer 3s linear infinite"}}/>
+                    <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.08)",borderRadius:"5px 5px 0 0"}}/>
                   </div>
-                  <div style={{fontSize:11,color:"#555",marginTop:6}}>Necesitas ≥10 para intentar golpe de estado</div>
+                  <div style={{fontSize:10,color:"#3a4050",marginTop:5,fontFamily:"'Rajdhani',sans-serif"}}>Necesitas ≥10 para intentar golpe de estado</div>
                 </div>
+
                 {/* XP Bar */}
-                <div style={{background:"rgba(0,0,0,0.3)",borderRadius:8,padding:12,marginBottom:12}}>
-                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                    <span style={{fontSize:12,color:colorNivel(nivel),fontWeight:"bold"}}>Nv.{nivel} — {tituloNivel(nivel)}</span>
-                    <span style={{fontSize:11,color:"#888",fontFamily:"monospace"}}>{xp} / {Math.round(100*(nivel+1)*(nivel+1))} XP</span>
+                <div style={{background:"rgba(0,0,0,0.35)",borderRadius:10,padding:12,marginBottom:14,border:"1px solid rgba(255,255,255,0.05)"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+                    <span style={{fontSize:13,color:colorNivel(nivel),fontWeight:700,fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.03em"}}>Nv.{nivel} — {tituloNivel(nivel)}</span>
+                    <span style={{fontSize:11,color:"#5a6070",fontFamily:"'Orbitron',monospace"}}>{xp} XP</span>
                   </div>
-                  <div style={{height:6,background:"rgba(255,255,255,0.06)",borderRadius:3,overflow:"hidden"}}>
-                    <div style={{height:"100%",width:`${Math.min(100, Math.max(0, ((xp - xpParaNivel(nivel)) / (xpParaNivel(nivel+1) - xpParaNivel(nivel))) * 100))}%`,background:`linear-gradient(90deg,${colorNivel(nivel)},${colorNivel(nivel)}88)`,borderRadius:3,transition:"width 0.8s ease"}} />
+                  <div style={{height:7,background:"rgba(255,255,255,0.05)",borderRadius:4,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:`${Math.min(100,Math.max(0,((xp-xpParaNivel(nivel))/(xpParaNivel(nivel+1)-xpParaNivel(nivel)))*100))}%`,background:`linear-gradient(90deg,${colorNivel(nivel)}cc,${colorNivel(nivel)})`,borderRadius:4,boxShadow:`0 0 6px ${colorNivel(nivel)}88`,transition:"width 0.8s ease"}}/>
                   </div>
-                  <div style={{fontSize:11,color:"#555",marginTop:4}}>💰 Dinero: ${dinero?.toLocaleString()}</div>
+                  <div style={{fontSize:11,color:"#3a5040",marginTop:5,fontFamily:"'Rajdhani',sans-serif"}}>💰 ${dinero?.toLocaleString()}</div>
                 </div>
+
+                {/* Action buttons */}
                 <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                  <button onClick={trabajar} style={{flex:1,minWidth:100,background:"rgba(33,150,243,0.15)",border:"1px solid rgba(33,150,243,0.3)",color:"#2196f3",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:12}}>💼 TRABAJAR</button>
-                  {!jugador?.partido && <button onClick={()=>setShowCreateParty(true)} style={{flex:1,minWidth:100,background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.3)",color:"#c9a84c",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:12}}>🏛️ CREAR PARTIDO</button>}
-                  <button onClick={acumularPoder} style={{flex:1,minWidth:100,background:"rgba(76,175,80,0.15)",border:"1px solid rgba(76,175,80,0.3)",color:"#4caf50",padding:"11px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:12}}>⚡ ACUMULAR PODER</button>
+                  {[
+                    {onClick:trabajar, color:"#2196f3", label:"💼 TRABAJAR"},
+                    ...(!jugador?.partido ? [{onClick:()=>setShowCreateParty(true), color:"#c9a84c", label:"🏛️ PARTIDO"}] : []),
+                    {onClick:acumularPoder, color:"#66bb6a", label:"⚡ PODER"},
+                  ].map((btn,i)=>(
+                    <button key={i} onClick={btn.onClick} style={{flex:1,minWidth:90,background:`linear-gradient(135deg,${btn.color}20,${btn.color}08)`,border:`1px solid ${btn.color}44`,color:btn.color,padding:"12px 6px",borderRadius:8,cursor:"pointer",fontFamily:"'Rajdhani',sans-serif",fontSize:13,fontWeight:700,letterSpacing:"0.05em",position:"relative",overflow:"hidden",transition:"all 0.2s",boxShadow:`0 2px 8px ${btn.color}15`}}>
+                      <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.05)",borderRadius:"8px 8px 0 0"}}/>
+                      {btn.label}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
 
+            {/* ── PRESIDENTE PANEL ── */}
             {esPresidente && (
               <>
-                {/* XP Bar Presidente */}
-                <div style={{background:"rgba(201,168,76,0.06)",border:"1px solid rgba(201,168,76,0.15)",borderRadius:8,padding:12,marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <div>
-                    <div style={{fontSize:12,color:colorNivel(nivel),fontWeight:"bold"}}>Nv.{nivel} — {tituloNivel(nivel)}</div>
-                    <div style={{height:4,width:120,background:"rgba(255,255,255,0.06)",borderRadius:2,overflow:"hidden",marginTop:4}}>
-                      <div style={{height:"100%",width:`${Math.min(100, Math.max(0, ((xp - xpParaNivel(nivel)) / (xpParaNivel(nivel+1) - xpParaNivel(nivel))) * 100))}%`,background:colorNivel(nivel),borderRadius:2}} />
+                {/* XP + Money + Energy row */}
+                <div style={{background:"linear-gradient(135deg,rgba(201,168,76,0.07),rgba(0,0,0,0.4))",border:"1px solid rgba(201,168,76,0.2)",borderRadius:12,padding:12,marginBottom:12,display:"flex",gap:10,alignItems:"center",position:"relative",overflow:"hidden"}}>
+                  <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,rgba(201,168,76,0.6),transparent)"}}/>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:11,color:colorNivel(nivel),fontWeight:700,fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.05em"}}>Nv.{nivel} — {tituloNivel(nivel)}</div>
+                    <div style={{height:4,background:"rgba(255,255,255,0.05)",borderRadius:2,overflow:"hidden",marginTop:4,width:110}}>
+                      <div style={{height:"100%",width:`${Math.min(100,Math.max(0,((xp-xpParaNivel(nivel))/(xpParaNivel(nivel+1)-xpParaNivel(nivel)))*100))}%`,background:colorNivel(nivel),borderRadius:2,boxShadow:`0 0 4px ${colorNivel(nivel)}`}}/>
                     </div>
                   </div>
-                  <div style={{textAlign:"right"}}>
-                    <div style={{fontSize:13,color:"#c9a84c",fontFamily:"monospace",fontWeight:"bold"}}>{xp} XP</div>
-                    <div style={{fontSize:11,color:"#666"}}>💰 ${dinero?.toLocaleString()}</div>
+                  <div style={{textAlign:"center"}}>
+                    <div style={{fontSize:12,color:"#f0c040",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:"0 0 6px rgba(240,192,64,0.4)"}}>{xp} <span style={{fontSize:9,opacity:0.6}}>XP</span></div>
+                    <div style={{fontSize:11,color:"#66bb6a",fontFamily:"'Orbitron',monospace",fontWeight:600}}>${dinero?.toLocaleString()}</div>
                   </div>
-                  <div style={{textAlign:"center",minWidth:60}}>
-                    <div style={{fontSize:11,color:energia>30?"#03a9f4":"#e53935",fontFamily:"monospace",fontWeight:"bold"}}>⚡{energia}/100</div>
-                    <div style={{height:3,width:"100%",background:"rgba(255,255,255,0.06)",borderRadius:2,marginTop:2,overflow:"hidden"}}>
-                      <div style={{height:"100%",width:`${energia}%`,background:energia>30?"#03a9f4":"#e53935",borderRadius:2,transition:"width 1s"}}/>
+                  <div style={{textAlign:"center",minWidth:64}}>
+                    <div style={{fontSize:11,color:energia>30?"#4fc3f7":"#ff5252",fontFamily:"'Orbitron',monospace",fontWeight:700}}>⚡{energia}<span style={{fontSize:9,opacity:0.5}}>/100</span></div>
+                    <div style={{height:4,background:"rgba(255,255,255,0.05)",borderRadius:2,marginTop:3,overflow:"hidden"}}>
+                      <div style={{height:"100%",width:`${energia}%`,background:energia>30?"#03a9f4":"#e53935",borderRadius:2,boxShadow:`0 0 4px currentColor`,transition:"width 1s"}}/>
                     </div>
                   </div>
                 </div>
+
+                {/* Big stats cards */}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-                  <div style={{background:"linear-gradient(135deg,rgba(201,168,76,0.1),rgba(201,168,76,0.05))",border:"1px solid rgba(201,168,76,0.25)",borderRadius:8,padding:12}}>
-                    <div style={{fontSize:10,color:"#c9a84c",letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>ECONOMÍA</div>
-                    <div style={{fontSize:28,color:"#c9a84c",fontFamily:"monospace",fontWeight:"bold"}}>{stats.pib}%</div>
-                    <div style={{fontSize:11,color:stats.pib>50?"#4caf50":"#e53935"}}>{stats.pib>50?"▲ Estable":"▼ En riesgo"}</div>
-                  </div>
-                  <div style={{background:"linear-gradient(135deg,rgba(233,30,99,0.1),rgba(233,30,99,0.05))",border:"1px solid rgba(233,30,99,0.25)",borderRadius:8,padding:12}}>
-                    <div style={{fontSize:10,color:"#e91e63",letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>APROBACIÓN</div>
-                    <div style={{fontSize:28,color:"#e91e63",fontFamily:"monospace",fontWeight:"bold"}}>{stats.aprobacion}%</div>
-                    <div style={{fontSize:11,color:stats.aprobacion>50?"#4caf50":"#e53935"}}>{stats.aprobacion>50?"▲ Popular":"▼ Impopular"}</div>
-                  </div>
+                  {[
+                    {label:"ECONOMÍA", val:stats.pib, color:"#c9a84c", icon:"💰", pos:"▲ Estable", neg:"▼ En riesgo"},
+                    {label:"APROBACIÓN", val:stats.aprobacion, color:"#e91e63", icon:"👥", pos:"▲ Popular", neg:"▼ Impopular"},
+                  ].map((s,i)=>(
+                    <div key={i} style={{background:`linear-gradient(135deg,${s.color}12,rgba(0,0,0,0.5))`,border:`1px solid ${s.color}33`,borderRadius:12,padding:14,position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:`linear-gradient(90deg,transparent,${s.color}88,transparent)`}}/>
+                      {/* bg fill level */}
+                      <div style={{position:"absolute",bottom:0,left:0,right:0,height:`${s.val}%`,background:`${s.color}06`,transition:"height 1.5s ease"}}/>
+                      <div style={{fontSize:9,color:`${s.color}88`,letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:4,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,position:"relative"}}>{s.icon} {s.label}</div>
+                      <div style={{fontSize:32,color:s.color,fontFamily:"'Orbitron',monospace",fontWeight:900,textShadow:`0 0 16px ${s.color}66`,lineHeight:1,position:"relative"}}>{s.val}<span style={{fontSize:14}}>%</span></div>
+                      <div style={{fontSize:11,color:s.val>50?"#66bb6a":"#ff5252",marginTop:4,fontFamily:"'Rajdhani',sans-serif",fontWeight:600,position:"relative"}}>{s.val>50?s.pos:s.neg}</div>
+                    </div>
+                  ))}
                 </div>
-                {stats.rebeldia>60 && <div style={{background:"rgba(229,57,53,0.08)",border:"1px solid rgba(229,57,53,0.3)",borderRadius:8,padding:"10px 14px",marginBottom:10,display:"flex",gap:10,alignItems:"center"}}><span style={{fontSize:20}}>⚠️</span><div><div style={{fontSize:12,color:"#e53935",fontWeight:"bold"}}>Alta Rebeldía — {stats.rebeldia}%</div><div style={{fontSize:11,color:"#888",marginTop:2}}>Ciudadanos podrían intentar un golpe de estado.</div></div></div>}
-                {stats.aprobacion<30 && <div style={{background:"rgba(229,57,53,0.08)",border:"1px solid rgba(229,57,53,0.3)",borderRadius:8,padding:"10px 14px",marginBottom:10,display:"flex",gap:10,alignItems:"center"}}><span style={{fontSize:20}}>🗳️</span><div><div style={{fontSize:12,color:"#e53935",fontWeight:"bold"}}>Aprobación Crítica — {stats.aprobacion}%</div><div style={{fontSize:11,color:"#888",marginTop:2}}>Eres vulnerable a golpes de estado. Actúa.</div></div></div>}
+
+                {/* Alerts */}
+                {stats.rebeldia>60 && (
+                  <div style={{background:"linear-gradient(135deg,rgba(229,57,53,0.1),rgba(0,0,0,0.4))",border:"1px solid rgba(229,57,53,0.4)",borderRadius:10,padding:"10px 14px",marginBottom:10,display:"flex",gap:10,alignItems:"center",animation:"pulse-glow 2s ease-in-out infinite"}}>
+                    <span style={{fontSize:22}}>⚠️</span>
+                    <div>
+                      <div style={{fontSize:12,color:"#ff5252",fontWeight:700,fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.05em"}}>ALTA REBELDÍA — {stats.rebeldia}%</div>
+                      <div style={{fontSize:11,color:"#6a4040",marginTop:1,fontFamily:"'Rajdhani',sans-serif"}}>Ciudadanos podrían intentar un golpe de estado.</div>
+                    </div>
+                  </div>
+                )}
+                {stats.aprobacion<30 && (
+                  <div style={{background:"linear-gradient(135deg,rgba(229,57,53,0.1),rgba(0,0,0,0.4))",border:"1px solid rgba(229,57,53,0.4)",borderRadius:10,padding:"10px 14px",marginBottom:10,display:"flex",gap:10,alignItems:"center",animation:"pulse-glow 2s ease-in-out infinite"}}>
+                    <span style={{fontSize:22}}>🗳️</span>
+                    <div>
+                      <div style={{fontSize:12,color:"#ff5252",fontWeight:700,fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.05em"}}>APROBACIÓN CRÍTICA — {stats.aprobacion}%</div>
+                      <div style={{fontSize:11,color:"#6a4040",marginTop:1,fontFamily:"'Rajdhani',sans-serif"}}>Eres vulnerable a golpes de estado. Actúa.</div>
+                    </div>
+                  </div>
+                )}
               </>
             )}
 
-            <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8,padding:14}}>
-              <div style={{fontSize:11,color:"#6a6a8a",letterSpacing:1,marginBottom:12,textTransform:"uppercase"}}>📊 Indicadores Nacionales</div>
+            {/* ── INDICADORES NACIONALES ── */}
+            <div style={{background:"linear-gradient(135deg,rgba(255,255,255,0.02),rgba(0,0,0,0.3))",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:14,position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,rgba(201,168,76,0.5),transparent)"}}/>
+              <div style={{fontSize:10,color:"#4a5878",letterSpacing:"0.15em",marginBottom:14,textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>📊 Indicadores Nacionales</div>
               <ResourceBar icon="💰" label="PIB Nacional" value={stats.pib} color="#c9a84c" />
               <ResourceBar icon="🛢️" label="Petróleo" value={stats.petroleo} color="#ff8f00" />
               <ResourceBar icon="🌾" label="Comida" value={stats.comida} color="#4caf50" />
@@ -1601,48 +1747,82 @@ export default function App() {
 
         {/* DECRETOS */}
         {tab==="decretos" && (
-          <div>
+          <div style={{animation:"slideInUp 0.3s ease"}}>
+            {/* Header row */}
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-              <div style={{fontSize:11,color:"#c9a84c",letterSpacing:2,textTransform:"uppercase"}}>📜 Decretos Presidenciales</div>
-              {esPresidente && <div style={{background:decreeUsed.length>=3?"rgba(229,57,53,0.15)":"rgba(201,168,76,0.1)",border:`1px solid ${decreeUsed.length>=3?"rgba(229,57,53,0.5)":"rgba(201,168,76,0.4)"}`,color:decreeUsed.length>=3?"#e53935":"#c9a84c",padding:"4px 14px",borderRadius:20,fontSize:12,fontFamily:"monospace"}}>{3-decreeUsed.length}/3 hoy</div>}
+              <div style={{fontSize:10,color:"#b09060",letterSpacing:"0.15em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>📜 Decretos Presidenciales</div>
+              {esPresidente && (
+                <div style={{background:decreeUsed.length>=3?"linear-gradient(135deg,rgba(229,57,53,0.2),rgba(0,0,0,0.3))":"linear-gradient(135deg,rgba(201,168,76,0.15),rgba(0,0,0,0.3))",border:`1px solid ${decreeUsed.length>=3?"rgba(229,57,53,0.5)":"rgba(201,168,76,0.5)"}`,color:decreeUsed.length>=3?"#ff5252":"#f0c040",padding:"4px 14px",borderRadius:20,fontSize:12,fontFamily:"'Orbitron',monospace",fontWeight:700,boxShadow:decreeUsed.length>=3?"0 0 8px rgba(229,57,53,0.3)":"0 0 8px rgba(201,168,76,0.3)"}}>
+                  {3-decreeUsed.length}/3 hoy
+                </div>
+              )}
             </div>
 
+            {/* Ciudadano locked */}
             {esCiudadano && (
-              <div style={{background:"rgba(76,175,80,0.06)",border:"1px solid rgba(76,175,80,0.25)",borderRadius:8,padding:16,marginBottom:14,textAlign:"center"}}>
-                <div style={{fontSize:24,marginBottom:8}}>🏴</div>
-                <div style={{fontSize:14,color:"#4caf50",fontWeight:"bold",marginBottom:8}}>Eres Ciudadano</div>
-                <div style={{fontSize:13,color:"#888",lineHeight:1.7,marginBottom:14}}>Los decretos son exclusivos de los presidentes. Para emitir decretos necesitas convertirte en presidente mediante un golpe de estado o eligiendo un país sin gobierno.</div>
-                <button onClick={()=>setTab("diplomacia")} style={{background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.3)",color:"#c9a84c",padding:"11px 20px",borderRadius:6,cursor:"pointer",fontFamily:"Georgia,serif",fontSize:12}}>⚔️ VER PRESIDENTES PARA GOLPE</button>
+              <div style={{background:"linear-gradient(135deg,rgba(76,175,80,0.07),rgba(0,0,0,0.4))",border:"1px solid rgba(76,175,80,0.3)",borderRadius:12,padding:20,marginBottom:14,textAlign:"center",position:"relative",overflow:"hidden"}}>
+                <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,#66bb6a,transparent)"}}/>
+                <div style={{fontSize:30,marginBottom:10}}>🔒</div>
+                <div style={{fontSize:15,color:"#66bb6a",fontWeight:700,marginBottom:8,fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.05em"}}>SOLO PRESIDENTES</div>
+                <div style={{fontSize:13,color:"#5a7060",lineHeight:1.8,marginBottom:16,fontFamily:"'Rajdhani',sans-serif"}}>Para emitir decretos necesitas convertirte en presidente. Consigue el poder político y haz un golpe de estado.</div>
+                <button onClick={()=>setTab("diplomacia")} style={{background:"linear-gradient(135deg,rgba(201,168,76,0.2),rgba(160,120,48,0.1))",border:"1px solid rgba(201,168,76,0.4)",color:"#f0c040",padding:"12px 20px",borderRadius:8,cursor:"pointer",fontFamily:"'Rajdhani',sans-serif",fontSize:13,fontWeight:700,letterSpacing:"0.05em",boxShadow:"0 0 12px rgba(201,168,76,0.15)"}}>
+                  ⚔️ VER PRESIDENTES
+                </button>
               </div>
             )}
 
             {esPresidente && (
               <>
+                {/* Consequence panel */}
                 {selectedDecree && (
-                  <div style={{background:"linear-gradient(135deg,rgba(201,168,76,0.08),rgba(201,168,76,0.04))",border:"1px solid rgba(201,168,76,0.3)",borderRadius:8,padding:16,marginBottom:14}}>
-                    <div style={{fontSize:13,color:"#c9a84c",marginBottom:10,fontWeight:"bold",display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:20}}>{selectedDecree.icon}</span>{selectedDecree.name} — Consecuencias</div>
+                  <div style={{background:"linear-gradient(135deg,rgba(201,168,76,0.08),rgba(0,0,0,0.5))",border:"1px solid rgba(201,168,76,0.35)",borderRadius:12,padding:16,marginBottom:14,position:"relative",overflow:"hidden"}}>
+                    <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,rgba(201,168,76,0.8),transparent)"}}/>
+                    <div style={{fontSize:12,color:"#f0c040",marginBottom:10,fontWeight:700,display:"flex",alignItems:"center",gap:8,fontFamily:"'Rajdhani',sans-serif",letterSpacing:"0.05em"}}>
+                      <span style={{fontSize:22}}>{selectedDecree.icon}</span>
+                      {selectedDecree.name.toUpperCase()} — CONSECUENCIAS
+                    </div>
                     {decreeLoading
-                      ? <div style={{color:"#6a6a8a",fontSize:13,display:"flex",alignItems:"center",gap:8}}><span>⏳</span> Evaluando impacto internacional...</div>
-                      : <div style={{color:"#d0d0d0",fontSize:13,lineHeight:1.9}}>{decreeResponse}</div>
+                      ? <div style={{color:"#4a5878",fontSize:13,display:"flex",alignItems:"center",gap:10,fontFamily:"'Rajdhani',sans-serif"}}>
+                          <div style={{width:16,height:16,border:"2px solid rgba(201,168,76,0.3)",borderTop:"2px solid #c9a84c",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>
+                          Evaluando impacto internacional...
+                        </div>
+                      : <div style={{color:"#c0b090",fontSize:13,lineHeight:2,fontFamily:"'Rajdhani',sans-serif",fontWeight:500}}>{decreeResponse}</div>
                     }
                   </div>
                 )}
+
+                {/* Decree cards */}
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
                   {DECREES.map(d=>{
                     const used=decreeUsed.includes(d.id);
                     const exhausted=decreeUsed.length>=3&&!used;
+                    const active=selectedDecree?.id===d.id;
                     return (
-                      <button key={d.id} onClick={()=>issueDecree(d)} disabled={used||exhausted} style={{background:used?"rgba(255,255,255,0.02)":selectedDecree?.id===d.id?"rgba(201,168,76,0.08)":"rgba(255,255,255,0.04)",border:`1px solid ${used?"rgba(255,255,255,0.05)":selectedDecree?.id===d.id?"rgba(201,168,76,0.4)":"rgba(201,168,76,0.15)"}`,borderRadius:8,padding:"14px 16px",textAlign:"left",cursor:used||exhausted?"not-allowed":"pointer",opacity:used||exhausted?0.35:1,transition:"all 0.2s",fontFamily:"Georgia,serif"}}>
+                      <button key={d.id} onClick={()=>issueDecree(d)} disabled={used||exhausted}
+                        style={{background:used?"rgba(255,255,255,0.015)":active?"linear-gradient(135deg,rgba(201,168,76,0.1),rgba(0,0,0,0.4))":"linear-gradient(135deg,rgba(255,255,255,0.03),rgba(0,0,0,0.3))",
+                          border:`1px solid ${used?"rgba(255,255,255,0.04)":active?"rgba(201,168,76,0.5)":"rgba(201,168,76,0.15)"}`,
+                          borderRadius:12,padding:"14px 16px",textAlign:"left",
+                          cursor:used||exhausted?"not-allowed":"pointer",
+                          opacity:used||exhausted?0.3:1,
+                          transition:"all 0.2s",fontFamily:"'Rajdhani',sans-serif",
+                          boxShadow:active?"0 0 16px rgba(201,168,76,0.15)":"none",
+                          position:"relative",overflow:"hidden"}}>
+                        {/* Top line on active */}
+                        {active && <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,rgba(201,168,76,0.8),transparent)"}}/>}
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-                          <div style={{display:"flex",gap:12}}>
-                            <span style={{fontSize:24}}>{d.icon}</span>
+                          <div style={{display:"flex",gap:14}}>
+                            <span style={{fontSize:26,filter:used?"grayscale(1)":active?"drop-shadow(0 0 8px rgba(201,168,76,0.6))":"none",transition:"filter 0.2s"}}>{d.icon}</span>
                             <div>
-                              <div style={{fontSize:14,color:used?"#555":"#e8e8e8",marginBottom:4,fontWeight:"bold"}}>{d.name}</div>
-                              <div style={{fontSize:12,color:"#666",marginBottom:6}}>{d.desc}</div>
-                              <div style={{fontSize:11,color:"#c9a84c",fontFamily:"monospace"}}>{d.effect}</div>
+                              <div style={{fontSize:15,color:used?"#3a3a3a":"#e8e0d0",marginBottom:3,fontWeight:700,letterSpacing:"0.03em"}}>{d.name}</div>
+                              <div style={{fontSize:12,color:"#4a5060",marginBottom:6,fontWeight:500}}>{d.desc}</div>
+                              <div style={{fontSize:11,color:"#c9a84c",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:used?"none":"0 0 6px rgba(201,168,76,0.3)"}}>{d.effect}</div>
                             </div>
                           </div>
-                          {used && <span style={{fontSize:10,color:"#4caf50",border:"1px solid #4caf5044",padding:"3px 10px",borderRadius:10,flexShrink:0}}>✓ EMITIDO</span>}
+                          {used && (
+                            <span style={{fontSize:9,color:"#66bb6a",border:"1px solid rgba(102,187,106,0.3)",padding:"4px 10px",borderRadius:6,flexShrink:0,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,letterSpacing:"0.08em",background:"rgba(102,187,106,0.08)"}}>
+                              ✓ EMITIDO
+                            </span>
+                          )}
                         </div>
                       </button>
                     );
@@ -1769,30 +1949,32 @@ export default function App() {
 
         {/* RANKING */}
         {tab==="ranking" && (
-          <div>
-            <div style={{fontSize:11,color:"#c9a84c",letterSpacing:2,textTransform:"uppercase",marginBottom:14}}>🏆 Ranking Mundial</div>
+          <div style={{animation:"slideInUp 0.3s ease"}}>
+            <div style={{fontSize:10,color:"#b09060",letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:14,fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>🏆 Ranking Mundial</div>
             {rankingData.length===0 ? (
-              <div style={{textAlign:"center",color:"#555",padding:40}}>Cargando ranking...</div>
+              <div style={{textAlign:"center",color:"#3a4050",padding:40,fontFamily:"'Rajdhani',sans-serif",fontSize:14}}>Cargando ranking...</div>
             ) : rankingData.map((j,i)=>{
               const jideo=IDEOLOGIES[j.ideologia]||IDEOLOGIES.democracia;
-              const medalColor=i===0?"#FFD700":i===1?"#C0C0C0":i===2?"#CD7F32":"#555";
+              const medalColor=i===0?"#FFD700":i===1?"#C0C0C0":i===2?"#CD7F32":"#3a4050";
               const tuPosicion=j.id===jugador?.id;
               return (
-                <div key={i} style={{background:tuPosicion?"rgba(201,168,76,0.08)":"rgba(255,255,255,0.02)",border:`1px solid ${tuPosicion?"rgba(201,168,76,0.3)":"rgba(255,255,255,0.06)"}`,borderRadius:8,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:12}}>
-                  <div style={{width:32,height:32,borderRadius:"50%",background:i<3?`${medalColor}22`:"rgba(255,255,255,0.05)",border:`2px solid ${medalColor}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:i<3?18:13,fontFamily:"monospace",fontWeight:"bold",color:medalColor,flexShrink:0}}>
-                    {i===0?"🥇":i===1?"🥈":i===2?"🥉":`#${i+1}`}
+                <div key={i} style={{background:tuPosicion?"linear-gradient(135deg,rgba(201,168,76,0.1),rgba(0,0,0,0.4))":"linear-gradient(135deg,rgba(255,255,255,0.02),rgba(0,0,0,0.3))",border:`1px solid ${tuPosicion?"rgba(201,168,76,0.35)":"rgba(255,255,255,0.05)"}`,borderRadius:10,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:12,position:"relative",overflow:"hidden"}}>
+                  {tuPosicion && <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,rgba(201,168,76,0.7),transparent)"}}/>}
+                  {/* Position badge */}
+                  <div style={{width:36,height:36,borderRadius:8,background:i<3?`${medalColor}22`:"rgba(255,255,255,0.04)",border:`2px solid ${medalColor}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:i<3?20:12,fontFamily:"'Orbitron',monospace",fontWeight:700,color:medalColor,flexShrink:0,boxShadow:i<3?`0 0 10px ${medalColor}44`:"none"}}>
+                    {i===0?"🥇":i===1?"🥈":i===2?"🥉":<span style={{fontSize:10}}>#{i+1}</span>}
                   </div>
                   <div style={{flex:1}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                      <div>
-                        <span style={{fontSize:13,color:tuPosicion?"#c9a84c":"#e8e8e8",fontWeight:"bold"}}>{j.nombre}</span>
-                        {tuPosicion&&<span style={{fontSize:10,color:"#c9a84c",marginLeft:6}}>(tú)</span>}
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <span style={{fontSize:14,color:tuPosicion?"#f0c040":"#d0c8b8",fontWeight:700,fontFamily:"'Rajdhani',sans-serif"}}>{j.nombre}</span>
+                        {tuPosicion && <span style={{fontSize:9,color:"#f0c040",background:"rgba(240,192,64,0.15)",padding:"2px 7px",borderRadius:4,fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>TÚ</span>}
                       </div>
-                      <span style={{fontSize:15,color:"#c9a84c",fontFamily:"monospace",fontWeight:"bold"}}>{j.puntuacion}</span>
+                      <span style={{fontSize:14,color:"#f0c040",fontFamily:"'Orbitron',monospace",fontWeight:700,textShadow:"0 0 8px rgba(240,192,64,0.4)"}}>{j.puntuacion}</span>
                     </div>
-                    <div style={{fontSize:11,display:"flex",gap:8,marginTop:4,alignItems:"center"}}>
-                      <span style={{color:jideo.color}}>{jideo.icon} {j.pais}</span>
-                      <span style={{background:j.rol==="presidente"?"rgba(201,168,76,0.15)":"rgba(76,175,80,0.15)",color:j.rol==="presidente"?"#c9a84c":"#4caf50",padding:"1px 6px",borderRadius:10,fontSize:9}}>{j.rol==="presidente"?"PRES":"CIU"}</span>
+                    <div style={{fontSize:11,display:"flex",gap:8,marginTop:4,alignItems:"center",fontFamily:"'Rajdhani',sans-serif"}}>
+                      <span style={{color:jideo.color,fontWeight:600}}>{jideo.icon} {j.pais}</span>
+                      <span style={{background:j.rol==="presidente"?"rgba(201,168,76,0.12)":"rgba(76,175,80,0.12)",color:j.rol==="presidente"?"#f0c040":"#66bb6a",padding:"2px 7px",borderRadius:4,fontSize:9,fontWeight:700,letterSpacing:"0.08em",border:`1px solid ${j.rol==="presidente"?"rgba(201,168,76,0.3)":"rgba(76,175,80,0.3)"}`}}>{j.rol==="presidente"?"PRES":"CIU"}</span>
                     </div>
                   </div>
                 </div>
@@ -1805,22 +1987,23 @@ export default function App() {
 
         {/* GUERRA */}
         {tab==="guerra" && (
-          <div>
-            <div style={{fontSize:11,color:"#c9a84c",letterSpacing:2,textTransform:"uppercase",marginBottom:14}}>⚔️ Centro de Guerra</div>
+          <div style={{animation:"slideInUp 0.3s ease"}}>
+            <div style={{fontSize:10,color:"#b06060",letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:14,fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>⚔️ Centro de Guerra</div>
 
-            {/* Mi estado bélico */}
-            <div style={{background:"rgba(229,57,53,0.06)",border:"1px solid rgba(229,57,53,0.2)",borderRadius:8,padding:14,marginBottom:14}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                <div style={{fontSize:12,color:"#e53935",fontWeight:"bold",textTransform:"uppercase",letterSpacing:1}}>Estado Militar</div>
-                <div style={{fontSize:10,color:esPresidente?"#c9a84c":"#4caf50",background:esPresidente?"rgba(201,168,76,0.15)":"rgba(76,175,80,0.15)",padding:"2px 8px",borderRadius:10}}>{esPresidente?"👑 PRESIDENTE":"🏴 CIUDADANO"}</div>
+            {/* Estado militar card */}
+            <div style={{background:"linear-gradient(135deg,rgba(229,57,53,0.08),rgba(0,0,0,0.5))",border:"1px solid rgba(229,57,53,0.3)",borderRadius:12,padding:14,marginBottom:14,position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,rgba(229,57,53,0.7),transparent)"}}/>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                <div style={{fontSize:10,color:"#ff5252",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"'Rajdhani',sans-serif"}}>Estado Militar</div>
+                <div style={{fontSize:9,color:esPresidente?"#f0c040":"#66bb6a",background:esPresidente?"rgba(201,168,76,0.12)":"rgba(76,175,80,0.12)",padding:"3px 10px",borderRadius:4,fontFamily:"'Rajdhani',sans-serif",fontWeight:700,border:`1px solid ${esPresidente?"rgba(201,168,76,0.3)":"rgba(76,175,80,0.3)"}`}}>{esPresidente?"👑 PRESIDENTE":"🏴 CIUDADANO"}</div>
               </div>
-              <div style={{display:"flex",gap:16,fontSize:12,color:"#888"}}>
-                <span>⚔️ Ejército: <strong style={{color:"#e53935"}}>{stats.militar}%</strong></span>
-                <span>⚡ Poder: <strong style={{color:"#c9a84c"}}>{jugador?.poder_politico||0}/100</strong></span>
-                <span>😤 Rebeldía: <strong style={{color:stats.rebeldia>50?"#e53935":"#888"}}>{stats.rebeldia}%</strong></span>
+              <div style={{display:"flex",gap:12,fontSize:13,fontFamily:"'Rajdhani',sans-serif",flexWrap:"wrap"}}>
+                <span style={{color:"#8a9aaa"}}>⚔️ Ejército: <strong style={{color:"#ff5252",fontFamily:"'Orbitron',monospace"}}>{stats.militar}%</strong></span>
+                <span style={{color:"#8a9aaa"}}>⚡ Poder: <strong style={{color:"#f0c040",fontFamily:"'Orbitron',monospace"}}>{jugador?.poder_politico||0}</strong></span>
+                <span style={{color:"#8a9aaa"}}>😤 Rebeldía: <strong style={{color:stats.rebeldia>50?"#ff5252":"#5a6070",fontFamily:"'Orbitron',monospace"}}>{stats.rebeldia}%</strong></span>
               </div>
-              {jugador?.colonizado_por && <div style={{marginTop:8,fontSize:12,color:"#e53935"}}>⚠️ Tu país está colonizado. Puedes declarar Guerra de Liberación.</div>}
-              {jugador?.territorios_conquistados?.length>0 && <div style={{marginTop:8,fontSize:12,color:"#c9a84c"}}>🏴 Territorios conquistados: {jugador.territorios_conquistados.join(", ")}</div>}
+              {jugador?.colonizado_por && <div style={{marginTop:8,fontSize:12,color:"#ff5252",fontFamily:"'Rajdhani',sans-serif",fontWeight:600}}>⚠️ Tu país está colonizado. Puedes declarar Guerra de Liberación.</div>}
+              {jugador?.territorios_conquistados?.length>0 && <div style={{marginTop:8,fontSize:12,color:"#f0c040",fontFamily:"'Rajdhani',sans-serif",fontWeight:600}}>🏴 Conquistas: {jugador.territorios_conquistados.join(", ")}</div>}
             </div>
 
             {/* Tipos de guerra disponibles */}
@@ -2281,15 +2464,26 @@ export default function App() {
         )}
       </div>
 
-      {/* Bottom Nav */}
-      <div style={{position:"fixed",bottom:0,left:0,right:0,background:"rgba(10,14,26,0.97)",borderTop:"1px solid rgba(201,168,76,0.2)",display:"flex",backdropFilter:"blur(20px)",paddingBottom:"env(safe-area-inset-bottom)"}}>
-        {[["panel","📊","Panel"],["decretos","📜","Gobernar"],["guerra","⚔️","Guerra"],["empresas","🏭","Trabajo"],["tienda","🛒","Tienda"]].map(([id,icon,label])=>(
-          <button key={id} onClick={()=>{tg?.HapticFeedback?.selectionChanged();setTab(id);if(id==="empresas"){loadFabricas();loadVisas();}}} style={{flex:1,background:"transparent",border:"none",padding:"10px 4px 12px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,position:"relative"}}>
-            {tab===id&&<div style={{position:"absolute",top:0,left:"20%",right:"20%",height:2,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",borderRadius:1}} />}
-            <span style={{fontSize:18}}>{icon}</span>
-            <span style={{fontSize:9,color:tab===id?"#c9a84c":"#444",letterSpacing:0.5,textTransform:"uppercase"}}>{label}</span>
-          </button>
-        ))}
+      {/* Bottom Nav — Game Style */}
+      <div style={{position:"fixed",bottom:0,left:0,right:0,background:"linear-gradient(180deg,rgba(6,8,16,0) 0%,rgba(6,8,16,0.98) 15%)",paddingTop:8,paddingBottom:"calc(env(safe-area-inset-bottom) + 4px)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",zIndex:200}}>
+        {/* Gold top border */}
+        <div style={{position:"absolute",top:8,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent 0%,rgba(201,168,76,0.4) 20%,rgba(201,168,76,0.7) 50%,rgba(201,168,76,0.4) 80%,transparent 100%)"}}/>
+        <div style={{display:"flex"}}>
+          {[["panel","📊","Panel"],["decretos","📜","Gobernar"],["guerra","⚔️","Guerra"],["empresas","🏭","Trabajo"],["tienda","🛒","Tienda"]].map(([id,icon,label])=>{
+            const active = tab===id;
+            return (
+              <button key={id} onClick={()=>{tg?.HapticFeedback?.selectionChanged();setTab(id);if(id==="empresas"){loadFabricas();loadVisas();}}}
+                style={{flex:1,background:"transparent",border:"none",padding:"8px 4px 10px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,position:"relative",transition:"all 0.2s"}}>
+                {/* Active glow bg */}
+                {active && <div style={{position:"absolute",inset:"2px 4px",background:"radial-gradient(ellipse at 50% 0%,rgba(201,168,76,0.12),transparent 70%)",borderRadius:8}}/>}
+                {/* Active top indicator */}
+                {active && <div style={{position:"absolute",top:0,left:"15%",right:"15%",height:2,background:"linear-gradient(90deg,transparent,#f0c040,transparent)",borderRadius:1,boxShadow:"0 0 8px rgba(240,192,64,0.8)"}}/>}
+                <span style={{fontSize:20,filter:active?"drop-shadow(0 0 6px rgba(201,168,76,0.8))":"none",transition:"filter 0.2s",transform:active?"scale(1.15)":"scale(1)",display:"block",transition:"all 0.2s"}}>{icon}</span>
+                <span style={{fontSize:9,color:active?"#f0c040":"#3a4060",letterSpacing:"0.08em",textTransform:"uppercase",fontFamily:"'Rajdhani',sans-serif",fontWeight:active?700:500,textShadow:active?"0 0 8px rgba(240,192,64,0.5)":"none"}}>{label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
